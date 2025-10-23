@@ -2,8 +2,12 @@
   "version": 2,
   "builds": [
     {
-      "src": "MedMate.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "static/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -13,15 +17,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "MedMate.py"
+      "dest": "/api/index.py"
     }
   ],
   "env": {
     "FLASK_ENV": "production"
-  },
-  "functions": {
-    "MedMate.py": {
-      "maxDuration": 60
-    }
   }
 }
