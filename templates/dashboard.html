@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MedMate</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Your AI-powered medical assistant for instant health insights, symptom analysis, and hospital finder">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MedMate">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='icons/icon-512x512.png') }}">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pwa-install.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-heartbeat"></i>
+            <span>MedMate</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#overview" class="sidebar-link active" data-section="overview">
+                <i class="fas fa-home"></i>
+                <span>Overview</span>
+            </a>
+            <a href="#diagnose" class="sidebar-link" data-section="diagnose">
+                <i class="fas fa-diagnoses"></i>
+                <span>Symptom Checker</span>
+            </a>
+            <a href="#image-analysis" class="sidebar-link" data-section="image-analysis">
+                <i class="fas fa-camera"></i>
+                <span>Image Analysis</span>
+            </a>
+            <a href="#assistant" class="sidebar-link" data-section="assistant">
+                <i class="fas fa-comments"></i>
+                <span>AI Assistant</span>
+            </a>
+            <a href="#hospitals" class="sidebar-link" data-section="hospitals">
+                <i class="fas fa-hospital"></i>
+                <span>Find Hospitals</span>
+            </a>
+            <a href="#history" class="sidebar-link" data-section="history">
+                <i class="fas fa-history"></i>
+                <span>My History</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-success btn-block" data-pwa-install style="margin-bottom: 1rem; display: none;">
+                <i class="fas fa-download"></i> Install App
+            </button>
+            <button class="btn btn-danger btn-block" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button class="mobile-sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="btn btn-success btn-sm" data-pwa-install style="display: none;">
+                    <i class="fas fa-download"></i> Install App
+                </button>
+                <div class="topbar-user">
+                    <i class="fas fa-user-circle"></i>
+                    <span>{{ user.username }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="content-section active">
+            <h1 class="page-title">Welcome, {{ user.username }}!</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-diagnoses"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalDiagnoses">0</h3>
+                        <p>Total Diagnoses</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalChats">0</h3>
+                        <p>AI Conversations</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="memberSince">{{ user.created_at.strftime('%b %Y') }}</h3>
+                        <p>Member Since</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h2>Recent Diagnoses</h2>
+                <div id="recentDiagnoses" class="activity-list">
+                    {% if diagnoses %}
+                        {% for diagnosis in diagnoses %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-file-medical"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>{{ diagnosis.symptoms[:50] }}...</h4>
+                                <p>{{ diagnosis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">No diagnoses yet. Start by checking your symptoms!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Symptom Checker Section -->
+        <section id="diagnose" class="content-section">
+            <h1 class="page-title">Symptom Checker</h1>
+            <p class="page-subtitle">Describe your symptoms and get AI-powered health insights</p>
+
+            <div class="card">
+                <div class="card-body">
+                    <form id="symptomForm">
+                        <div class="form-group">
+                            <label for="symptoms">Describe Your Symptoms</label>
+                            <textarea id="symptoms" class="form-control" rows="5" 
+                                placeholder="E.g., I have a headache, fever, and sore throat for the past 2 days..." required></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Analyze Symptoms
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="diagnosisResult" class="diagnosis-result" style="display: none;">
+                        <h3>Diagnosis Results</h3>
+                        <div id="diagnosisContent"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Image Analysis Section -->
+        <section id="image-analysis" class="content-section">
+            <h1 class="page-title">Medical Image Analysis</h1>
+            <p class="page-subtitle">Upload a medical image for AI-powered analysis</p>
+
+            <div class="card">
+                <div class="card-body">
+                    <form id="imageForm">
+                        <div class="form-group">
+                            <label for="imageUpload">Upload Medical Image</label>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to upload or drag and drop</p>
+                                <p class="file-info">PNG, JPG, JPEG up to 16MB</p>
+                                <input type="file" id="imageUpload" accept="image/*" hidden>
+                            </div>
+                            <div id="imagePreview" class="image-preview" style="display: none;">
+                                <img id="previewImg" src="" alt="Preview">
+                                <button type="button" class="btn btn-sm btn-danger" id="removeImage">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="imageSymptoms">Additional Symptoms (Optional)</label>
+                            <textarea id="imageSymptoms" class="form-control" rows="3" 
+                                placeholder="Describe any symptoms related to the image..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Analyze Image
+                        </button>
+                    </form>
+
+                    <div id="imageAnalysisResult" class="diagnosis-result" style="display: none;">
+                        <h3>Image Analysis Results</h3>
+                        <div id="imageAnalysisContent"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Assistant Section -->
+        <section id="assistant" class="content-section">
+            <h1 class="page-title">AI Medical Assistant</h1>
+            <p class="page-subtitle">Chat with our AI assistant for health advice and information</p>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message assistant">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <p>Hello! I'm your MedMate AI assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="chatForm" class="chat-input-form">
+                    <input type="text" id="chatInput" class="chat-input" 
+                        placeholder="Ask me anything about health..." required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Hospital Finder Section -->
+        <section id="hospitals" class="content-section">
+            <h1 class="page-title">Find Nearby Hospitals</h1>
+            <p class="page-subtitle">Locate medical facilities near you</p>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="location-options" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <button class="btn btn-primary" id="findHospitalsBtn">
+                            <i class="fas fa-location-arrow"></i> Use My GPS Location
+                        </button>
+                        <button class="btn btn-secondary" id="searchByCityBtn">
+                            <i class="fas fa-city"></i> Search by City/Area
+                        </button>
+                    </div>
+
+                    <div id="citySearchForm" class="city-search-form" style="display: none; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label for="cityInput">Enter City or Area Name</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="cityInput" class="form-control" 
+                                    placeholder="E.g., Ambala, Karnal, Panipat, Gurgaon..." 
+                                    style="flex: 1;">
+                                <button class="btn btn-primary" id="searchCityBtn">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                                <button class="btn btn-secondary" id="cancelCityBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <small style="color: #666; display: block; margin-top: 0.5rem;">
+                                Enter your city name in Haryana (e.g., Ambala, Karnal, Panipat, Hisar, Rohtak, Gurgaon, Faridabad)
+                            </small>
+                        </div>
+                    </div>
+
+                    <div id="hospitalResults" class="hospital-results" style="display: none;">
+                        <h3>Nearby Hospitals</h3>
+                        <div id="hospitalList"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="history" class="content-section">
+            <h1 class="page-title">My Medical History</h1>
+            <p class="page-subtitle">View your past diagnoses and consultations</p>
+
+            <div class="history-tabs">
+                <button class="history-tab active" data-tab="diagnoses">Diagnoses</button>
+                <button class="history-tab" data-tab="chats">AI Conversations</button>
+            </div>
+
+            <div id="diagnosesHistory" class="history-content">
+                <div id="diagnosesHistoryList"></div>
+            </div>
+
+            <div id="chatsHistory" class="history-content" style="display: none;">
+                <div id="chatsHistoryList"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
+</body>
+</html>
