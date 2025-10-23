@@ -5,13 +5,13 @@ import sys
 import os
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Import the Flask app
 from MedMate import app
 
-# Vercel serverless function handler
-def handler(request):
-    return app(request.environ, lambda *args: None)
+# This is the WSGI application that Vercel will use
+application = app
 
 # For local testing
 if __name__ == "__main__":

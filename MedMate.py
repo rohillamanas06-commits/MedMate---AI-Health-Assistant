@@ -1025,8 +1025,12 @@ def internal_error(e):
 # ==================== DATABASE INITIALIZATION ====================
 
 # Initialize database tables (for Vercel compatibility)
-with app.app_context():
-    db.create_all()
+try:
+    with app.app_context():
+        db.create_all()
+except Exception as e:
+    print(f"⚠️ Database initialization warning: {e}")
+    print("Note: SQLite may not work on Vercel. Consider using PostgreSQL for production.")
 
 # ==================== MAIN ====================
 
