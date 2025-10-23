@@ -1024,19 +1024,14 @@ def internal_error(e):
 
 # ==================== DATABASE INITIALIZATION ====================
 
-def init_db():
-    """Initialize database"""
-    with app.app_context():
-        db.create_all()
-        print("Database initialized successfully!")
+# Initialize database tables (for Vercel compatibility)
+with app.app_context():
+    db.create_all()
 
 # ==================== MAIN ====================
 
 if __name__ == '__main__':
-    # Initialize database
-    init_db()
-    
-    # Run app
+    # Print startup information
     print("=" * 50)
     print("MedMate - AI Medical Assistant")
     print("=" * 50)
