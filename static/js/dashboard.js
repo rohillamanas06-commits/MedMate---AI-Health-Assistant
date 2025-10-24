@@ -1,9 +1,7 @@
 // MedMate - Dashboard JavaScript
 
-// Global variables
-let recognition = null;
+// Global variables - using VoiceAssistant from voice-assistant.js
 let isListening = false;
-let isMuted = localStorage.getItem('voiceMuted') === 'true' || false;
 
 // ==================== VOICE MUTE TOGGLE ====================
 
@@ -13,8 +11,7 @@ if (muteToggle) {
     updateMuteIcon();
     
     muteToggle.addEventListener('click', () => {
-        isMuted = !isMuted;
-        localStorage.setItem('voiceMuted', isMuted);
+        const isMuted = voiceAssistant.toggleMute();
         updateMuteIcon();
         
         // Show feedback
@@ -26,6 +23,8 @@ if (muteToggle) {
 function updateMuteIcon() {
     if (!muteToggle) return;
     const icon = muteToggle.querySelector('i');
+    const isMuted = voiceAssistant.isMuted;
+    
     if (isMuted) {
         icon.className = 'fas fa-volume-mute';
         muteToggle.classList.remove('btn-secondary');
@@ -59,15 +58,6 @@ function showToast(message) {
         toast.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 2000);
-}
-
-// Initialize speech recognition
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
 }
 
 // Sidebar navigation
@@ -140,31 +130,40 @@ const voiceInputBtn = document.getElementById('voiceInputBtn');
 const symptomsTextarea = document.getElementById('symptoms');
 
 // Voice input for symptoms
-if (voiceInputBtn && recognition) {
+if (voiceInputBtn && voiceAssistant.isRecognitionAvailable()) {
     voiceInputBtn.addEventListener('click', () => {
         if (!isListening) {
-            recognition.start();
-            isListening = true;
-            voiceInputBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-            voiceInputBtn.classList.add('btn-danger');
+            const started = voiceAssistant.startListening(
+                (transcript, confidence) => {
+                    symptomsTextarea.value = transcript;
+                    showToast(`Recognized: ${transcript.substring(0, 50)}...`);
+                    isListening = false;
+                    voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice Input';
+                    voiceInputBtn.classList.remove('btn-danger');
+                },
+                (error) => {
+                    showToast(`Voice error: ${error}`);
+                    isListening = false;
+                    voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice Input';
+                    voiceInputBtn.classList.remove('btn-danger');
+                }
+            );
+            
+            if (started) {
+                isListening = true;
+                voiceInputBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+                voiceInputBtn.classList.add('btn-danger');
+            }
         } else {
-            recognition.stop();
+            voiceAssistant.stopListening();
             isListening = false;
             voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice Input';
             voiceInputBtn.classList.remove('btn-danger');
         }
     });
-    
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        symptomsTextarea.value = transcript;
-    };
-    
-    recognition.onend = () => {
-        isListening = false;
-        voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice Input';
-        voiceInputBtn.classList.remove('btn-danger');
-    };
+} else if (voiceInputBtn) {
+    voiceInputBtn.disabled = true;
+    voiceInputBtn.title = 'Voice recognition not supported in this browser';
 }
 
 // Symptom form submission
@@ -207,10 +206,13 @@ function displayDiagnosisResult(result) {
     const contentDiv = document.getElementById('diagnosisContent');
     
     let html = '';
+    let voiceText = '';
     
     // Display diseases
     if (result.diseases && result.diseases.length > 0) {
-        result.diseases.forEach(disease => {
+        voiceText = `I found ${result.diseases.length} possible condition${result.diseases.length > 1 ? 's' : ''}. `;
+        
+        result.diseases.forEach((disease, index) => {
             const confidenceClass = disease.confidence >= 50 ? 'confidence-high' : 
                                    disease.confidence >= 30 ? 'confidence-medium' : 'confidence-low';
             
@@ -233,12 +235,20 @@ function displayDiagnosisResult(result) {
                     </div>
                 </div>
             `;
+            
+            // Build voice summary
+            if (index === 0) {
+                voiceText += `The most likely condition is ${disease.name} with ${disease.confidence} percent confidence. `;
+                voiceText += `${disease.explanation}. `;
+                voiceText += `The urgency level is ${disease.urgency}. `;
+            }
         });
     }
     
     // General advice
     if (result.general_advice) {
         html += `<div class="disease-item"><h5>General Advice:</h5><p>${result.general_advice}</p></div>`;
+        voiceText += `General advice: ${result.general_advice}. `;
     }
     
     // Disclaimer
@@ -251,6 +261,14 @@ function displayDiagnosisResult(result) {
     
     // Scroll to results
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Speak the results
+    if (voiceText && voiceAssistant.isSynthesisAvailable()) {
+        voiceAssistant.speak(voiceText, {
+            rate: 0.9,
+            pitch: 1.0
+        });
+    }
 }
 
 // ==================== IMAGE ANALYSIS ====================

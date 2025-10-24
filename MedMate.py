@@ -54,6 +54,23 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Initialize database
 db = SQLAlchemy(app)
 
+# Database initialization function for serverless
+def init_db():
+    """Initialize database tables - called on each request in serverless"""
+    try:
+        db.create_all()
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+
+# Hook to ensure database is initialized before each request
+@app.before_request
+def ensure_db_initialized():
+    """Ensure database tables exist before processing request"""
+    if not hasattr(app, '_db_initialized'):
+        with app.app_context():
+            init_db()
+            app._db_initialized = True
+
 # Initialize text-to-speech engine
 tts_engine = None
 tts_lock = threading.Lock()  # Thread lock for TTS engine
@@ -909,30 +926,58 @@ def chat_history():
 @app.route('/api/voice-to-text', methods=['POST'])
 @login_required
 def voice_to_text():
-    """Text-to-speech endpoint"""
+    """Process voice input text (from browser's Web Speech API)"""
     try:
         data = request.get_json()
         text = data.get('text', '')
         
-        print(f"TTS request received: {len(text)} characters")
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
         
-        if text:
-            if not tts_engine:
-                print("TTS engine not available")
-                return jsonify({'error': 'Text-to-speech not available'}), 503
-            
-            speak_text(text)
-            print("TTS request queued successfully")
-            return jsonify({'message': 'Speech synthesis started', 'status': 'success'}), 200
+        # Process the voice command
+        # This is just acknowledging receipt - actual TTS happens in browser
+        return jsonify({
+            'message': 'Voice input received',
+            'text': text,
+            'status': 'success'
+        }), 200
+    
+    except Exception as e:
+        print(f"Voice input error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/text-to-speech', methods=['POST'])
+@login_required
+def text_to_speech():
+    """Return text for browser-based speech synthesis"""
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
         
-        print("TTS request failed: No text provided")
-        return jsonify({'error': 'No text provided'}), 400
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # Return text for browser's Speech Synthesis API
+        # The actual speech happens on the client side
+        return jsonify({
+            'text': text,
+            'status': 'success',
+            'message': 'Text ready for speech synthesis'
+        }), 200
     
     except Exception as e:
         print(f"TTS endpoint error: {e}")
-        import traceback
-        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/voice/status', methods=['GET'])
+def voice_status():
+    """Check voice features availability"""
+    return jsonify({
+        'voice_recognition': True,  # Browser-based Web Speech API
+        'text_to_speech': True,     # Browser-based Speech Synthesis API
+        'environment': 'serverless' if os.getenv('VERCEL') else 'local',
+        'note': 'Voice features use browser APIs (Web Speech API)'
+    }), 200
 
 # ==================== HOSPITAL FINDER ROUTES ====================
 
@@ -1044,13 +1089,17 @@ def internal_error(e):
 
 # ==================== DATABASE INITIALIZATION ====================
 
-# Initialize database tables (for Vercel compatibility)
-try:
-    with app.app_context():
-        db.create_all()
-except Exception as e:
-    print(f"⚠️ Database initialization warning: {e}")
-    print("Note: SQLite may not work on Vercel. Consider using PostgreSQL for production.")
+# Initialize database tables on startup (for local development)
+if not os.getenv('VERCEL'):
+    # Only initialize on startup for local development
+    # For Vercel, initialization happens on each request via before_request hook
+    try:
+        with app.app_context():
+            db.create_all()
+            print("✓ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization warning: {e}")
+        print("Note: SQLite may not persist on Vercel. Consider using PostgreSQL for production.")
 
 # ==================== MAIN ====================
 
