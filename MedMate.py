@@ -1249,6 +1249,9 @@ if not os.getenv('VERCEL'):
 # ==================== MAIN ====================
 
 if __name__ == '__main__':
+    # Get port from environment variable (for Railway/Render) or default to 5000
+    port = int(os.getenv('PORT', 5000))
+    
     # Print startup information
     print("=" * 50)
     print("MedMate - AI Medical Assistant")
@@ -1259,7 +1262,9 @@ if __name__ == '__main__':
     print(f"Google Maps API: {'✓ Configured' if GOOGLE_MAPS_API_KEY else '✗ Not configured'}")
     print(f"Text-to-Speech: {'✓ Available' if tts_engine else '✗ Not available'}")
     print("=" * 50)
-    print("Starting server on http://localhost:5000")
+    print(f"Starting server on http://0.0.0.0:{port}")
     print("=" * 50)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Use debug=False in production
+    is_production = os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RENDER')
+    app.run(debug=not is_production, host='0.0.0.0', port=port)
