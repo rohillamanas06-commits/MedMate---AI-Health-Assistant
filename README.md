@@ -1,209 +1,426 @@
-# MedMate - AI Medical Assistant Frontend
+# 🏥 MedMate - AI Medical Assistant
+
+> Your intelligent healthcare companion powered by Google Gemini AI
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.x-black.svg)](https://flask.palletsprojects.com/)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black.svg)](https://github.com/rohillamanas06-commits/MedMate---AI-Health-Assistant-v2)
+
+🔗 **Repository**: [https://github.com/rohillamanas06-commits/MedMate---AI-Health-Assistant-v2](https://github.com/rohillamanas06-commits/MedMate---AI-Health-Assistant-v2)
+
+## 📋 Table of Contents
+
+- [About](#-about-medmate)
+- [Features](#-features)
+- [Tech Stack](#️-tech-stack)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+- [API Documentation](#-api-documentation)
+- [Deployment](#-deployment)
+- [Screenshots](#-screenshots)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## 🏥 About MedMate
 
-MedMate is an advanced AI-powered medical assistant platform that provides:
+MedMate is an advanced AI-powered medical assistant platform that provides instant medical insights using cutting-edge AI technology. Built with **Google Gemini 2.5 Flash** for lightning-fast, accurate medical analysis.
 
-- **AI Symptom Diagnosis** - Instant symptom analysis using Gemini/OpenAI
-- **Medical Image Analysis** - Upload and analyze medical images
-- **24/7 AI Chat Assistant** - Interactive medical consultation
-- **Hospital Finder** - Locate nearby medical facilities
-- **Medical History** - Track diagnoses and conversations
-- **Voice Recognition** - Hands-free symptom input
+### Why MedMate?
 
-## 🚀 Features
+- 🚀 **Instant Analysis** - Get medical insights in seconds
+- 🎯 **High Accuracy** - Powered by Google's latest Gemini 2.5 Flash model
+- 🔒 **Secure & Private** - Your health data is encrypted and protected
+- 📱 **Accessible Anywhere** - Works on desktop, tablet, and mobile
+- 🌐 **24/7 Availability** - AI assistant available round the clock
 
-### Core Features
-- ✅ User authentication (register/login)
-- ✅ AI-powered symptom checker
-- ✅ Medical image analysis with Vision API
-- ✅ Interactive AI chat with context awareness
-- ✅ Hospital finder with Google Maps integration
-- ✅ Diagnosis and chat history tracking
-- ✅ Voice recognition for hands-free input
-- ✅ Text-to-speech for accessibility
-- ✅ Responsive design for all devices
+## ✨ Features
 
-### Design Highlights
-- 🎨 Medical-grade UI with calming blue/teal theme
-- ✨ Smooth animations and micro-interactions
-- 🌓 Light/dark mode support
-- 📱 Mobile-first responsive design
-- ♿ Accessible components
+### Core Functionality
+
+#### 🤖 AI Symptom Diagnosis
+- Describe your symptoms in natural language
+- Get instant AI-powered analysis with confidence scores
+- Receive detailed explanations and recommended solutions
+- Urgency level assessment (Low/Medium/High)
+- Voice input support for hands-free operation
+
+#### 🖼️ Medical Image Analysis
+- **Multiple Image Upload** - Upload up to 5 medical images at once
+- AI-powered image analysis using Gemini Vision
+- Detailed observations and condition detection
+- Confidence scores for each detected condition
+- Professional evaluation recommendations
+
+#### 💬 24/7 AI Chat Assistant
+- Interactive conversation with medical AI
+- Context-aware responses
+- Chat history tracking
+- **Smart Audio Controls**:
+  - Text-to-speech for all AI responses
+  - Auto-stop previous audio when playing new message
+  - Visual indicators for playing audio
+  - Toggle play/pause on each message
+
+#### 🏥 Hospital Finder
+- Find nearby hospitals and medical facilities
+- Integrated with Google Maps
+- Real-time location services
+- Hospital ratings and contact information
+- Distance calculation from your location
+
+#### 📊 Medical History
+- Track all your diagnoses
+- View past conversations
+- Export medical records
+- Organized timeline view
+
+### Additional Features
+
+- ✅ **User Authentication** - Secure login and registration
+- ✅ **Voice Recognition** - Hands-free symptom input
+- ✅ **Text-to-Speech** - Audio playback for accessibility
+- ✅ **Responsive Design** - Works on all devices
+- ✅ **Dark Mode Support** - Easy on the eyes
+- ✅ **Real-time Updates** - Instant feedback and notifications
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **Shadcn/ui** - Component library
-- **React Router** - Navigation
-- **TanStack Query** - Data fetching
 
-### Backend Integration
-- **Flask** - Python backend API
+- **React 18** - Modern UI framework
+- **TypeScript** - Type-safe development
+- **Vite** - Lightning-fast build tool
+- **Tailwind CSS** - Utility-first styling
+- **Shadcn/ui** - Beautiful component library
+- **React Router** - Client-side routing
+- **Lucide Icons** - Modern icon library
+- **Sonner** - Toast notifications
+
+### Backend
+
+- **Flask 3.x** - Python web framework
 - **SQLAlchemy** - Database ORM
-- **OpenAI/Gemini** - AI models
+- **PostgreSQL** - Production database (Neon)
+- **Google Gemini 2.5 Flash** - AI model for analysis
 - **Google Maps API** - Location services
+- **Flask-CORS** - Cross-origin support
+- **Werkzeug** - Security utilities
+
+### AI & APIs
+
+- **Google Generative AI (Gemini)** - Primary AI provider
+- **Google Maps Geocoding** - Location services
+- **Web Speech API** - Voice recognition & TTS
 
 ## 📦 Installation
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Backend running on port 5000 (see MedMate.py)
 
-### Setup
+- **Node.js** 18+ and npm
+- **Python** 3.11+
+- **PostgreSQL** (or SQLite for development)
+- **Google Gemini API Key**
+- **Google Maps API Key**
+
+### Backend Setup
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd medmate-frontend
+git clone https://github.com/rohillamanas06-commits/MedMate---AI-Health-Assistant-v2.git
+cd MedMate---AI-Health-Assistant-v2
 
-# Install dependencies
-npm install
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Create environment file
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Create .env file
 cp .env.example .env
 
-# Update .env with your backend URL
-# VITE_API_URL=http://localhost:5000
+# Add your API keys to .env
+# GEMINI_API_KEY=your_gemini_api_key
+# GOOGLE_MAPS_API_KEY=your_google_maps_key
+# DATABASE_URL=your_database_url (optional)
+
+# Run the Flask backend
+python MedMate.py
+```
+
+The backend will run on `http://localhost:5000`
+
+### Frontend Setup
+
+```bash
+# Install Node dependencies
+npm install
+
+# Update .env with backend URL
+echo "VITE_API_URL=http://localhost:5000" > .env
 
 # Start development server
 npm run dev
 ```
 
-The app will be available at `http://localhost:8080`
+The frontend will run on `http://localhost:8080`
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Create a `.env` file:
+#### Backend (.env)
+```env
+# Required
+GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_MAPS_API_KEY=your_google_maps_key_here
 
+# Optional
+DATABASE_URL=postgresql://user:pass@host/db  # Defaults to SQLite
+SECRET_KEY=your_secret_key_here              # Auto-generated if not set
+OPENAI_API_KEY=your_openai_key_here          # Optional fallback
+```
+
+#### Frontend (.env)
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
-### Backend Setup
+### Getting API Keys
 
-Make sure your Flask backend is running with:
-- OpenAI or Gemini API key configured
-- Google Maps API key (for hospital finder)
-- Database configured (PostgreSQL recommended for production)
+1. **Google Gemini API Key**
+   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a new API key
+   - Copy and paste into `.env`
 
-## 📱 Pages
+2. **Google Maps API Key**
+   - Visit [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable Maps JavaScript API and Geocoding API
+   - Create credentials
+   - Copy API key to `.env`
 
-### Public Pages
-- **Home** (`/`) - Landing page with features
-- **Auth** (`/auth`) - Login/Register
+## 🚀 Usage
 
-### Protected Pages (Require Authentication)
-- **Dashboard** (`/dashboard`) - Overview and quick actions
-- **Diagnose** (`/diagnose`) - Symptom checker and image analysis
-- **Chat** (`/chat`) - AI medical assistant
-- **Hospitals** (`/hospitals`) - Find nearby hospitals
-- **History** (`/history`) - View past diagnoses and chats
-- **Profile** (`/profile`) - User account settings
+### 1. Register/Login
+- Create an account or login with existing credentials
+- Your data is securely stored with encrypted passwords
 
-## 🎨 Design System
+### 2. Diagnose Symptoms
+- Navigate to **Diagnose** page
+- Choose **Text Input** or **Image Analysis** tab
+- Enter symptoms or upload medical images (up to 5)
+- Click **Analyze** to get AI-powered insights
 
-### Color Palette
-- **Primary**: Medical Blue (#3B82F6)
-- **Secondary**: Healthcare Green (#10B981)
-- **Accent**: Teal (#14B8A6)
-- **Destructive**: Medical Red (#EF4444)
+### 3. Chat with AI
+- Go to **AI Chat** page
+- Ask medical questions in natural language
+- Use voice input for hands-free operation
+- Click volume icon to hear responses
 
-### Animations
-- Smooth transitions with cubic-bezier easing
-- Float animations for hero elements
-- Fade-in and slide-up for page elements
-- Pulse glow for interactive elements
+### 4. Find Hospitals
+- Visit **Find Hospitals** page
+- Enter your city or allow location access
+- View nearby hospitals on map
+- Get directions and contact information
 
-## 🔌 API Integration
+### 5. View History
+- Check **History** page for past diagnoses
+- Review previous chat conversations
+- Track your medical journey
 
-The frontend communicates with the Flask backend via REST API:
+## 📡 API Documentation
 
-### Authentication
-- `POST /api/register` - User registration
-- `POST /api/login` - User login
-- `POST /api/logout` - User logout
-- `GET /api/check-auth` - Check auth status
+### Authentication Endpoints
 
-### Diagnosis
-- `POST /api/diagnose` - Text symptom analysis
-- `POST /api/diagnose-image` - Image analysis
-- `GET /api/diagnosis-history` - Get user's diagnosis history
+```http
+POST /api/register
+Content-Type: application/json
 
-### Chat
-- `POST /api/chat` - Send message to AI
-- `GET /api/chat-history` - Get conversation history
+{
+  "username": "string",
+  "email": "string",
+  "password": "string"
+}
+```
 
-### Hospitals
-- `POST /api/geocode-city` - Convert city to coordinates
-- `POST /api/nearby-hospitals` - Find nearby hospitals
-- `GET /api/hospital-details/<id>` - Get hospital details
+```http
+POST /api/login
+Content-Type: application/json
 
-### Voice
-- `POST /api/voice-to-text` - Voice recognition
-- `POST /api/text-to-speech` - Text-to-speech
-- `GET /api/voice/status` - Voice features status
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+```http
+GET /api/check-auth
+Returns: { authenticated: boolean, user: object }
+```
+
+### Diagnosis Endpoints
+
+```http
+POST /api/diagnose
+Content-Type: application/json
+
+{
+  "symptoms": "string"
+}
+```
+
+```http
+POST /api/diagnose-image
+Content-Type: multipart/form-data
+
+{
+  "image": File,
+  "symptoms": "string" (optional)
+}
+```
+
+### Chat Endpoints
+
+```http
+POST /api/chat
+Content-Type: application/json
+
+{
+  "message": "string"
+}
+```
+
+```http
+GET /api/chat-history?page=1&per_page=20
+Returns: { chats: array, total: number, pages: number }
+```
+
+### Hospital Finder Endpoints
+
+```http
+POST /api/geocode-city
+Content-Type: application/json
+
+{
+  "city": "string"
+}
+```
+
+```http
+POST /api/nearby-hospitals
+Content-Type: application/json
+
+{
+  "latitude": number,
+  "longitude": number,
+  "radius": number (optional)
+}
+```
 
 ## 🚢 Deployment
 
-### Build for Production
+### Frontend Deployment (Vercel)
 
 ```bash
+# Build for production
 npm run build
+
+# Deploy to Vercel
+vercel --prod
 ```
 
-The build output will be in the `dist/` folder.
+### Backend Deployment (Railway/Heroku)
 
-### Deploy Options
-- **Vercel** - Recommended for frontend
-- **Netlify** - Easy deployment
-- **Cloudflare Pages** - Fast CDN
-- **AWS S3 + CloudFront** - Enterprise scale
+```bash
+# Ensure requirements.txt is up to date
+pip freeze > requirements.txt
 
-### Backend Deployment
-Deploy the Flask backend to:
-- **Vercel** (serverless)
-- **Railway** (with PostgreSQL)
-- **Heroku** (with add-ons)
-- **AWS EC2/ECS** (production scale)
+# Deploy to Railway
+railway up
 
-## 🔒 Security
+# Or deploy to Heroku
+git push heroku main
+```
 
-- Session-based authentication with secure cookies
-- HTTPS enforced in production
-- CORS configured for frontend domain
-- Input sanitization on backend
-- Medical disclaimer on all diagnoses
+### Environment Variables for Production
 
-## 📄 License
+Make sure to set all environment variables in your deployment platform:
+- `GEMINI_API_KEY`
+- `GOOGLE_MAPS_API_KEY`
+- `DATABASE_URL`
+- `SECRET_KEY`
 
-This project is created for educational purposes.
+## 📸 Screenshots
+
+### Home Page
+![Home Page](docs/screenshots/home.png)
+
+### AI Diagnosis
+![Diagnosis](docs/screenshots/diagnose.png)
+
+### AI Chat
+![Chat](docs/screenshots/chat.png)
+
+### Hospital Finder
+![Hospitals](docs/screenshots/hospitals.png)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow:
+Contributions are welcome! Please follow these steps:
+
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📞 Support
+### Development Guidelines
 
-For issues and questions:
-- Create an issue in the repository
-- Contact the development team
+- Follow TypeScript best practices
+- Write meaningful commit messages
+- Add comments for complex logic
+- Test your changes thoroughly
+- Update documentation as needed
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## ⚠️ Medical Disclaimer
 
-MedMate is for informational purposes only and does not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare providers for medical concerns.
+**IMPORTANT**: MedMate is for informational and educational purposes only. It does not provide medical advice, diagnosis, or treatment. 
+
+- Always consult with qualified healthcare providers for medical concerns
+- Do not rely solely on AI-generated information for medical decisions
+- In case of emergency, call your local emergency services immediately
+- This tool is not a substitute for professional medical advice
+
+## 🙏 Acknowledgments
+
+- **Google Gemini** - For providing advanced AI capabilities
+- **Shadcn/ui** - For beautiful UI components
+- **Tailwind CSS** - For utility-first styling
+- **React Community** - For amazing tools and libraries
+- **Cascade AI** - For development assistance and code optimization
+
+## 📞 Support
+
+For issues, questions, or suggestions:
+
+- 🐛 [Report a Bug](https://github.com/rohillamanas06-commits/MedMate---AI-Health-Assistant-v2/issues)
+- 💡 [Request a Feature](https://github.com/rohillamanas06-commits/MedMate---AI-Health-Assistant-v2/issues)
+- 📧 Email: rohillamanas06@gmail.com
+
+## 🌟 Star History
+
+If you find MedMate helpful, please consider giving it a star ⭐
 
 ---
 
-Built with ❤️ using React, TypeScript, and AI technology
+**Built with ❤️ by [Rohilla Manas](https://github.com/rohillamanas06-commits)**
+
+*Powered by Google Gemini 2.5 Flash | React | TypeScript | Flask*

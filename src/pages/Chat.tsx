@@ -22,6 +22,7 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,13 +135,40 @@ export default function Chat() {
     }
   };
 
-  const speakText = (text: string) => {
+  const speakText = (text: string, messageId: string) => {
     if ('speechSynthesis' in window) {
+      // If this message is already playing, stop it
+      if (playingMessageId === messageId) {
+        window.speechSynthesis.cancel();
+        setPlayingMessageId(null);
+        toast.info('Audio stopped');
+        return;
+      }
+      
+      // Stop any currently playing speech
+      window.speechSynthesis.cancel();
+      setPlayingMessageId(messageId);
+      
+      // Create and play new speech
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9;
       utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      utterance.onstart = () => {
+        toast.success('Playing audio');
+      };
+      
+      utterance.onend = () => {
+        setPlayingMessageId(null);
+      };
+      
+      utterance.onerror = () => {
+        toast.error('Audio playback failed');
+        setPlayingMessageId(null);
+      };
+      
       window.speechSynthesis.speak(utterance);
-      toast.success('Playing audio');
     } else {
       toast.error('Text-to-speech not supported');
     }
@@ -216,8 +244,9 @@ export default function Chat() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 px-2"
-                              onClick={() => speakText(message.content)}
+                              className={`h-6 px-2 ${playingMessageId === message.id ? 'text-primary animate-pulse' : ''}`}
+                              onClick={() => speakText(message.content, message.id)}
+                              title={playingMessageId === message.id ? 'Stop audio' : 'Play audio'}
                             >
                               <Volume2 className="h-3 w-3" />
                             </Button>

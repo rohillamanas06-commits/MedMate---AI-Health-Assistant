@@ -228,32 +228,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24">
-        <div className="container">
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-90"></div>
-            <div className="relative z-10 p-12 lg:p-20 text-center text-white space-y-6">
-              <h2 className="text-4xl lg:text-5xl font-bold">Ready to Transform Your Healthcare?</h2>
-              <p className="text-xl max-w-2xl mx-auto opacity-90">
-                Join thousands of users who trust MedMate for their health needs
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  onClick={() => navigate(user ? '/dashboard' : '/auth')}
-                >
-                  Get Started Now
-                </Button>
-                <Button size="lg" variant="outline" className="bg-white/10 border-white text-white hover:bg-white/20">
-                  Learn More
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </section>
     </div>
   );
 }

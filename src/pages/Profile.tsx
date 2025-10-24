@@ -66,7 +66,15 @@ export default function Profile() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Member Since</p>
-                    <p className="font-semibold">2024</p>
+                    <p className="font-semibold">
+                      {user.created_at 
+                        ? new Date(user.created_at).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })
+                        : 'N/A'}
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -85,24 +93,6 @@ export default function Profile() {
             </div>
           </Card>
 
-          {/* Settings Card */}
-          <Card className="p-6 glass animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <h3 className="text-xl font-bold mb-4">Account Settings</h3>
-            <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                Update Profile
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                Change Password
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                Privacy Settings
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-destructive">
-                Delete Account
-              </Button>
-            </div>
-          </Card>
         </div>
       </div>
     </div>

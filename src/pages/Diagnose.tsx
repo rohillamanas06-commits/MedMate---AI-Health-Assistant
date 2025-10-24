@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Mic,
   X,
+  Volume2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -23,8 +24,8 @@ export default function Diagnose() {
   const [symptoms, setSymptoms] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
 
   const handleTextDiagnosis = async () => {
@@ -48,8 +49,8 @@ export default function Diagnose() {
   };
 
   const handleImageDiagnosis = async () => {
-    if (!selectedImage) {
-      toast.error('Please select an image');
+    if (selectedImages.length === 0) {
+      toast.error('Please select at least one image');
       return;
     }
 
@@ -57,9 +58,10 @@ export default function Diagnose() {
     setResult(null);
 
     try {
-      const response: any = await api.diagnoseImage(selectedImage, symptoms);
+      // For now, analyze the first image (backend needs update for multiple)
+      const response: any = await api.diagnoseImage(selectedImages[0], symptoms);
       setResult(response.result);
-      toast.success('Image analysis complete!');
+      toast.success(`Image analysis complete! (${selectedImages.length} image${selectedImages.length > 1 ? 's' : ''} uploaded)`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Image analysis failed');
     } finally {
@@ -68,15 +70,52 @@ export default function Diagnose() {
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      // Calculate how many more images we can add
+      const remainingSlots = 5 - selectedImages.length;
+      const filesToAdd = files.slice(0, remainingSlots);
+      
+      if (filesToAdd.length === 0) {
+        toast.error('Maximum 5 images already selected');
+        e.target.value = ''; // Reset input
+        return;
+      }
+      
+      // Add new files to existing ones
+      const newImages = [...selectedImages, ...filesToAdd];
+      setSelectedImages(newImages);
+      
+      // Generate previews for new images
+      const newPreviews: string[] = [];
+      let loadedCount = 0;
+      
+      filesToAdd.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result as string);
+          loadedCount++;
+          if (loadedCount === filesToAdd.length) {
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      if (files.length > remainingSlots) {
+        toast.info(`Added ${filesToAdd.length} image(s). Maximum 5 images allowed.`);
+      } else {
+        toast.success(`Added ${filesToAdd.length} image(s)`);
+      }
+      
+      // Reset input so same file can be selected again
+      e.target.value = '';
     }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const startVoiceRecognition = () => {
@@ -110,6 +149,22 @@ export default function Diagnose() {
       recognition.start();
     } else {
       toast.error('Voice recognition not supported');
+    }
+  };
+
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // Stop any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+      toast.success('Playing audio');
+    } else {
+      toast.error('Text-to-speech not supported in your browser');
     }
   };
 
@@ -188,32 +243,46 @@ export default function Diagnose() {
 
                 <TabsContent value="image" className="space-y-4">
                   <div>
-                    <Label>Upload Medical Image</Label>
+                    <Label>Upload Medical Images (Max 5)</Label>
                     <div
                       className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors ${
-                        imagePreview ? 'border-primary' : 'border-border'
+                        imagePreviews.length > 0 ? 'border-primary' : 'border-border'
                       }`}
                       onClick={() => document.getElementById('image-upload')?.click()}
                     >
-                      {imagePreview ? (
-                        <div className="relative">
-                          <img
-                            src={imagePreview}
-                            alt="Preview"
-                            className="max-h-64 mx-auto rounded-lg"
-                          />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedImage(null);
-                              setImagePreview('');
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                      {imagePreviews.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-32 object-cover rounded-lg"
+                              />
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeImage(index);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                              <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                {index + 1}/{imagePreviews.length}
+                              </div>
+                            </div>
+                          ))}
+                          {imagePreviews.length < 5 && (
+                            <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg">
+                              <div className="text-center">
+                                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-1" />
+                                <p className="text-xs text-muted-foreground">Add more</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -221,7 +290,7 @@ export default function Diagnose() {
                           <p className="text-sm text-muted-foreground">
                             Click to upload or drag and drop
                           </p>
-                          <p className="text-xs text-muted-foreground">PNG, JPG up to 16MB</p>
+                          <p className="text-xs text-muted-foreground">PNG, JPG up to 16MB • Max 5 images</p>
                         </div>
                       )}
                     </div>
@@ -229,6 +298,7 @@ export default function Diagnose() {
                       id="image-upload"
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={handleImageSelect}
                       className="hidden"
                     />
@@ -274,8 +344,68 @@ export default function Diagnose() {
             {result ? (
               <div className="space-y-4 animate-scale-in">
                 <Card className="p-6 glass">
-                  <h2 className="text-2xl font-bold mb-4">Diagnosis Results</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Diagnosis Results</h2>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const textToSpeak = result.diseases?.map((d: any) => 
+                          `${d.name} with ${d.confidence}% confidence. ${d.explanation}`
+                        ).join('. ') + '. ' + (result.general_advice || '');
+                        speakText(textToSpeak);
+                      }}
+                    >
+                      <Volume2 className="h-4 w-4 mr-2" />
+                      Read Aloud
+                    </Button>
+                  </div>
                   
+                  {/* Image Analysis Results */}
+                  {result.observation && (
+                    <Card className="p-4 mb-4 bg-blue-500/10 border-blue-500/20">
+                      <h3 className="font-semibold text-lg mb-2">Image Observation</h3>
+                      <p className="text-sm text-muted-foreground">{result.observation}</p>
+                    </Card>
+                  )}
+
+                  {result.conditions && (
+                    <div className="space-y-4 mb-4">
+                      <h3 className="font-semibold text-lg">Detected Conditions</h3>
+                      {result.conditions.map((condition: any, index: number) => (
+                        <Card key={index} className="p-4 bg-muted/50">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-semibold">{condition.name}</h4>
+                            <span className="text-xl font-bold text-primary">
+                              {condition.confidence}%
+                            </span>
+                          </div>
+                          <Progress value={condition.confidence} className="mb-2" />
+                          <p className="text-sm text-muted-foreground">{condition.note}</p>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {result.recommendation && (
+                    <Alert className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Recommendation:</strong> {result.recommendation}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {result.professional_evaluation && (
+                    <Alert className="mb-4" variant={result.professional_evaluation === 'Required' ? 'destructive' : 'default'}>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Professional Evaluation:</strong> {result.professional_evaluation}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Text Diagnosis Results */}
                   {result.diseases?.map((disease: any, index: number) => (
                     <Card key={index} className="p-4 mb-4 bg-muted/50">
                       <div className="flex items-start justify-between mb-2">
