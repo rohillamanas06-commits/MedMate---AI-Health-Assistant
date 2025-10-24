@@ -46,13 +46,22 @@ if DATABASE_URL:
     # Production: Use PostgreSQL
     if DATABASE_URL.startswith('postgres://'):
         DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    
+    # Configure SQLAlchemy for PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
+        'pool_size': 10,
+        'max_overflow': 20,
+        'connect_args': {
+            'sslmode': 'require',
+            'connect_timeout': 10
+        }
     }
     upload_folder = '/tmp/uploads' if os.getenv('VERCEL') else 'static/uploads'
     print("✅ Using PostgreSQL database for production")
+    print(f"📍 Database host: {DATABASE_URL.split('@')[1].split('/')[0] if '@' in DATABASE_URL else 'unknown'}")
 else:
     # Local development: Use SQLite
     if os.getenv('VERCEL'):
@@ -81,8 +90,13 @@ def init_db():
     """Initialize database tables - called on each request in serverless"""
     try:
         db.create_all()
+        print("✅ Database tables created/verified successfully")
+        return True
     except Exception as e:
-        print(f"Database initialization error: {e}")
+        print(f"❌ Database initialization error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 # Hook to ensure database is initialized before each request
 @app.before_request
@@ -90,8 +104,12 @@ def ensure_db_initialized():
     """Ensure database tables exist before processing request"""
     if not hasattr(app, '_db_initialized'):
         with app.app_context():
-            init_db()
-            app._db_initialized = True
+            success = init_db()
+            if success:
+                app._db_initialized = True
+                print(f"📊 Database URI: {app.config['SQLALCHEMY_DATABASE_URI'][:50]}...")
+            else:
+                print("⚠️ Database initialization failed, but continuing...")
 
 # Initialize text-to-speech engine
 tts_engine = None
@@ -686,21 +704,32 @@ def register():
         email = data.get('email')
         password = data.get('password')
         
+        print(f"📝 Registration attempt: username={username}, email={email}")
+        
         if not all([username, email, password]):
             return jsonify({'error': 'All fields are required'}), 400
         
-        if User.query.filter_by(username=username).first():
+        # Check existing users
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            print(f"⚠️ Username '{username}' already exists")
             return jsonify({'error': 'Username already exists'}), 400
         
-        if User.query.filter_by(email=email).first():
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            print(f"⚠️ Email '{email}' already exists")
             return jsonify({'error': 'Email already exists'}), 400
         
+        # Create new user
         user = User(username=username, email=email)
         user.set_password(password)
         
         db.session.add(user)
         db.session.commit()
         
+        print(f"✅ User registered successfully: ID={user.id}, username={user.username}")
+        
+        # Set session
         session.permanent = True
         session['user_id'] = user.id
         session['username'] = user.username
@@ -716,7 +745,10 @@ def register():
     
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Registration error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Registration failed: {str(e)}'}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -726,17 +758,26 @@ def login():
         username = data.get('username')
         password = data.get('password')
         
+        print(f"🔐 Login attempt: username={username}")
+        
         if not all([username, password]):
             return jsonify({'error': 'Username and password required'}), 400
         
         user = User.query.filter_by(username=username).first()
         
-        if not user or not user.check_password(password):
+        if not user:
+            print(f"⚠️ User '{username}' not found")
+            return jsonify({'error': 'Invalid username or password'}), 401
+        
+        if not user.check_password(password):
+            print(f"⚠️ Invalid password for user '{username}'")
             return jsonify({'error': 'Invalid username or password'}), 401
         
         session.permanent = True
         session['user_id'] = user.id
         session['username'] = user.username
+        
+        print(f"✅ Login successful: ID={user.id}, username={user.username}")
         
         return jsonify({
             'message': 'Login successful',
@@ -748,6 +789,9 @@ def login():
         }), 200
     
     except Exception as e:
+        print(f"❌ Login error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/logout', methods=['POST'])
