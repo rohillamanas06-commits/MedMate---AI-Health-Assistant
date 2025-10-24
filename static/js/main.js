@@ -85,14 +85,24 @@ authTabs.forEach(tab => {
 
 // Login form submission
 if (loginForm) {
+    console.log('✅ Login form found and listener attached');
+    
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        console.log('📝 Login form submitted');
         
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
         const errorDiv = document.getElementById('loginError');
         
+        console.log('Login attempt for user:', username);
+        
+        // Clear previous errors
+        errorDiv.textContent = '';
+        errorDiv.classList.remove('show');
+        
         try {
+            console.log('🔄 Sending login request...');
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
@@ -101,26 +111,36 @@ if (loginForm) {
                 body: JSON.stringify({ username, password })
             });
             
+            console.log('📥 Response status:', response.status);
             const data = await response.json();
+            console.log('📥 Response data:', data);
             
             if (response.ok) {
+                console.log('✅ Login successful! Redirecting...');
                 // Redirect to dashboard
                 window.location.href = '/dashboard';
             } else {
+                console.log('❌ Login failed:', data.error);
                 errorDiv.textContent = data.error || 'Login failed';
                 errorDiv.classList.add('show');
             }
         } catch (error) {
-            errorDiv.textContent = 'An error occurred. Please try again.';
+            console.error('❌ Login error:', error);
+            errorDiv.textContent = 'An error occurred. Please try again. Check console for details.';
             errorDiv.classList.add('show');
         }
     });
+} else {
+    console.error('❌ Login form not found!');
 }
 
 // Register form submission
 if (registerForm) {
+    console.log('✅ Register form found and listener attached');
+    
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        console.log('📝 Register form submitted');
         
         const username = document.getElementById('registerUsername').value;
         const email = document.getElementById('registerEmail').value;
@@ -128,14 +148,22 @@ if (registerForm) {
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
         const errorDiv = document.getElementById('registerError');
         
+        console.log('User data:', { username, email, password: '***' });
+        
+        // Clear previous errors
+        errorDiv.textContent = '';
+        errorDiv.classList.remove('show');
+        
         // Validate passwords match
         if (password !== confirmPassword) {
+            console.log('❌ Passwords do not match');
             errorDiv.textContent = 'Passwords do not match';
             errorDiv.classList.add('show');
             return;
         }
         
         try {
+            console.log('🔄 Sending registration request...');
             const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: {
@@ -144,20 +172,27 @@ if (registerForm) {
                 body: JSON.stringify({ username, email, password })
             });
             
+            console.log('📥 Response status:', response.status);
             const data = await response.json();
+            console.log('📥 Response data:', data);
             
             if (response.ok) {
+                console.log('✅ Registration successful! Redirecting...');
                 // Redirect to dashboard
                 window.location.href = '/dashboard';
             } else {
+                console.log('❌ Registration failed:', data.error);
                 errorDiv.textContent = data.error || 'Registration failed';
                 errorDiv.classList.add('show');
             }
         } catch (error) {
-            errorDiv.textContent = 'An error occurred. Please try again.';
+            console.error('❌ Registration error:', error);
+            errorDiv.textContent = 'An error occurred. Please try again. Check console for details.';
             errorDiv.classList.add('show');
         }
     });
+} else {
+    console.error('❌ Register form not found!');
 }
 
 // Learn more button
