@@ -1,73 +1,209 @@
-# Welcome to your Lovable project
+# MedMate - AI Medical Assistant Frontend
 
-## Project info
+## 🏥 About MedMate
 
-**URL**: https://lovable.dev/projects/5c9ec546-61c1-4735-aa1a-58523d8a7600
+MedMate is an advanced AI-powered medical assistant platform that provides:
 
-## How can I edit this code?
+- **AI Symptom Diagnosis** - Instant symptom analysis using Gemini/OpenAI
+- **Medical Image Analysis** - Upload and analyze medical images
+- **24/7 AI Chat Assistant** - Interactive medical consultation
+- **Hospital Finder** - Locate nearby medical facilities
+- **Medical History** - Track diagnoses and conversations
+- **Voice Recognition** - Hands-free symptom input
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+### Core Features
+- ✅ User authentication (register/login)
+- ✅ AI-powered symptom checker
+- ✅ Medical image analysis with Vision API
+- ✅ Interactive AI chat with context awareness
+- ✅ Hospital finder with Google Maps integration
+- ✅ Diagnosis and chat history tracking
+- ✅ Voice recognition for hands-free input
+- ✅ Text-to-speech for accessibility
+- ✅ Responsive design for all devices
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5c9ec546-61c1-4735-aa1a-58523d8a7600) and start prompting.
+### Design Highlights
+- 🎨 Medical-grade UI with calming blue/teal theme
+- ✨ Smooth animations and micro-interactions
+- 🌓 Light/dark mode support
+- 📱 Mobile-first responsive design
+- ♿ Accessible components
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Tech Stack
 
-**Use your preferred IDE**
+### Frontend
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **Tailwind CSS** - Styling
+- **Shadcn/ui** - Component library
+- **React Router** - Navigation
+- **TanStack Query** - Data fetching
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Backend Integration
+- **Flask** - Python backend API
+- **SQLAlchemy** - Database ORM
+- **OpenAI/Gemini** - AI models
+- **Google Maps API** - Location services
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📦 Installation
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+ and npm
+- Backend running on port 5000 (see MedMate.py)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+# Clone the repository
+git clone <repository-url>
+cd medmate-frontend
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Create environment file
+cp .env.example .env
+
+# Update .env with your backend URL
+# VITE_API_URL=http://localhost:5000
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🔧 Configuration
 
-**Use GitHub Codespaces**
+### Environment Variables
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Create a `.env` file:
 
-## What technologies are used for this project?
+```env
+VITE_API_URL=http://localhost:5000
+```
 
-This project is built with:
+### Backend Setup
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Make sure your Flask backend is running with:
+- OpenAI or Gemini API key configured
+- Google Maps API key (for hospital finder)
+- Database configured (PostgreSQL recommended for production)
 
-## How can I deploy this project?
+## 📱 Pages
 
-Simply open [Lovable](https://lovable.dev/projects/5c9ec546-61c1-4735-aa1a-58523d8a7600) and click on Share -> Publish.
+### Public Pages
+- **Home** (`/`) - Landing page with features
+- **Auth** (`/auth`) - Login/Register
 
-## Can I connect a custom domain to my Lovable project?
+### Protected Pages (Require Authentication)
+- **Dashboard** (`/dashboard`) - Overview and quick actions
+- **Diagnose** (`/diagnose`) - Symptom checker and image analysis
+- **Chat** (`/chat`) - AI medical assistant
+- **Hospitals** (`/hospitals`) - Find nearby hospitals
+- **History** (`/history`) - View past diagnoses and chats
+- **Profile** (`/profile`) - User account settings
 
-Yes, you can!
+## 🎨 Design System
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Color Palette
+- **Primary**: Medical Blue (#3B82F6)
+- **Secondary**: Healthcare Green (#10B981)
+- **Accent**: Teal (#14B8A6)
+- **Destructive**: Medical Red (#EF4444)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Animations
+- Smooth transitions with cubic-bezier easing
+- Float animations for hero elements
+- Fade-in and slide-up for page elements
+- Pulse glow for interactive elements
+
+## 🔌 API Integration
+
+The frontend communicates with the Flask backend via REST API:
+
+### Authentication
+- `POST /api/register` - User registration
+- `POST /api/login` - User login
+- `POST /api/logout` - User logout
+- `GET /api/check-auth` - Check auth status
+
+### Diagnosis
+- `POST /api/diagnose` - Text symptom analysis
+- `POST /api/diagnose-image` - Image analysis
+- `GET /api/diagnosis-history` - Get user's diagnosis history
+
+### Chat
+- `POST /api/chat` - Send message to AI
+- `GET /api/chat-history` - Get conversation history
+
+### Hospitals
+- `POST /api/geocode-city` - Convert city to coordinates
+- `POST /api/nearby-hospitals` - Find nearby hospitals
+- `GET /api/hospital-details/<id>` - Get hospital details
+
+### Voice
+- `POST /api/voice-to-text` - Voice recognition
+- `POST /api/text-to-speech` - Text-to-speech
+- `GET /api/voice/status` - Voice features status
+
+## 🚢 Deployment
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+The build output will be in the `dist/` folder.
+
+### Deploy Options
+- **Vercel** - Recommended for frontend
+- **Netlify** - Easy deployment
+- **Cloudflare Pages** - Fast CDN
+- **AWS S3 + CloudFront** - Enterprise scale
+
+### Backend Deployment
+Deploy the Flask backend to:
+- **Vercel** (serverless)
+- **Railway** (with PostgreSQL)
+- **Heroku** (with add-ons)
+- **AWS EC2/ECS** (production scale)
+
+## 🔒 Security
+
+- Session-based authentication with secure cookies
+- HTTPS enforced in production
+- CORS configured for frontend domain
+- Input sanitization on backend
+- Medical disclaimer on all diagnoses
+
+## 📄 License
+
+This project is created for educational purposes.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow:
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## 📞 Support
+
+For issues and questions:
+- Create an issue in the repository
+- Contact the development team
+
+## ⚠️ Medical Disclaimer
+
+MedMate is for informational purposes only and does not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare providers for medical concerns.
+
+---
+
+Built with ❤️ using React, TypeScript, and AI technology
