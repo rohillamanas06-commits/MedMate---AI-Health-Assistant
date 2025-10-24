@@ -39,16 +39,33 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# Use /tmp for database in serverless environment (Vercel)
-# Note: Data will not persist between function invocations
-if os.getenv('VERCEL'):
-    db_path = '/tmp/medmate.db'
-    upload_folder = '/tmp/uploads'
-else:
-    db_path = 'medmate.db'
-    upload_folder = 'static/uploads'
+# Database configuration - PostgreSQL for production, SQLite for local
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+if DATABASE_URL:
+    # Production: Use PostgreSQL
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
+    upload_folder = '/tmp/uploads' if os.getenv('VERCEL') else 'static/uploads'
+    print("✅ Using PostgreSQL database for production")
+else:
+    # Local development: Use SQLite
+    if os.getenv('VERCEL'):
+        db_path = '/tmp/medmate.db'
+        upload_folder = '/tmp/uploads'
+        print("⚠️ WARNING: Using temporary SQLite on Vercel - accounts will not persist!")
+    else:
+        db_path = 'medmate.db'
+        upload_folder = 'static/uploads'
+        print("✅ Using SQLite database for local development")
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = upload_folder
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
