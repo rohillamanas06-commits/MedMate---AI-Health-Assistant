@@ -1258,22 +1258,31 @@ if not os.getenv('VERCEL'):
 # ==================== MAIN ====================
 
 if __name__ == '__main__':
-    # Get port from environment variable (for Railway/Render) or default to 5000
-    port = int(os.getenv('PORT', 5000))
-    
-    # Print startup information
-    print("=" * 50)
-    print("MedMate - AI Medical Assistant")
-    print("=" * 50)
-    print(f"AI Provider: {ai_provider.upper() if ai_provider else 'NONE (Demo Mode)'}")
-    print(f"Gemini API: {'✓ Configured' if GEMINI_API_KEY else '✗ Not configured'}")
-    print(f"OpenAI API: {'✓ Configured' if OPENAI_API_KEY else '✗ Not configured'}")
-    print(f"Google Maps API: {'✓ Configured' if GOOGLE_MAPS_API_KEY else '✗ Not configured'}")
-    print(f"Text-to-Speech: {'✓ Available' if tts_engine else '✗ Not available'}")
-    print("=" * 50)
-    print(f"Starting server on http://0.0.0.0:{port}")
-    print("=" * 50)
-    
-    # Use debug=False in production
-    is_production = os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RENDER')
-    app.run(debug=not is_production, host='0.0.0.0', port=port)
+    try:
+        # Get port from environment variable (for Railway/Render) or default to 5000
+        port = int(os.getenv('PORT', 5000))
+        
+        # Print startup information
+        print("=" * 50)
+        print("MedMate - AI Medical Assistant")
+        print("=" * 50)
+        print(f"AI Provider: {ai_provider.upper() if ai_provider else 'NONE (Demo Mode)'}")
+        print(f"Gemini API: {'✓ Configured' if GEMINI_API_KEY else '✗ Not configured'}")
+        print(f"OpenAI API: {'✓ Configured' if OPENAI_API_KEY else '✗ Not configured'}")
+        print(f"Google Maps API: {'✓ Configured' if GOOGLE_MAPS_API_KEY else '✗ Not configured'}")
+        print(f"Text-to-Speech: {'✓ Available' if tts_engine else '✗ Not available'}")
+        print(f"Database: {'✓ PostgreSQL' if DATABASE_URL else '✓ SQLite (local)'}")
+        print("=" * 50)
+        print(f"Starting server on http://0.0.0.0:{port}")
+        print("=" * 50)
+        
+        # Use debug=False in production
+        is_production = os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RENDER')
+        app.run(debug=not is_production, host='0.0.0.0', port=port)
+    except Exception as e:
+        print(f"❌ Failed to start server: {e}")
+        import traceback
+        traceback.print_exc()
+        # Exit with error code
+        import sys
+        sys.exit(1)
