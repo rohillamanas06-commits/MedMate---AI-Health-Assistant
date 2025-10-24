@@ -15,20 +15,37 @@ import requests
 import base64
 from functools import wraps
 import secrets
-import pyttsx3
 import threading
 from dotenv import load_dotenv
 import google.generativeai as genai
+
+# Optional import for text-to-speech (not available in serverless)
+try:
+    import pyttsx3
+    PYTTSX3_AVAILABLE = True
+except ImportError:
+    PYTTSX3_AVAILABLE = False
+    pyttsx3 = None
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = secrets.token_hex(32)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medmate.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
+
+# Use /tmp for database in serverless environment (Vercel)
+# Note: Data will not persist between function invocations
+if os.getenv('VERCEL'):
+    db_path = '/tmp/medmate.db'
+    upload_folder = '/tmp/uploads'
+else:
+    db_path = 'medmate.db'
+    upload_folder = 'static/uploads'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = upload_folder
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Ensure upload folder exists
@@ -40,12 +57,15 @@ db = SQLAlchemy(app)
 # Initialize text-to-speech engine
 tts_engine = None
 tts_lock = threading.Lock()  # Thread lock for TTS engine
-try:
-    tts_engine = pyttsx3.init()
-    tts_engine.setProperty('rate', 150)
-    tts_engine.setProperty('volume', 0.9)
-except Exception as e:
-    print(f"TTS initialization warning: {e}")
+if PYTTSX3_AVAILABLE:
+    try:
+        tts_engine = pyttsx3.init()
+        tts_engine.setProperty('rate', 150)
+        tts_engine.setProperty('volume', 0.9)
+    except Exception as e:
+        print(f"TTS initialization warning: {e}")
+else:
+    print("TTS not available (running in serverless environment)")
 
 # Load API keys from environment variables
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
