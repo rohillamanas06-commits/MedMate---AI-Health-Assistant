@@ -34,6 +34,11 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
 
+# Session configuration for proper cookie handling
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+
 # Use /tmp for database in serverless environment (Vercel)
 # Note: Data will not persist between function invocations
 if os.getenv('VERCEL'):
@@ -178,7 +183,12 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return jsonify({'error': 'Authentication required'}), 401
+            # Check if this is an API request or page request
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Authentication required'}), 401
+            else:
+                # Redirect to home page for non-API requests
+                return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -636,9 +646,17 @@ def index():
 @login_required
 def dashboard():
     """User dashboard"""
-    user = User.query.get(session['user_id'])
-    recent_diagnoses = Diagnosis.query.filter_by(user_id=user.id).order_by(Diagnosis.created_at.desc()).limit(5).all()
-    return render_template('dashboard.html', user=user, diagnoses=recent_diagnoses)
+    try:
+        user = User.query.get(session['user_id'])
+        if not user:
+            session.clear()
+            return redirect(url_for('index'))
+        recent_diagnoses = Diagnosis.query.filter_by(user_id=user.id).order_by(Diagnosis.created_at.desc()).limit(5).all()
+        return render_template('dashboard.html', user=user, diagnoses=recent_diagnoses)
+    except Exception as e:
+        print(f"Dashboard error: {e}")
+        session.clear()
+        return redirect(url_for('index'))
 
 # ==================== AUTHENTICATION ROUTES ====================
 
@@ -666,6 +684,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         
+        session.permanent = True
         session['user_id'] = user.id
         session['username'] = user.username
         
@@ -698,6 +717,7 @@ def login():
         if not user or not user.check_password(password):
             return jsonify({'error': 'Invalid username or password'}), 401
         
+        session.permanent = True
         session['user_id'] = user.id
         session['username'] = user.username
         

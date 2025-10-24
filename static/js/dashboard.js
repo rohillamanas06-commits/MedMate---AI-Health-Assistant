@@ -427,25 +427,40 @@ const chatMessages = document.getElementById('chatMessages');
 const voiceChatBtn = document.getElementById('voiceChatBtn');
 
 // Voice input for chat
-if (voiceChatBtn && recognition) {
+if (voiceChatBtn && voiceAssistant.isRecognitionAvailable()) {
     voiceChatBtn.addEventListener('click', () => {
         if (!isListening) {
-            recognition.start();
-            isListening = true;
-            voiceChatBtn.innerHTML = '<i class="fas fa-stop"></i>';
-            voiceChatBtn.classList.add('btn-danger');
+            const started = voiceAssistant.startListening(
+                (transcript, confidence) => {
+                    chatInput.value = transcript;
+                    showToast(`Recognized: ${transcript.substring(0, 50)}...`);
+                    isListening = false;
+                    voiceChatBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    voiceChatBtn.classList.remove('btn-danger');
+                },
+                (error) => {
+                    showToast(`Voice error: ${error}`);
+                    isListening = false;
+                    voiceChatBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    voiceChatBtn.classList.remove('btn-danger');
+                }
+            );
+            
+            if (started) {
+                isListening = true;
+                voiceChatBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                voiceChatBtn.classList.add('btn-danger');
+            }
         } else {
-            recognition.stop();
+            voiceAssistant.stopListening();
             isListening = false;
             voiceChatBtn.innerHTML = '<i class="fas fa-microphone"></i>';
             voiceChatBtn.classList.remove('btn-danger');
         }
     });
-    
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        chatInput.value = transcript;
-    };
+} else if (voiceChatBtn) {
+    voiceChatBtn.disabled = true;
+    voiceChatBtn.title = 'Voice recognition not supported in this browser';
 }
 
 // Chat form submission
@@ -506,36 +521,13 @@ function addChatMessage(text, sender) {
 }
 
 function speakText(text) {
-    // Check if muted
-    if (isMuted) {
-        console.log('🔇 Voice output muted, skipping TTS');
-        return;
+    // Use voiceAssistant to speak
+    if (voiceAssistant.isSynthesisAvailable()) {
+        voiceAssistant.speak(text, {
+            rate: 0.9,
+            pitch: 1.0
+        });
     }
-    
-    // Send to backend for TTS
-    console.log('🔊 Speaking text:', text.substring(0, 50) + '...');
-    
-    fetch('/api/voice-to-text', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text })
-    })
-    .then(response => {
-        if (!response.ok) {
-            console.error('TTS request failed:', response.status);
-        } else {
-            console.log('✅ TTS request successful');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('TTS response:', data);
-    })
-    .catch(error => {
-        console.error('TTS error:', error);
-    });
 }
 
 // ==================== HOSPITAL FINDER ====================

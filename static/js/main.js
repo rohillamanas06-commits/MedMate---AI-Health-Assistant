@@ -94,12 +94,17 @@ if (loginForm) {
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
         const errorDiv = document.getElementById('loginError');
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
         
         console.log('Login attempt for user:', username);
         
         // Clear previous errors
         errorDiv.textContent = '';
         errorDiv.classList.remove('show');
+        
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
         
         try {
             console.log('🔄 Sending login request...');
@@ -117,17 +122,24 @@ if (loginForm) {
             
             if (response.ok) {
                 console.log('✅ Login successful! Redirecting...');
+                submitBtn.textContent = 'Success! Redirecting...';
                 // Redirect to dashboard
                 window.location.href = '/dashboard';
             } else {
                 console.log('❌ Login failed:', data.error);
                 errorDiv.textContent = data.error || 'Login failed';
                 errorDiv.classList.add('show');
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
             }
         } catch (error) {
             console.error('❌ Login error:', error);
             errorDiv.textContent = 'An error occurred. Please try again. Check console for details.';
             errorDiv.classList.add('show');
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login';
         }
     });
 } else {
@@ -147,6 +159,7 @@ if (registerForm) {
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
         const errorDiv = document.getElementById('registerError');
+        const submitBtn = registerForm.querySelector('button[type="submit"]');
         
         console.log('User data:', { username, email, password: '***' });
         
@@ -161,6 +174,10 @@ if (registerForm) {
             errorDiv.classList.add('show');
             return;
         }
+        
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Registering...';
         
         try {
             console.log('🔄 Sending registration request...');
@@ -178,17 +195,26 @@ if (registerForm) {
             
             if (response.ok) {
                 console.log('✅ Registration successful! Redirecting...');
-                // Redirect to dashboard
-                window.location.href = '/dashboard';
+                submitBtn.textContent = 'Success! Redirecting...';
+                // Small delay to ensure session cookie is set before redirect
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 100);
             } else {
                 console.log('❌ Registration failed:', data.error);
                 errorDiv.textContent = data.error || 'Registration failed';
                 errorDiv.classList.add('show');
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
             }
         } catch (error) {
             console.error('❌ Registration error:', error);
             errorDiv.textContent = 'An error occurred. Please try again. Check console for details.';
             errorDiv.classList.add('show');
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Register';
         }
     });
 } else {
