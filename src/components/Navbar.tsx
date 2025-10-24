@@ -9,39 +9,77 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useState } from 'react';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
+    setIsSheetOpen(false);
   };
 
-  const NavLinks = () => (
-    <>
-      <Link to="/" className="text-foreground hover:text-primary transition-colors">
-        Home
-      </Link>
-      {user ? (
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setIsSheetOpen(false);
+  };
+
+  const NavLinks = ({ isMobile = false }: { isMobile?: boolean }) => {
+    const linkClass = "text-foreground hover:text-primary transition-colors";
+    
+    if (isMobile) {
+      return (
         <>
-          <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
-            Dashboard
-          </Link>
-          <Link to="/diagnose" className="text-foreground hover:text-primary transition-colors">
-            Diagnosis
-          </Link>
-          <Link to="/chat" className="text-foreground hover:text-primary transition-colors">
-            AI Chat
-          </Link>
-          <Link to="/hospitals" className="text-foreground hover:text-primary transition-colors">
-            Find Hospitals
-          </Link>
+          <button onClick={() => handleNavigation('/')} className={`${linkClass} text-left w-full`}>
+            Home
+          </button>
+          {user ? (
+            <>
+              <button onClick={() => handleNavigation('/dashboard')} className={`${linkClass} text-left w-full`}>
+                Dashboard
+              </button>
+              <button onClick={() => handleNavigation('/diagnose')} className={`${linkClass} text-left w-full`}>
+                Diagnosis
+              </button>
+              <button onClick={() => handleNavigation('/chat')} className={`${linkClass} text-left w-full`}>
+                AI Chat
+              </button>
+              <button onClick={() => handleNavigation('/hospitals')} className={`${linkClass} text-left w-full`}>
+                Find Hospitals
+              </button>
+            </>
+          ) : null}
         </>
-      ) : null}
-    </>
-  );
+      );
+    }
+    
+    return (
+      <>
+        <Link to="/" className={linkClass}>
+          Home
+        </Link>
+        {user ? (
+          <>
+            <Link to="/dashboard" className={linkClass}>
+              Dashboard
+            </Link>
+            <Link to="/diagnose" className={linkClass}>
+              Diagnosis
+            </Link>
+            <Link to="/chat" className={linkClass}>
+              AI Chat
+            </Link>
+            <Link to="/hospitals" className={linkClass}>
+              Find Hospitals
+            </Link>
+          </>
+        ) : null}
+      </>
+    );
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -88,7 +126,7 @@ export const Navbar = () => {
         </div>
 
         {/* Mobile Navigation */}
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild className="md:hidden">
             <Button variant="outline" size="icon">
               <Menu className="h-5 w-5" />
@@ -96,10 +134,10 @@ export const Navbar = () => {
           </SheetTrigger>
           <SheetContent side="right" className="bg-background">
             <div className="flex flex-col space-y-4 mt-8">
-              <NavLinks />
+              <NavLinks isMobile={true} />
               {user ? (
                 <>
-                  <Button variant="outline" onClick={() => navigate('/profile')}>
+                  <Button variant="outline" onClick={() => handleNavigation('/profile')}>
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Button>
@@ -110,10 +148,10 @@ export const Navbar = () => {
                 </>
               ) : (
                 <>
-                  <Button variant="outline" onClick={() => navigate('/auth')}>
+                  <Button variant="outline" onClick={() => { navigate('/auth'); setIsSheetOpen(false); }}>
                     Login
                   </Button>
-                  <Button onClick={() => navigate('/auth')}>Get Started</Button>
+                  <Button onClick={() => { navigate('/auth'); setIsSheetOpen(false); }}>Get Started</Button>
                 </>
               )}
             </div>

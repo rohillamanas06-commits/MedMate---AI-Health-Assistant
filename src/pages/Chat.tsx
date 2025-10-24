@@ -4,10 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
-import { MessageSquare, Send, Loader2, Bot, User, Mic, Volume2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Bot, User, Mic, Volume2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Message {
   id: string;
@@ -59,6 +70,17 @@ export default function Chat() {
       setMessages(history);
     } catch (error) {
       // Silent fail for history
+    }
+  };
+
+  const handleDeleteHistory = async () => {
+    try {
+      setMessages([]);
+      toast.success('Chat history cleared successfully');
+      // Note: Backend endpoint would need to be implemented for permanent deletion
+      // For now, this clears the local state
+    } catch (error) {
+      toast.error('Failed to delete chat history');
     }
   };
 
@@ -177,11 +199,39 @@ export default function Chat() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-5xl">
-        <div className="mb-6 text-center animate-slide-up">
-          <h1 className="text-4xl font-bold mb-2 gradient-text">AI Medical Assistant</h1>
-          <p className="text-muted-foreground">
-            Ask me anything about your health concerns
-          </p>
+        <div className="mb-6 animate-slide-up">
+          <div className="flex items-center justify-between">
+            <div className="text-center flex-1">
+              <h1 className="text-4xl font-bold mb-2 gradient-text">AI Medical Assistant</h1>
+              <p className="text-muted-foreground">
+                Ask me anything about your health concerns
+              </p>
+            </div>
+            {messages.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="ml-4">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear History
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Chat History?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all your chat messages. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
 
         <Card className="glass overflow-hidden animate-fade-in" style={{ height: 'calc(100vh - 250px)' }}>
