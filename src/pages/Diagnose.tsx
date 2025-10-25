@@ -239,7 +239,7 @@ export default function Diagnose() {
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing... (This may take up to 60 seconds)
+                          Analyzing...
                         </>
                       ) : (
                         <>
@@ -335,7 +335,7 @@ export default function Diagnose() {
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing Image... (This may take up to 60 seconds)
+                        Analyzing Image...
                       </>
                     ) : (
                       <>
@@ -354,7 +354,7 @@ export default function Diagnose() {
                 <strong>Medical Disclaimer:</strong> This AI diagnosis is for informational purposes
                 only. Always consult with a healthcare professional for medical advice.
                 <br />
-                <strong>Note:</strong> AI analysis may take up to 60 seconds. Please be patient during processing.
+                <strong>Note:</strong> AI analysis is processing. Please be patient during analysis.
               </AlertDescription>
             </Alert>
           </div>
