@@ -42,7 +42,16 @@ export default function Diagnose() {
       setResult(response.result);
       toast.success('Analysis complete!');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Diagnosis failed');
+      const errorMessage = error instanceof Error ? error.message : 'Diagnosis failed';
+      
+      // Provide more specific error messages
+      if (errorMessage.includes('timeout')) {
+        toast.error('Analysis is taking longer than expected. Please try again with shorter symptoms or check your connection.');
+      } else if (errorMessage.includes('network')) {
+        toast.error('Network error. Please check your internet connection and try again.');
+      } else {
+        toast.error(`Diagnosis failed: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,7 +72,16 @@ export default function Diagnose() {
       setResult(response.result);
       toast.success(`Image analysis complete! (${selectedImages.length} image${selectedImages.length > 1 ? 's' : ''} uploaded)`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Image analysis failed');
+      const errorMessage = error instanceof Error ? error.message : 'Image analysis failed';
+      
+      // Provide more specific error messages
+      if (errorMessage.includes('timeout')) {
+        toast.error('Image analysis is taking longer than expected. Please try again with a smaller image or check your connection.');
+      } else if (errorMessage.includes('network')) {
+        toast.error('Network error. Please check your internet connection and try again.');
+      } else {
+        toast.error(`Image analysis failed: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -221,7 +239,7 @@ export default function Diagnose() {
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing...
+                          Analyzing... (This may take up to 60 seconds)
                         </>
                       ) : (
                         <>
@@ -317,7 +335,7 @@ export default function Diagnose() {
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing Image...
+                        Analyzing Image... (This may take up to 60 seconds)
                       </>
                     ) : (
                       <>
@@ -335,6 +353,8 @@ export default function Diagnose() {
               <AlertDescription>
                 <strong>Medical Disclaimer:</strong> This AI diagnosis is for informational purposes
                 only. Always consult with a healthcare professional for medical advice.
+                <br />
+                <strong>Note:</strong> AI analysis may take up to 60 seconds. Please be patient during processing.
               </AlertDescription>
             </Alert>
           </div>

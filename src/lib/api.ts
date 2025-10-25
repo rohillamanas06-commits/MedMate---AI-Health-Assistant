@@ -3,7 +3,7 @@
  * Handles all HTTP requests to the Flask backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:5000');
 
 interface ApiError {
   error: string;
@@ -20,6 +20,14 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    return this.requestWithTimeout(endpoint, options, 10000); // Default 10 second timeout
+  }
+
+  private async requestWithTimeout<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    timeoutMs: number = 10000
+  ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
     const config: RequestInit = {
@@ -34,7 +42,7 @@ class ApiClient {
     try {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       
       const response = await fetch(url, {
         ...config,
@@ -85,10 +93,10 @@ class ApiClient {
 
   // Diagnosis
   async diagnose(symptoms: string) {
-    return this.request('/api/diagnose', {
+    return this.requestWithTimeout('/api/diagnose', {
       method: 'POST',
       body: JSON.stringify({ symptoms }),
-    });
+    }, 60000); // 60 second timeout for diagnosis
   }
 
   async diagnoseImage(image: File, symptoms?: string) {
@@ -96,11 +104,36 @@ class ApiClient {
     formData.append('image', image);
     if (symptoms) formData.append('symptoms', symptoms);
 
-    return fetch(`${this.baseUrl}/api/diagnose-image`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    }).then(res => res.json());
+    // Use longer timeout for image analysis
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/diagnose-image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Image analysis failed');
+      }
+
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Image analysis timeout - please try again');
+        }
+        throw error;
+      }
+      throw new Error('Network error occurred');
+    }
   }
 
   async getDiagnosisHistory(page = 1, perPage = 10) {
@@ -109,10 +142,10 @@ class ApiClient {
 
   // Chat
   async sendChatMessage(message: string) {
-    return this.request('/api/chat', {
+    return this.requestWithTimeout('/api/chat', {
       method: 'POST',
       body: JSON.stringify({ message }),
-    });
+    }, 30000); // 30 second timeout for chat
   }
 
   async getChatHistory(page = 1, perPage = 20) {

@@ -47,6 +47,8 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
 CORS(app, 
      supports_credentials=True, 
      origins=[
+         'http://localhost:8000',  # Vite dev server port
+         'http://127.0.0.1:8000', 
          'http://localhost:8080', 
          'http://127.0.0.1:8080', 
          'http://localhost:5173', 
@@ -59,8 +61,8 @@ CORS(app,
 
 # Session configuration for proper cookie handling
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Required for cross-origin requests
-app.config['SESSION_COOKIE_SECURE'] = True  # Set to True for HTTPS in production
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Better for local development
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to False for local development
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # Database configuration - PostgreSQL for production, SQLite for local
@@ -340,44 +342,102 @@ Respond in JSON format:
     "disclaimer": "Medical disclaimer"
 }}"""
 
-        # Try Gemini first
+        # Try Gemini first with timeout
         if gemini_model:
             try:
                 print(f"🔄 Calling Gemini API for symptoms: {symptoms[:50]}...")
-                response = gemini_model.generate_content(prompt)
-                result_text = response.text
-                print(f"📥 Gemini raw response: {result_text[:200]}...")
                 
-                # Clean up markdown code blocks if present
-                if '```json' in result_text:
-                    result_text = result_text.split('```json')[1].split('```')[0].strip()
-                elif '```' in result_text:
-                    result_text = result_text.split('```')[1].split('```')[0].strip()
+                # Use threading to implement timeout
+                import threading
+                import time
                 
-                result = json.loads(result_text)
-                print(f"✓ Gemini diagnosis completed successfully")
-                return result
+                result_container = {'data': None, 'error': None}
+                
+                def call_gemini():
+                    try:
+                        response = gemini_model.generate_content(prompt)
+                        result_text = response.text
+                        print(f"📥 Gemini raw response: {result_text[:200]}...")
+                        
+                        # Clean up markdown code blocks if present
+                        if '```json' in result_text:
+                            result_text = result_text.split('```json')[1].split('```')[0].strip()
+                        elif '```' in result_text:
+                            result_text = result_text.split('```')[1].split('```')[0].strip()
+                        
+                        result = json.loads(result_text)
+                        result_container['data'] = result
+                    except Exception as e:
+                        result_container['error'] = e
+                
+                # Start the API call in a separate thread
+                thread = threading.Thread(target=call_gemini)
+                thread.daemon = True
+                thread.start()
+                
+                # Wait for result with timeout (45 seconds for text analysis)
+                thread.join(timeout=45)
+                
+                if thread.is_alive():
+                    print("⏰ Gemini API call timed out, using fallback")
+                    return get_fallback_diagnosis(symptoms)
+                
+                if result_container['error']:
+                    raise result_container['error']
+                
+                if result_container['data']:
+                    print(f"✓ Gemini diagnosis completed successfully")
+                    return result_container['data']
+                
             except Exception as e:
                 print(f"❌ Gemini error: {type(e).__name__}: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 print("⚠️ Falling back to alternative method...")
         
-        # Fallback to OpenAI
+        # Fallback to OpenAI with timeout
         if openai_client:
             try:
-                response = openai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful medical AI assistant. Always include medical disclaimers."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1000
-                )
-                result = json.loads(response.choices[0].message.content)
-                print(f"✓ OpenAI diagnosis completed for: {symptoms[:50]}...")
-                return result
+                print(f"🔄 Calling OpenAI API for symptoms: {symptoms[:50]}...")
+                
+                # Use threading to implement timeout
+                result_container = {'data': None, 'error': None}
+                
+                def call_openai():
+                    try:
+                        response = openai_client.chat.completions.create(
+                            model="gpt-3.5-turbo",
+                            messages=[
+                                {"role": "system", "content": "You are a helpful medical AI assistant. Always include medical disclaimers."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.7,
+                            max_tokens=1000
+                        )
+                        result = json.loads(response.choices[0].message.content)
+                        result_container['data'] = result
+                    except Exception as e:
+                        result_container['error'] = e
+                
+                # Start the API call in a separate thread
+                thread = threading.Thread(target=call_openai)
+                thread.daemon = True
+                thread.start()
+                
+                # Wait for result with timeout (45 seconds)
+                thread.join(timeout=45)
+                
+                if thread.is_alive():
+                    print("⏰ OpenAI API call timed out, using fallback")
+                    return get_fallback_diagnosis(symptoms)
+                
+                if result_container['error']:
+                    raise result_container['error']
+                
+                if result_container['data']:
+                    print(f"✓ OpenAI diagnosis completed for: {symptoms[:50]}...")
+                    return result_container['data']
+                    
             except Exception as e:
                 print(f"OpenAI error: {e}")
         
@@ -527,44 +587,101 @@ You can discuss:
 
 Always remind users to consult healthcare professionals for diagnosis and treatment, but provide comprehensive information to help them understand their health better."""
 
-        # Try Gemini first
+        # Try Gemini first with timeout
         if gemini_model:
             try:
-                # Build conversation context for Gemini
-                conversation_context = system_prompt + "\n\n"
-                for chat in chat_history[-10:]:
-                    conversation_context += f"User: {chat['message']}\nAssistant: {chat['response']}\n\n"
-                conversation_context += f"User: {message}\nAssistant:"
+                print(f"🔄 Calling Gemini API for chat: {message[:50]}...")
                 
-                response = gemini_model.generate_content(conversation_context)
-                ai_response = response.text
-                print(f"✓ Gemini chat response generated for: {message[:50]}...")
-                return ai_response
+                # Use threading to implement timeout
+                import threading
+                
+                result_container = {'data': None, 'error': None}
+                
+                def call_gemini():
+                    try:
+                        # Build conversation context for Gemini
+                        conversation_context = system_prompt + "\n\n"
+                        for chat in chat_history[-10:]:
+                            conversation_context += f"User: {chat['message']}\nAssistant: {chat['response']}\n\n"
+                        conversation_context += f"User: {message}\nAssistant:"
+                        
+                        response = gemini_model.generate_content(conversation_context)
+                        ai_response = response.text
+                        result_container['data'] = ai_response
+                    except Exception as e:
+                        result_container['error'] = e
+                
+                # Start the API call in a separate thread
+                thread = threading.Thread(target=call_gemini)
+                thread.daemon = True
+                thread.start()
+                
+                # Wait for result with timeout (30 seconds for chat)
+                thread.join(timeout=30)
+                
+                if thread.is_alive():
+                    print("⏰ Gemini chat API call timed out, using fallback")
+                    return "I'm here to help! However, the AI service is currently taking longer than expected. Please try again later."
+                
+                if result_container['error']:
+                    raise result_container['error']
+                
+                if result_container['data']:
+                    print(f"✓ Gemini chat response generated for: {message[:50]}...")
+                    return result_container['data']
+                    
             except Exception as e:
                 print(f"Gemini chat error: {e}, falling back...")
         
-        # Fallback to OpenAI
+        # Fallback to OpenAI with timeout
         if openai_client:
             try:
-                messages = [{"role": "system", "content": system_prompt}]
+                print(f"🔄 Calling OpenAI API for chat: {message[:50]}...")
                 
-                # Add chat history context (last 10 messages for better context)
-                for chat in chat_history[-10:]:
-                    messages.append({"role": "user", "content": chat['message']})
-                    messages.append({"role": "assistant", "content": chat['response']})
+                result_container = {'data': None, 'error': None}
                 
-                messages.append({"role": "user", "content": message})
+                def call_openai():
+                    try:
+                        messages = [{"role": "system", "content": system_prompt}]
+                        
+                        # Add chat history context (last 10 messages for better context)
+                        for chat in chat_history[-10:]:
+                            messages.append({"role": "user", "content": chat['message']})
+                            messages.append({"role": "assistant", "content": chat['response']})
+                        
+                        messages.append({"role": "user", "content": message})
+                        
+                        response = openai_client.chat.completions.create(
+                            model="gpt-3.5-turbo",
+                            messages=messages,
+                            temperature=0.9,
+                            max_tokens=800
+                        )
+                        
+                        ai_response = response.choices[0].message.content
+                        result_container['data'] = ai_response
+                    except Exception as e:
+                        result_container['error'] = e
                 
-                response = openai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=messages,
-                    temperature=0.9,
-                    max_tokens=800
-                )
+                # Start the API call in a separate thread
+                thread = threading.Thread(target=call_openai)
+                thread.daemon = True
+                thread.start()
                 
-                ai_response = response.choices[0].message.content
-                print(f"✓ OpenAI chat response generated for: {message[:50]}...")
-                return ai_response
+                # Wait for result with timeout (30 seconds)
+                thread.join(timeout=30)
+                
+                if thread.is_alive():
+                    print("⏰ OpenAI chat API call timed out, using fallback")
+                    return "I'm here to help! However, the AI service is currently taking longer than expected. Please try again later."
+                
+                if result_container['error']:
+                    raise result_container['error']
+                
+                if result_container['data']:
+                    print(f"✓ OpenAI chat response generated for: {message[:50]}...")
+                    return result_container['data']
+                    
             except Exception as e:
                 print(f"OpenAI chat error: {e}")
         
