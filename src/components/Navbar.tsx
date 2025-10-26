@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, LogOut, User, Menu, Settings, Moon, Sun } from 'lucide-react';
+import { Activity, LogOut, User, Menu, Settings, Moon, Sun, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +28,18 @@ export const Navbar = () => {
   const handleNavigation = (path: string) => {
     navigate(path);
     setIsSheetOpen(false);
+  };
+
+  const getThemeIcon = () => {
+    if (theme === 'light') return <Moon className="h-4 w-4 mr-2" />;
+    if (theme === 'dark') return <Sparkles className="h-4 w-4 mr-2" />;
+    return <Sun className="h-4 w-4 mr-2" />;
+  };
+
+  const getThemeLabel = () => {
+    if (theme === 'light') return 'Dark Mode';
+    if (theme === 'dark') return 'Med Mode';
+    return 'Light Mode';
   };
 
   const NavLinks = ({ isMobile = false }: { isMobile?: boolean }) => {
@@ -117,12 +129,8 @@ export const Navbar = () => {
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleTheme}>
-                  {theme === 'light' ? (
-                    <Moon className="h-4 w-4 mr-2" />
-                  ) : (
-                    <Sun className="h-4 w-4 mr-2" />
-                  )}
-                  {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                  {getThemeIcon()}
+                  {getThemeLabel()}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
@@ -162,12 +170,8 @@ export const Navbar = () => {
                     Settings
                   </Button>
                   <Button variant="outline" onClick={toggleTheme}>
-                    {theme === 'light' ? (
-                      <Moon className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Sun className="h-4 w-4 mr-2" />
-                    )}
-                    {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                    {getThemeIcon()}
+                    {getThemeLabel()}
                   </Button>
                   <Button variant="outline" onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />

@@ -192,7 +192,7 @@ export default function Chat() {
             <ScrollArea className="flex-1 p-6">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Bot className="h-24 w-24 text-muted-foreground opacity-30 mb-4 animate-float" />
+                  <Bot className="h-24 w-24 text-muted-foreground opacity-30 mb-4" />
                   <h3 className="text-xl font-semibold mb-2">Start a Conversation</h3>
                   <p className="text-muted-foreground max-w-md">
                     Hi {user?.username}! I'm your AI medical assistant. Ask me about symptoms,
@@ -228,13 +228,16 @@ export default function Chat() {
                         }`}
                       >
                         <Card
-                          className={`p-4 ${
+                          className={`p-4 relative transition-all duration-300 ${
                             message.sender === 'user'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
+                              ? 'bg-transparent border-0 shadow-sm hover:shadow-lg hover:bg-gradient-to-r hover:from-primary/10 hover:via-accent/10 hover:to-primary/10'
+                              : 'bg-muted border-border/50'
                           }`}
                         >
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {message.sender === 'user' && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none"></div>
+                          )}
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap relative z-10">
                             {message.content}
                           </p>
                         </Card>

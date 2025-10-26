@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { MapPin, Navigation, Phone, Star, Clock, Loader2, Search } from 'lucide-react';
+import { MapPin, Navigation, Star, Clock, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface Hospital {
   name: string;
@@ -18,39 +17,10 @@ interface Hospital {
 }
 
 export default function Hospitals() {
-  const [city, setCity] = useState('');
+  const { theme } = useTheme();
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-
-  const handleCitySearch = async () => {
-    if (!city.trim()) {
-      toast.error('Please enter a city name');
-      return;
-    }
-
-    setLoading(true);
-    setHospitals([]);
-
-    try {
-      const geoResponse: any = await api.geocodeCity(city);
-      const { latitude, longitude } = geoResponse;
-
-      const hospitalsResponse: any = await api.findNearbyHospitals(latitude, longitude);
-      setHospitals(hospitalsResponse.hospitals || []);
-      setUserLocation({ lat: latitude, lng: longitude });
-
-      if (hospitalsResponse.hospitals?.length === 0) {
-        toast.info('No hospitals found in this area');
-      } else {
-        toast.success(`Found ${hospitalsResponse.hospitals.length} hospitals`);
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to find hospitals');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCurrentLocation = () => {
     if ('geolocation' in navigator) {
@@ -107,44 +77,29 @@ export default function Hospitals() {
         <div className="mb-8 text-center animate-slide-up">
           <h1 className="text-4xl font-bold mb-2 gradient-text">Find Nearby Hospitals</h1>
           <p className="text-muted-foreground text-lg">
-            Locate medical facilities near you or search by city
+            Locate medical facilities near you using your current location
           </p>
         </div>
 
         {/* Search Section */}
-        <Card className="p-6 mb-8 glass animate-fade-in">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">Search by City</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="city"
-                  placeholder="Enter city name (e.g., Delhi, Mumbai)"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleCitySearch()}
-                />
-                <Button onClick={handleCitySearch} disabled={loading}>
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Use Current Location</Label>
-              <Button
-                onClick={handleCurrentLocation}
-                disabled={loading}
-                variant="outline"
-                className="w-full"
-              >
+        <Card className="p-8 mb-8 glass animate-fade-in">
+          <div className="max-w-md mx-auto text-center">
+            <p className="text-muted-foreground mb-6">
+              Click the button below to find hospitals near your current location
+            </p>
+            <Button
+              onClick={handleCurrentLocation}
+              disabled={loading}
+              size="lg"
+              className="w-full"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
                 <Navigation className="h-4 w-4 mr-2" />
-                Find Nearby Hospitals
-              </Button>
-            </div>
+              )}
+              Find Nearby Hospitals
+            </Button>
           </div>
         </Card>
 
@@ -191,7 +146,7 @@ export default function Hospitals() {
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4" />
                       <span
-                        className={hospital.open_now ? 'text-secondary' : 'text-destructive'}
+                        className={hospital.open_now ? (theme === 'med' ? 'text-green-500' : 'text-secondary') : 'text-destructive'}
                       >
                         {hospital.open_now ? 'Open Now' : 'Closed'}
                       </span>
@@ -199,15 +154,10 @@ export default function Hospitals() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={() => getDirections(hospital)} className="flex-1">
-                    <Navigation className="h-4 w-4 mr-2" />
-                    Get Directions
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <Phone className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button onClick={() => getDirections(hospital)} className="w-full">
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Get Directions
+                </Button>
               </Card>
             ))}
           </div>
@@ -216,7 +166,7 @@ export default function Hospitals() {
             <MapPin className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30 animate-float" />
             <h3 className="text-xl font-semibold mb-2">No Hospitals Found</h3>
             <p className="text-muted-foreground mb-6">
-              Search by city or use your current location to find nearby hospitals
+              Use your current location to find nearby hospitals
             </p>
             <Button onClick={handleCurrentLocation}>
               <Navigation className="h-4 w-4 mr-2" />

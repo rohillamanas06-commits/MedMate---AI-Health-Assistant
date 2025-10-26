@@ -252,6 +252,14 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Feedback
+  async submitFeedback(name: string, email: string, message: string) {
+    return this.request('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, message }),
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

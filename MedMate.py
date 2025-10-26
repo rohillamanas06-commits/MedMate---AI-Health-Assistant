@@ -323,6 +323,51 @@ def validate_password_strength(password):
     
     return True, None
 
+def send_feedback_email(name, email, message):
+    """Send feedback email to author"""
+    try:
+        print(f"📧 Attempting to send feedback email from: {email}")
+        print(f"📋 Name: {name}")
+        
+        msg = Message(
+            subject='MedMate Feedback',
+            recipients=['rohillamanas06@gmail.com'],
+            html=f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">MedMate Feedback</h1>
+                </div>
+                <div style="background: #f9f9f9; padding: 30px;">
+                    <h2 style="color: #333; margin-top: 0;">New Feedback Received</h2>
+                    <p style="color: #666; line-height: 1.6;">
+                        You have received new feedback from a user.
+                    </p>
+                    <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Name:</strong> {name}</p>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> {email}</p>
+                        <p style="margin: 5px 0; white-space: pre-wrap;"><strong>Message:</strong> {message}</p>
+                    </div>
+                </div>
+                <div style="background: #eee; padding: 20px; text-align: center;">
+                    <p style="color: #999; font-size: 12px; margin: 0;">
+                        © 2024 MedMate. All rights reserved.
+                    </p>
+                </div>
+            </div>
+            """,
+        )
+        
+        with app.app_context():
+            mail.send(msg)
+            print(f"✅ Feedback email sent successfully")
+        
+        return True
+    except Exception as e:
+        print(f"❌ Error sending feedback email: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def send_password_reset_email(user_email, reset_link):
     """Send password reset email"""
     try:
@@ -953,20 +998,32 @@ def get_hospital_details(place_id):
         url = "https://maps.googleapis.com/maps/api/place/details/json"
         params = {
             'place_id': place_id,
-            'fields': 'name,formatted_address,formatted_phone_number,opening_hours,rating,website',
+            'fields': 'name,formatted_address,formatted_phone_number,international_phone_number,opening_hours,rating,website',
             'key': GOOGLE_MAPS_API_KEY
         }
         
         response = requests.get(url, params=params)
         data = response.json()
         
+        print(f"📍 Getting details for hospital: {place_id}")
+        
         if data.get('status') == 'OK':
-            return data.get('result', {})
+            result = data.get('result', {})
+            # Try to get phone number from different fields
+            phone = result.get('formatted_phone_number') or result.get('international_phone_number')
+            print(f"📞 Phone number found: {phone}")
+            if phone:
+                result['phone'] = phone
+            return result
+        else:
+            print(f"⚠️ API error: {data.get('status')} - {data.get('error_message', 'Unknown error')}")
         
         return {}
     
     except Exception as e:
         print(f"Hospital Details Error: {e}")
+        import traceback
+        traceback.print_exc()
         return {}
 
 def get_fallback_hospitals():
@@ -1058,7 +1115,7 @@ def register():
         # Get profile picture URL (will be None for new users)
         profile_pic_url = None
         if user.profile_picture:
-            profile_pic_url = f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=user.profile_picture)}"
+            profile_pic_url = f"{request.url_root.rstrip('/')}/static/uploads/{user.profile_picture}"
         
         return jsonify({
             'message': 'Registration successful',
@@ -1111,7 +1168,7 @@ def login():
         # Get profile picture URL
         profile_pic_url = None
         if user.profile_picture:
-            profile_pic_url = f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=user.profile_picture)}"
+            profile_pic_url = f"{request.url_root.rstrip('/')}/static/uploads/{user.profile_picture}"
         
         return jsonify({
             'message': 'Login successful',
@@ -1144,7 +1201,7 @@ def check_auth():
         user = User.query.get(session['user_id'])
         profile_pic_url = None
         if user.profile_picture:
-            profile_pic_url = f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=user.profile_picture)}"
+            profile_pic_url = f"{request.url_root.rstrip('/')}/static/uploads/{user.profile_picture}"
         
         return jsonify({
             'authenticated': True,
@@ -1639,6 +1696,41 @@ def hospital_details(place_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ==================== FEEDBACK ROUTES ====================
+
+@app.route('/api/feedback', methods=['POST'])
+def feedback():
+    """Handle feedback submission"""
+    try:
+        data = request.get_json()
+        name = data.get('name', '')
+        email = data.get('email', '')
+        message = data.get('message', '')
+        
+        print(f"📝 Feedback received from: {name} ({email})")
+        
+        if not all([name, email, message]):
+            return jsonify({'error': 'All fields are required'}), 400
+        
+        # Validate email format
+        if not validate_email_format(email):
+            return jsonify({'error': 'Please enter a valid email address'}), 400
+        
+        # Send feedback email
+        email_sent = send_feedback_email(name, email, message)
+        
+        if email_sent:
+            print(f"✅ Feedback processed successfully")
+            return jsonify({'message': 'Feedback received successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to send feedback'}), 500
+    
+    except Exception as e:
+        print(f"❌ Feedback error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred. Please try again later.'}), 500
+
 # ==================== PROFILE MANAGEMENT ROUTES ====================
 
 @app.route('/api/profile', methods=['GET'])
@@ -1711,10 +1803,13 @@ def upload_profile_picture():
         print(f"✅ Profile picture uploaded: {filename}")
         print(f"💾 Profile picture saved in DB: {user_after.profile_picture}")
         
+        # Generate the proper URL for the uploaded file
+        image_url = f"{request.url_root.rstrip('/')}/static/uploads/{filename}"
+        
         return jsonify({
             'message': 'Profile picture uploaded successfully',
             'profile_picture': filename,
-            'image_url': f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=filename)}"
+            'image_url': image_url
         }), 200
     
     except Exception as e:

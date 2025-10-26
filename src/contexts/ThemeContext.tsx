@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'med';
 
 interface ThemeContextType {
   theme: Theme;
@@ -25,7 +25,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage first, then system preference
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
+    if (savedTheme && ['light', 'dark', 'med'].includes(savedTheme)) {
       return savedTheme;
     }
     
@@ -40,8 +40,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Remove previous theme class
-    root.classList.remove('light', 'dark');
+    // Remove all theme classes
+    root.classList.remove('light', 'dark', 'med');
     
     // Add current theme class
     root.classList.add(theme);
@@ -51,7 +51,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme(prevTheme => {
+      // Cycle through themes: light -> dark -> med -> light
+      if (prevTheme === 'light') return 'dark';
+      if (prevTheme === 'dark') return 'med';
+      return 'light';
+    });
   };
 
   return (

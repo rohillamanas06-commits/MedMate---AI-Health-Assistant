@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,8 +11,20 @@ import {
   Zap,
   ArrowRight,
   CheckCircle2,
+  Loader2,
+  Instagram,
+  Github,
+  Mail,
+  Linkedin,
+  HeartPulse,
+  Stethoscope,
+  Microscope,
+  Hospital,
+  Pill,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import heroImage from '@/assets/hero-medical.jpg';
 import diagnosisIcon from '@/assets/diagnosis-icon.png';
 import chatIcon from '@/assets/chat-icon.png';
@@ -19,6 +32,26 @@ import chatIcon from '@/assets/chat-icon.png';
 export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Medical images for carousel - Original girl image + 3 realistic medical images
+  const medicalImages = [
+    heroImage, // Original medical girl image
+    'https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=800&auto=format&fit=crop', // Healthcare professionals
+    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&auto=format&fit=crop', // Medical team working
+    'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&auto=format&fit=crop', // Dental care
+  ];
+
+  // Auto-rotate images every 1.5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === medicalImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [medicalImages.length]);
 
   const features = [
     {
@@ -49,7 +82,6 @@ export default function Home() {
     'Personalized health insights',
     'Track your medical history',
     'Voice-enabled interface',
-    'Multi-language support',
   ];
 
   return (
@@ -86,28 +118,59 @@ export default function Home() {
                   Try Symptom Checker
                 </Button>
               </div>
-              <div className="flex items-center gap-8 pt-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent border-2 border-background"
-                    />
-                  ))}
+              <div className="flex items-center gap-6 pt-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">AI-Powered</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">24/7 Available</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold">10,000+ Users</p>
-                  <p className="text-sm text-muted-foreground">Trusted worldwide</p>
+                <div className="h-12 w-px bg-border" />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">Instant Results</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">Secure & Private</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="relative animate-fade-in">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl"></div>
-              <img
-                src={heroImage}
-                alt="AI Medical Assistant"
-                className="relative rounded-3xl shadow-2xl hover-lift"
-              />
+            <div className="relative animate-fade-in overflow-hidden rounded-3xl">
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl animate-pulse"></div>
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
+                {medicalImages.map((imageSrc, index) => (
+                  <img
+                    key={index}
+                    src={imageSrc}
+                    alt={`Medical Assistant ${index + 1}`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                      index === currentImageIndex 
+                        ? 'opacity-100 scale-100' 
+                        : 'opacity-0 scale-105'
+                    }`}
+                  />
+                ))}
+              </div>
+              {/* Carousel indicators */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                {medicalImages.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === currentImageIndex 
+                        ? 'w-8 bg-primary shadow-lg' 
+                        : 'w-2 bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -210,24 +273,206 @@ export default function Home() {
               </Button>
             </div>
             <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: 'Diagnoses', value: '50K+' },
-                  { label: 'Accuracy', value: '98%' },
-                  { label: 'Users', value: '10K+' },
-                  { label: 'Countries', value: '50+' },
-                ].map((stat, index) => (
-                  <Card key={index} className="p-6 text-center hover-lift glass animate-pulse-glow">
-                    <div className="text-4xl font-bold gradient-text">{stat.value}</div>
-                    <div className="text-muted-foreground mt-2">{stat.label}</div>
-                  </Card>
-                ))}
-              </div>
+              <Card className="p-8 glass hover-lift animate-fade-in">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <Brain className="h-8 w-8 text-primary" />
+                    <h3 className="text-2xl font-semibold">AI-Powered Insights</h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Get instant, accurate health insights powered by advanced artificial intelligence. 
+                    Your symptoms are analyzed in real-time with comprehensive medical knowledge.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-8 w-8 text-primary" />
+                    <h3 className="text-2xl font-semibold">Privacy First</h3>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Your health data remains completely private and secure. We use industry-standard 
+                    encryption to protect your sensitive information.
+                  </p>
+                </div>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
+      {/* About Section */}
+      <section className="py-24 bg-muted/30">
+        <div className="container">
+          <div className="text-center space-y-4 mb-16 animate-slide-up">
+            <h2 className="text-4xl lg:text-5xl font-bold">About MedMate</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Empowering healthcare through AI innovation
+            </p>
+          </div>
+          
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6 animate-slide-up">
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                MedMate is an AI-powered medical assistant designed to bridge the gap between patients and healthcare providers. 
+                Our mission is to make quality healthcare accessible to everyone, everywhere.
+              </p>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                With advanced AI technology, MedMate provides instant symptom analysis, medical consultations, 
+                and helps you locate nearby hospitals. We combine the power of artificial intelligence with 
+                medical expertise to deliver accurate, reliable health information.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-4">
+                <a 
+                  href="https://www.instagram.com/manas_rohilla_" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-14 h-14 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-lg transition-all flex items-center justify-center text-white hover:scale-110"
+                  title="Instagram"
+                >
+                  <Instagram className="h-6 w-6" />
+                </a>
+                <a 
+                  href="https://github.com/rohillamanas06-commits" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-14 h-14 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 hover:shadow-lg transition-all flex items-center justify-center text-white hover:scale-110"
+                  title="GitHub"
+                >
+                  <Github className="h-6 w-6" />
+                </a>
+                <a 
+                  href="mailto:rohillamanas06@gmail.com" 
+                  className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg transition-all flex items-center justify-center text-white hover:scale-110"
+                  title="Email"
+                >
+                  <Mail className="h-6 w-6" />
+                </a>
+                <a 
+                  href="https://www.linkedin.com/in/manas-rohilla-b73415338/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-lg transition-all flex items-center justify-center text-white hover:scale-110"
+                  title="LinkedIn"
+                >
+                  <Linkedin className="h-6 w-6" />
+                </a>
+              </div>
+            </div>
+            <Card className="p-8 glass hover-lift animate-fade-in">
+              <h3 className="text-2xl font-semibold mb-6 text-center">Get in Touch</h3>
+              <p className="text-center text-muted-foreground mb-6">
+                Have feedback or questions? We'd love to hear from you!
+              </p>
+              <div className="space-y-4">
+                <Button variant="outline" className="w-full" asChild>
+                  <a href="mailto:rohillamanas06@gmail.com">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Contact Support
+                  </a>
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Feedback Form Section */}
+      <section className="py-24">
+        <div className="container max-w-2xl">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-4xl lg:text-5xl font-bold">Share Your Feedback</h2>
+            <p className="text-xl text-muted-foreground">
+              Help us improve MedMate by sharing your thoughts
+            </p>
+          </div>
+          <FeedbackForm />
+        </div>
+      </section>
+
     </div>
+  );
+}
+
+// Feedback Form Component
+function FeedbackForm() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name || !email || !message) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.submitFeedback(name, email, message);
+      toast.success('Thank you for your feedback! We\'ll be in touch soon.');
+      setName('');
+      setEmail('');
+      setMessage('');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to send feedback. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card className="p-8 glass animate-fade-in">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium">Name</label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Your name"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="your.email@example.com"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="message" className="text-sm font-medium">Message</label>
+          <textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={6}
+            className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            placeholder="Share your thoughts, suggestions, or feedback..."
+            required
+          />
+        </div>
+        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              Submit Feedback
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </>
+          )}
+        </Button>
+      </form>
+    </Card>
   );
 }
