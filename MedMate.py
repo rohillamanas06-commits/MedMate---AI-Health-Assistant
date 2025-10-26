@@ -325,13 +325,29 @@ def validate_password_strength(password):
 
 def send_feedback_email(name, email, message):
     """Send feedback email to author"""
+    print("=" * 50)
+    print("📧 SENDING FEEDBACK EMAIL")
+    print("=" * 50)
+    print(f"📋 From: {name} ({email})")
+    print(f"📧 To: rohillamanas06@gmail.com")
+    print(f"📝 Message: {message[:100]}...")
+    print(f"📋 Mail Server: {app.config.get('MAIL_SERVER')}")
+    print(f"📋 Mail Username: {app.config.get('MAIL_USERNAME')}")
+    print(f"📋 Mail Password set: {bool(app.config.get('MAIL_PASSWORD'))}")
+    print("=" * 50)
+    
     try:
-        print(f"📧 Attempting to send feedback email from: {email}")
-        print(f"📋 Name: {name}")
+        # Check if mail credentials are configured
+        if not app.config.get('MAIL_USERNAME') or not app.config.get('MAIL_PASSWORD'):
+            print("❌ Mail credentials not configured - cannot send email")
+            print("⚠️ Please set MAIL_USERNAME and MAIL_PASSWORD environment variables")
+            return False
         
+        print(f"📧 Creating email message...")
         msg = Message(
             subject='MedMate Feedback',
             recipients=['rohillamanas06@gmail.com'],
+            sender=app.config.get('MAIL_USERNAME'),
             html=f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
@@ -357,13 +373,18 @@ def send_feedback_email(name, email, message):
             """,
         )
         
+        print(f"📧 Sending email through SMTP...")
         with app.app_context():
             mail.send(msg)
-            print(f"✅ Feedback email sent successfully")
         
+        print("=" * 50)
+        print("✅ Feedback email sent successfully!")
+        print("=" * 50)
         return True
     except Exception as e:
+        print("=" * 50)
         print(f"❌ Error sending feedback email: {e}")
+        print("=" * 50)
         import traceback
         traceback.print_exc()
         return False
@@ -1266,9 +1287,16 @@ def forgot_password():
             
             # Send email with threading to prevent timeout
             print(f"📧 Calling send_password_reset_email()...")
+            
+            # Start email thread
             email_thread = threading.Thread(target=send_password_reset_email, args=(user.email, reset_link))
             email_thread.daemon = True
             email_thread.start()
+            
+            # Wait a bit to ensure email is being sent
+            import time
+            time.sleep(1)  # 1 second delay to show some processing time
+            
             print(f"✅ Password reset email thread started")
         else:
             print(f"⚠️ No user found with email: {email}")
@@ -1744,12 +1772,19 @@ def feedback():
         
         # Send feedback email with threading to prevent timeout
         print(f"📧 Sending feedback email...")
+        
+        # Start email thread
         feedback_thread = threading.Thread(target=send_feedback_email, args=(name, email, message))
         feedback_thread.daemon = True
         feedback_thread.start()
+        
+        # Wait a bit to ensure email is being sent (gives time for SMTP connection)
+        import time
+        time.sleep(1)  # 1 second delay to show some processing time
+        
         print(f"✅ Feedback email thread started")
         
-        return jsonify({'message': 'Feedback received successfully. Thank you for your input!'}), 200
+        return jsonify({'message': 'Feedback received successfully! Thank you for your input!'}), 200
     
     except Exception as e:
         print(f"❌ Feedback error: {e}")
