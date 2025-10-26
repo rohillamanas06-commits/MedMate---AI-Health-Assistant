@@ -89,9 +89,9 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent/5 to-background">
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        <div className="container relative z-10 py-24 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 animate-slide-up">
+        <div className="container relative z-10 py-8 sm:py-16 lg:py-24">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
+            <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-slide-up">
               <div className="inline-block">
                 <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
                   AI-Powered Healthcare
@@ -177,9 +177,9 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-24 bg-muted/30">
+      <section className="py-8 sm:py-16 lg:py-24 bg-muted/30">
         <div className="container">
-          <div className="text-center space-y-4 mb-16 animate-slide-up">
+          <div className="text-center space-y-3 sm:space-y-4 mb-8 sm:mb-12 lg:mb-16 animate-slide-up">
             <h2 className="text-4xl lg:text-5xl font-bold">
               Powerful Features for Your Health
             </h2>
@@ -204,9 +204,9 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-24">
+      <section className="py-8 sm:py-16 lg:py-24">
         <div className="container">
-          <div className="text-center space-y-4 mb-16">
+          <div className="text-center space-y-3 sm:space-y-4 mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold">How MedMate Works</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Get medical assistance in three simple steps
@@ -248,10 +248,10 @@ export default function Home() {
       </section>
 
       {/* Benefits */}
-      <section className="py-24 bg-gradient-to-br from-primary/5 via-accent/5 to-background">
+      <section className="py-8 sm:py-16 lg:py-24 bg-gradient-to-br from-primary/5 via-accent/5 to-background">
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 animate-slide-up">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+            <div className="space-y-4 sm:space-y-6 animate-slide-up">
               <h2 className="text-4xl lg:text-5xl font-bold">
                 Everything You Need for Better Health
               </h2>
@@ -299,17 +299,17 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="py-24 bg-muted/30">
+      <section className="py-8 sm:py-16 lg:py-24 bg-muted/30">
         <div className="container">
-          <div className="text-center space-y-4 mb-16 animate-slide-up">
+          <div className="text-center space-y-3 sm:space-y-4 mb-8 sm:mb-12 lg:mb-16 animate-slide-up">
             <h2 className="text-4xl lg:text-5xl font-bold">About MedMate</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Empowering healthcare through AI innovation
             </p>
           </div>
           
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 animate-slide-up">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+            <div className="space-y-4 sm:space-y-6 animate-slide-up">
               <p className="text-lg text-muted-foreground leading-relaxed">
                 MedMate is an AI-powered medical assistant designed to bridge the gap between patients and healthcare providers. 
                 Our mission is to make quality healthcare accessible to everyone, everywhere.
@@ -375,9 +375,9 @@ export default function Home() {
       </section>
 
       {/* Feedback Form Section */}
-      <section className="py-24">
+      <section className="py-8 sm:py-16 lg:py-24">
         <div className="container max-w-2xl">
-          <div className="text-center space-y-4 mb-12">
+          <div className="text-center space-y-3 sm:space-y-4 mb-8 sm:mb-10 lg:mb-12">
             <h2 className="text-4xl lg:text-5xl font-bold">Share Your Feedback</h2>
             <p className="text-xl text-muted-foreground">
               Help us improve MedMate by sharing your thoughts
