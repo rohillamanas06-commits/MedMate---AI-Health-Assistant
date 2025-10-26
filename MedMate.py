@@ -1259,18 +1259,17 @@ def forgot_password():
             db.session.commit()
             print(f"💾 Token saved to database")
             
-            # Log reset link instead of sending email (to prevent timeout)
+            # Create reset link
             frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:8080')
             reset_link = f"{frontend_url}/reset-password?token={token}"
-            print("=" * 50)
-            print("🔗 PASSWORD RESET LINK (LOG THIS MANUALLY)")
-            print("=" * 50)
-            print(f"Email: {user.email}")
-            print(f"Reset Link: {reset_link}")
-            print("=" * 50)
-            print("⚠️ Note: Email sending disabled to prevent timeout")
-            print("Please manually send this reset link to the user")
-            print("=" * 50)
+            print(f"🔗 Reset link: {reset_link}")
+            
+            # Send email with threading to prevent timeout
+            print(f"📧 Calling send_password_reset_email()...")
+            email_thread = threading.Thread(target=send_password_reset_email, args=(user.email, reset_link))
+            email_thread.daemon = True
+            email_thread.start()
+            print(f"✅ Password reset email thread started")
         else:
             print(f"⚠️ No user found with email: {email}")
         
@@ -1743,17 +1742,13 @@ def feedback():
         if not validate_email_format(email):
             return jsonify({'error': 'Please enter a valid email address'}), 400
         
-        # Log feedback to console instead of sending email (to prevent timeouts)
-        print("=" * 50)
-        print("📋 FEEDBACK SUBMISSION")
-        print("=" * 50)
-        print(f"Name: {name}")
-        print(f"Email: {email}")
-        print(f"Message: {message}")
-        print("=" * 50)
+        # Send feedback email with threading to prevent timeout
+        print(f"📧 Sending feedback email...")
+        feedback_thread = threading.Thread(target=send_feedback_email, args=(name, email, message))
+        feedback_thread.daemon = True
+        feedback_thread.start()
+        print(f"✅ Feedback email thread started")
         
-        # Return success immediately to prevent timeout
-        print(f"✅ Feedback logged successfully")
         return jsonify({'message': 'Feedback received successfully. Thank you for your input!'}), 200
     
     except Exception as e:
