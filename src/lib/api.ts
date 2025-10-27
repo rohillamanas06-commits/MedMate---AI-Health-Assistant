@@ -72,17 +72,17 @@ class ApiClient {
 
   // Authentication
   async register(username: string, email: string, password: string) {
-    return this.request('/api/register', {
+    return this.requestWithTimeout('/api/register', {
       method: 'POST',
       body: JSON.stringify({ username, email, password }),
-    });
+    }, 30000); // 30 second timeout for registration
   }
 
   async login(username: string, password: string) {
-    return this.request('/api/login', {
+    return this.requestWithTimeout('/api/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
-    });
+    }, 30000); // 30 second timeout for login
   }
 
   async logout() {

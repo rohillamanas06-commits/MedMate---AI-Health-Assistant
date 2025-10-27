@@ -58,7 +58,10 @@ export default function Auth() {
     setLoading(true);
     try {
       await login(loginData.username, loginData.password);
-      navigate('/dashboard');
+      // Small delay to ensure user state is updated
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (error) {
       // Error handled by context
     } finally {
@@ -95,7 +98,10 @@ export default function Auth() {
     setLoading(true);
     try {
       await register(registerData.username, registerData.email, registerData.password);
-      navigate('/dashboard');
+      // Small delay to ensure user state is updated
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (error) {
       // Error handled by context
     } finally {
