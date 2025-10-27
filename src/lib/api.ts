@@ -160,7 +160,7 @@ class ApiClient {
   }
 
   async getDiagnosisHistory(page = 1, perPage = 10) {
-    return this.request(`/api/diagnosis-history?page=${page}&per_page=${perPage}`);
+    return this.requestWithTimeout(`/api/diagnosis-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
   }
 
   // Chat
@@ -172,7 +172,7 @@ class ApiClient {
   }
 
   async getChatHistory(page = 1, perPage = 20) {
-    return this.request(`/api/chat-history?page=${page}&per_page=${perPage}`);
+    return this.requestWithTimeout(`/api/chat-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
   }
 
   // Hospital Finder

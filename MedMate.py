@@ -97,7 +97,7 @@ if DATABASE_URL:
         'max_overflow': 20,
         'connect_args': {
             'sslmode': 'require',
-            'connect_timeout': 10
+            'connect_timeout': 30  # Increased for reliability
         }
     }
     upload_folder = '/tmp/uploads' if os.getenv('VERCEL') else 'static/uploads'
@@ -148,6 +148,27 @@ def init_db():
             print(f"⚠️ Migration check skipped (development mode): {migration_error}")
         
         db.create_all()
+        
+        # Create indexes for better query performance
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            
+            # Create indexes if they don't exist
+            with db.engine.connect() as conn:
+                # Index for diagnosis.user_id
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_diagnosis_user_id ON diagnosis(user_id)"))
+                # Index for diagnosis.created_at
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_diagnosis_created_at ON diagnosis(created_at)"))
+                # Index for chat_history.user_id
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_chat_history_user_id ON chat_history(user_id)"))
+                # Index for chat_history.created_at
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_chat_history_created_at ON chat_history(created_at)"))
+                conn.commit()
+            print("✅ Database indexes created/verified successfully")
+        except Exception as index_error:
+            print(f"⚠️ Index creation skipped: {index_error}")
+        
         print("✅ Database tables created/verified successfully")
         return True
     except Exception as e:
@@ -258,11 +279,11 @@ class PasswordResetToken(db.Model):
 class Diagnosis(db.Model):
     """Store diagnosis history"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     symptoms = db.Column(db.Text, nullable=False)
     diagnosis_result = db.Column(db.Text, nullable=False)  # JSON string
     image_path = db.Column(db.String(300), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     
     def get_result_dict(self):
         try:
@@ -273,10 +294,10 @@ class Diagnosis(db.Model):
 class ChatHistory(db.Model):
     """Store chat conversations with AI assistant"""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     message = db.Column(db.Text, nullable=False)
     response = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
 class Hospital(db.Model):
     """Store hospital information"""
