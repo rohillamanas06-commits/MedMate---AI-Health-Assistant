@@ -377,7 +377,23 @@ npm run build
 vercel --prod
 ```
 
-### Backend Deployment (Railway/Heroku)
+### Backend Deployment (Render - Free)
+
+**Quick Deploy to Render (Recommended for free hosting)**
+
+Render offers a free tier with automatic SSL, PostgreSQL database, and seamless GitHub integration.
+
+📖 **See detailed guide**: [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md)
+
+**Quick steps:**
+1. Push code to GitHub
+2. Create Render account at [render.com](https://render.com)
+3. Create PostgreSQL database
+4. Create Web Service from GitHub repo
+5. Add environment variables
+6. Deploy!
+
+### Alternative: Railway Deployment
 
 ```bash
 # Ensure requirements.txt is up to date
@@ -385,9 +401,6 @@ pip freeze > requirements.txt
 
 # Deploy to Railway
 railway up
-
-# Or deploy to Heroku
-git push heroku main
 ```
 
 ### Environment Variables for Production
@@ -397,6 +410,8 @@ Make sure to set all environment variables in your deployment platform:
 - `GOOGLE_MAPS_API_KEY`
 - `DATABASE_URL`
 - `SECRET_KEY`
+- `SENDGRID_API_KEY` (for password reset)
+- `FRONTEND_URL` (your Vercel deployment URL)
 
 ## 📸 Screenshots
 

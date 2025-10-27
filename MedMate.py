@@ -58,7 +58,8 @@ CORS(app,
          'http://localhost:5173', 
          'http://127.0.0.1:5173',
          'https://med-mate-ai-health-assistant-v2.vercel.app',  # Your Vercel domain
-         'https://*.vercel.app'  # All Vercel preview deployments
+         'https://*.vercel.app',  # All Vercel preview deployments
+         'https://*.onrender.com'  # Render deployment
      ],
      allow_headers=['Content-Type', 'Authorization'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])

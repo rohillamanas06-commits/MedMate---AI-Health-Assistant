@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: medmate-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python MedMate.py
+    healthCheckPath: /api/health
+    env:
+      - key: RENDER
+        value: true
+      - key: SECRET_KEY
+        generateValue: true
+
