@@ -345,7 +345,7 @@ def send_feedback_email(name, email, message):
         sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
         
         message_body = Mail(
-            from_email='noreply@medmate.ai',
+            from_email='rohillamanas06@gmail.com',
             to_emails='rohillamanas06@gmail.com',
             subject='MedMate Feedback',
             html_content=f"""
@@ -398,7 +398,7 @@ def send_password_reset_email(user_email, reset_link):
         sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
         
         message = Mail(
-            from_email='noreply@medmate.ai',
+            from_email='rohillamanas06@gmail.com',
             to_emails=user_email,
             subject='MedMate - Password Reset Request',
             html_content=f"""
