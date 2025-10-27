@@ -64,8 +64,19 @@ CORS(app,
 
 # Session configuration for proper cookie handling
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Better for local development
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to False for local development
+
+# Set SESSION_COOKIE_SECURE and SESSION_COOKIE_SAMESITE based on environment
+# In production (Railway/Vercel), use True for HTTPS and None for SameSite
+# In local development, use False for HTTP and Lax for SameSite
+is_production = os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RENDER') or os.getenv('VERCEL')
+
+if is_production:
+    app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS required
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-domain
+else:
+    app.config['SESSION_COOKIE_SECURE'] = False  # HTTP for local
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Better for local development
+
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # Database configuration - PostgreSQL for production, SQLite for local
@@ -398,10 +409,11 @@ def send_password_reset_email(user_email, reset_link):
         
         frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
         
-        msg = Message(
-            subject='MedMate - Password Reset Request',
-            recipients=[user_email],
-            html=f"""
+        with app.app_context():  # Add Flask app context
+            msg = Message(
+                subject='MedMate - Password Reset Request',
+                recipients=[user_email],
+                html=f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
                     <h1 style="color: white; margin: 0;">MedMate</h1>
@@ -435,9 +447,8 @@ def send_password_reset_email(user_email, reset_link):
                 </div>
             </div>
             """,
-        )
-        
-        with app.app_context():
+            )
+            
             mail.send(msg)
             print(f"✅ Email sent successfully to: {user_email}")
         
