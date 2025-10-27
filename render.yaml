@@ -3,12 +3,10 @@ services:
     name: medmate-backend
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: python MedMate.py
     healthCheckPath: /api/health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: RENDER
         value: true
       - key: SECRET_KEY

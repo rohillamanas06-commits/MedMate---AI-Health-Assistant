@@ -87,10 +87,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     # Production: Use PostgreSQL
     if DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+psycopg://', 1)
-    elif DATABASE_URL.startswith('postgresql://'):
-        # Use psycopg3 (modern, works with Python 3.13)
-        DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg://', 1)
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
     
     # Configure SQLAlchemy for PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
