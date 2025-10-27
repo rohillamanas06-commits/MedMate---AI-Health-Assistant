@@ -93,11 +93,12 @@ if DATABASE_URL:
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_pre_ping': True,
         'pool_recycle': 300,
-        'pool_size': 10,
-        'max_overflow': 20,
+        'pool_size': 20,  # Increased pool size for faster queries
+        'max_overflow': 30,  # More overflow connections
         'connect_args': {
             'sslmode': 'require',
-            'connect_timeout': 30  # Increased for reliability
+            'connect_timeout': 30,  # Increased for reliability
+            'application_name': 'medmate_app'  # Helpful for monitoring
         }
     }
     upload_folder = '/tmp/uploads' if os.getenv('VERCEL') else 'static/uploads'
