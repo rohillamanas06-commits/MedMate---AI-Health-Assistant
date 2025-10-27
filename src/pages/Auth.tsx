@@ -160,7 +160,7 @@ export default function Auth() {
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                 />
                 <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
-                  Remember me for 1 year
+                  Remember me
                 </Label>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
