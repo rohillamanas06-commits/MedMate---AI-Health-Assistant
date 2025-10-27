@@ -14,7 +14,8 @@ if sys.platform == 'win32':
 from flask import Flask, request, jsonify, session, redirect, url_for, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_mail import Mail, Message
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, Content
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
@@ -125,17 +126,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Initialize database
 db = SQLAlchemy(app)
 
-# Email configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')  # Your Gmail address
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')  # Your Gmail app password
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME', 'noreply@medmate.ai')
-
-# Initialize Flask-Mail after configuration
-mail = Mail(app)
+# Email configuration - SendGrid
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 
 # Database initialization function for serverless
 def init_db():
@@ -335,31 +327,28 @@ def validate_password_strength(password):
     return True, None
 
 def send_feedback_email(name, email, message):
-    """Send feedback email to author"""
+    """Send feedback email to author using SendGrid"""
     print("=" * 50)
     print("📧 SENDING FEEDBACK EMAIL")
     print("=" * 50)
     print(f"📋 From: {name} ({email})")
     print(f"📧 To: rohillamanas06@gmail.com")
     print(f"📝 Message: {message[:100]}...")
-    print(f"📋 Mail Server: {app.config.get('MAIL_SERVER')}")
-    print(f"📋 Mail Username: {app.config.get('MAIL_USERNAME')}")
-    print(f"📋 Mail Password set: {bool(app.config.get('MAIL_PASSWORD'))}")
+    print(f"📋 SendGrid configured: {bool(SENDGRID_API_KEY)}")
     print("=" * 50)
     
     try:
-        # Check if mail credentials are configured
-        if not app.config.get('MAIL_USERNAME') or not app.config.get('MAIL_PASSWORD'):
-            print("❌ Mail credentials not configured - cannot send email")
-            print("⚠️ Please set MAIL_USERNAME and MAIL_PASSWORD environment variables")
+        if not SENDGRID_API_KEY:
+            print("❌ SendGrid API key not configured")
             return False
         
-        print(f"📧 Creating email message...")
-        msg = Message(
+        sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
+        
+        message_body = Mail(
+            from_email='noreply@medmate.ai',
+            to_emails='rohillamanas06@gmail.com',
             subject='MedMate Feedback',
-            recipients=['rohillamanas06@gmail.com'],
-            sender=app.config.get('MAIL_USERNAME'),
-            html=f"""
+            html_content=f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
                     <h1 style="color: white; margin: 0;">MedMate Feedback</h1>
@@ -381,15 +370,12 @@ def send_feedback_email(name, email, message):
                     </p>
                 </div>
             </div>
-            """,
+            """
         )
         
-        print(f"📧 Sending email through SMTP...")
-        with app.app_context():
-            mail.send(msg)
-        
+        response = sg.send(message_body)
         print("=" * 50)
-        print("✅ Feedback email sent successfully!")
+        print(f"✅ Feedback email sent successfully! Status: {response.status_code}")
         print("=" * 50)
         return True
     except Exception as e:
@@ -401,19 +387,21 @@ def send_feedback_email(name, email, message):
         return False
 
 def send_password_reset_email(user_email, reset_link):
-    """Send password reset email"""
+    """Send password reset email using SendGrid"""
     try:
-        print(f"📧 Attempting to send email to: {user_email}")
-        print(f"📋 Mail config - Server: {app.config.get('MAIL_SERVER')}, Port: {app.config.get('MAIL_PORT')}")
-        print(f"📋 Mail config - Username: {app.config.get('MAIL_USERNAME')}")
+        print(f"📧 Attempting to send password reset email to: {user_email}")
         
-        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        if not SENDGRID_API_KEY:
+            print("❌ SendGrid API key not configured")
+            return False
         
-        with app.app_context():  # Add Flask app context
-            msg = Message(
-                subject='MedMate - Password Reset Request',
-                recipients=[user_email],
-                html=f"""
+        sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
+        
+        message = Mail(
+            from_email='noreply@medmate.ai',
+            to_emails=user_email,
+            subject='MedMate - Password Reset Request',
+            html_content=f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
                     <h1 style="color: white; margin: 0;">MedMate</h1>
@@ -447,10 +435,11 @@ def send_password_reset_email(user_email, reset_link):
                 </div>
             </div>
             """,
-            )
-            
-            mail.send(msg)
-            print(f"✅ Email sent successfully to: {user_email}")
+        )
+        
+        response = sg.send(message)
+        print(f"✅ Password reset email sent successfully to: {user_email}")
+        print(f"📊 SendGrid status: {response.status_code}")
         
         return True
     except Exception as e:
