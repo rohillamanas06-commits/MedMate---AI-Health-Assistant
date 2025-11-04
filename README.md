@@ -420,15 +420,6 @@ Make sure to set all environment variables in your deployment platform:
 ### Home Page
 ![Home Page](C:/Users/manas/OneDrive/Pictures/Screenshots/Screenshot (435).png)
 
-### AI Diagnosis
-![Diagnosis](docs/screenshots/diagnose.png)
-
-### AI Chat
-![Chat](docs/screenshots/chat.png)
-
-### Hospital Finder
-![Hospitals](docs/screenshots/hospitals.png)
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
