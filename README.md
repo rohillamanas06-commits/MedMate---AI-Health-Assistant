@@ -415,11 +415,6 @@ Make sure to set all environment variables in your deployment platform:
 - `SENDGRID_API_KEY` (for password reset)
 - `FRONTEND_URL` (your Vercel deployment URL)
 
-## 📸 Screenshots
-
-### Home Page
-![Home Page](C:/Users/manas/OneDrive/Pictures/Screenshots/Screenshot (435).png)
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
