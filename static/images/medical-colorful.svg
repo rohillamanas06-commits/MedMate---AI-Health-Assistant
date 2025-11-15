@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background gradient circle -->
+    <circle cx="100" cy="100" r="90" fill="url(#gradient)" stroke="white" stroke-width="4"/>
+    
+    <!-- Plus sign with shadow effect -->
+    <rect x="90" y="40" width="20" height="120" rx="4" fill="white" fill-opacity="0.9"/>
+    <rect x="40" y="90" width="120" height="20" rx="4" fill="white" fill-opacity="0.9"/>
+    
+    <!-- Inner circle with pulse effect -->
+    <circle cx="100" cy="100" r="40" fill="url(#pulse)" filter="url(#shadow)"/>
+    
+    <!-- Gradient definition -->
+    <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4f46e5"/>
+            <stop offset="50%" stop-color="#7c3aed"/>
+            <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        
+        <radialGradient id="pulse" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+            <stop offset="0%" stop-color="#f43f5e"/>
+            <stop offset="100%" stop-color="#ec4899"/>
+        </radialGradient>
+        
+        <filter id="shadow" x="0" y="0" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+            <feOffset dx="0" dy="4" result="offsetblur"/>
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.2"/>
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+</svg>
