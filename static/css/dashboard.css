@@ -439,6 +439,8 @@ textarea.form-control::placeholder {
     transition: background 0.3s;
     overflow: hidden;
     position: relative;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
 }
 
 .chat-messages {
@@ -495,6 +497,8 @@ textarea.form-control::placeholder {
     gap: 0.5rem;
     padding: 1rem;
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    touch-action: manipulation;
 }
 
 .chat-input {
@@ -502,10 +506,15 @@ textarea.form-control::placeholder {
     padding: 0.75rem;
     border: 2px solid var(--border-color);
     border-radius: 0.5rem;
-    font-size: 1rem;
+    font-size: 16px; /* Prevents auto-zoom on iOS/Android */
     background: var(--bg-secondary);
     color: var(--text-primary);
     transition: all 0.3s;
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+    transform: scale(1);
+    -webkit-transform: scale(1);
 }
 
 .chat-input::placeholder {
@@ -679,6 +688,8 @@ textarea.form-control::placeholder {
     .chat-input {
         font-size: 16px; /* Prevents zoom on iOS/Android */
         padding: 0.5rem;
+        transform: scale(1);
+        -webkit-transform: scale(1);
     }
 
     .message-avatar {
@@ -723,6 +734,9 @@ textarea.form-control::placeholder {
     .chat-input {
         font-size: 16px;
         min-height: 44px; /* Better touch target */
+        transform: scale(1);
+        -webkit-transform: scale(1);
+        touch-action: manipulation;
     }
 
     .message-content {
