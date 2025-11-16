@@ -98,6 +98,7 @@ body {
     padding: 5rem 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    transition: all 0.3s ease;
 }
 
 .hero .container {
@@ -561,6 +562,41 @@ body.dark-mode .feature-card h3 {
 
 body.dark-mode .feature-card p {
     color: var(--text-secondary);
+}
+
+/* Dark mode hero section */
+body.dark-mode .hero {
+    background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+}
+
+body.dark-mode .hero-title,
+body.dark-mode .hero-subtitle {
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .hero-buttons .btn {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+body.dark-mode .hero-buttons .btn-primary {
+    background-color: #7c3aed;
+    border-color: #6d28d9;
+}
+
+body.dark-mode .hero-buttons .btn-primary:hover {
+    background-color: #6d28d9;
+    border-color: #5b21b6;
+}
+
+body.dark-mode .hero-buttons .btn-secondary {
+    background-color: transparent;
+    border-color: #a78bfa;
+    color: #e9d5ff;
+}
+
+body.dark-mode .hero-buttons .btn-secondary:hover {
+    background-color: rgba(167, 139, 250, 0.1);
 }
 
 body.dark-mode .about {
