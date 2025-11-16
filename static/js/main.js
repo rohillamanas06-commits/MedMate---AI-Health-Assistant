@@ -263,6 +263,29 @@ async function checkAuth() {
 // Check auth on page load
 checkAuth();
 
+// ==================== THEME MANAGEMENT ====================
+
+// Load saved theme from localStorage
+function loadTheme() {
+    const savedTheme = localStorage.getItem('medmate-theme') || 'light';
+    applyTheme(savedTheme);
+}
+
+// Apply theme to body
+function applyTheme(theme) {
+    const body = document.body;
+    body.classList.remove('dark-mode', 'med-mode');
+    
+    if (theme === 'dark') {
+        body.classList.add('dark-mode');
+    } else if (theme === 'med') {
+        body.classList.add('med-mode');
+    }
+}
+
+// Load theme on page load
+loadTheme();
+
 // ==================== GOOGLE SIGN-IN ====================
 
 // Google Sign-In callback

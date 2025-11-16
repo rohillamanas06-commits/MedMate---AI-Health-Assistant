@@ -6,6 +6,15 @@
     background: #f3f4f6;
 }
 
+/* Ensure body background changes with theme */
+body.dark-mode .dashboard-body {
+    background: #000000 !important;
+}
+
+body.med-mode .dashboard-body {
+    background: linear-gradient(135deg, #1a0d2e 0%, #2d1b3d 50%, #1a0d2e 100%) !important;
+}
+
 /* Sidebar */
 .sidebar {
     width: 260px;
@@ -1020,6 +1029,40 @@ body.dark-mode .sidebar-link:hover {
 
 body.dark-mode .sidebar-header:hover {
     background-color: #1a1a1a;
+}
+
+/* Override white backgrounds in dark mode */
+body.dark-mode .sidebar {
+    background: #0a0a0a !important;
+}
+
+body.dark-mode .topbar {
+    background: #0a0a0a !important;
+}
+
+body.dark-mode .hospital-item {
+    background: #0a0a0a !important;
+}
+
+body.dark-mode .history-tab {
+    background: #1a1a1a !important;
+}
+
+/* Override white backgrounds in med mode */
+body.med-mode .sidebar {
+    background: linear-gradient(180deg, #2d1b3d 0%, #3d2a4d 100%) !important;
+}
+
+body.med-mode .topbar {
+    background: linear-gradient(135deg, #2d1b3d 0%, #3d2a4d 100%) !important;
+}
+
+body.med-mode .hospital-item {
+    background: linear-gradient(135deg, #2d1b3d 0%, #3d2a4d 100%) !important;
+}
+
+body.med-mode .history-tab {
+    background: #3d2a4d !important;
 }
 
 /* Med Mode - Dark Aesthetic Purple Theme */
