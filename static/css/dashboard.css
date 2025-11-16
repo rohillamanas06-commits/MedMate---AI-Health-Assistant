@@ -133,11 +133,10 @@ body.dark-mode .sidebar-header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    background: #000000;
+    background: white;
     padding: 1rem 1.5rem;
     border-radius: 0.5rem;
     box-shadow: var(--shadow);
-    color: white;
 }
 
 .mobile-sidebar-toggle {
