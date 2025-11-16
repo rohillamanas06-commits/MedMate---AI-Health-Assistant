@@ -1002,6 +1002,66 @@ def chat_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/delete-chat-history', methods=['DELETE'])
+@login_required
+def delete_chat_history():
+    """Delete all chat history for the current user"""
+    try:
+        user_id = session['user_id']
+        
+        # Delete all chat history for this user
+        deleted_count = ChatHistory.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Chat history deleted successfully',
+            'deleted_count': deleted_count
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/delete-diagnosis-history', methods=['DELETE'])
+@login_required
+def delete_diagnosis_history():
+    """Delete all diagnosis history for the current user"""
+    try:
+        user_id = session['user_id']
+        
+        # Get all diagnoses to delete associated image files
+        diagnoses = Diagnosis.query.filter_by(user_id=user_id).all()
+        
+        # Delete associated image files
+        import os
+        for diagnosis in diagnoses:
+            if diagnosis.image_path:
+                # Handle both 'static/uploads/filename' and 'uploads/filename' formats
+                image_path = diagnosis.image_path
+                if not os.path.isabs(image_path):
+                    # If relative path, ensure it starts with static/
+                    if not image_path.startswith('static/'):
+                        image_path = os.path.join('static', image_path)
+                
+                if os.path.exists(image_path):
+                    try:
+                        os.remove(image_path)
+                    except Exception as e:
+                        print(f"Error deleting image file {image_path}: {e}")
+        
+        # Delete all diagnosis records for this user
+        deleted_count = Diagnosis.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Diagnosis history deleted successfully',
+            'deleted_count': deleted_count
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 # ==================== VOICE INPUT ROUTE ====================
 
 @app.route('/api/voice-to-text', methods=['POST'])

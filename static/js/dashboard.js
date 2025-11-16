@@ -899,3 +899,134 @@ async function loadStats() {
 
 // Initialize
 loadStats();
+
+// ==================== THEME MANAGEMENT ====================
+
+// Load saved theme from localStorage
+function loadTheme() {
+    const savedTheme = localStorage.getItem('medmate-theme') || 'light';
+    applyTheme(savedTheme);
+    updateThemeButtons(savedTheme);
+}
+
+// Apply theme to body
+function applyTheme(theme) {
+    const body = document.body;
+    body.classList.remove('dark-mode', 'med-mode');
+    
+    if (theme === 'dark') {
+        body.classList.add('dark-mode');
+    } else if (theme === 'med') {
+        body.classList.add('med-mode');
+    }
+    
+    localStorage.setItem('medmate-theme', theme);
+}
+
+// Update theme button states
+function updateThemeButtons(activeTheme) {
+    const themeButtons = document.querySelectorAll('.theme-option');
+    themeButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-theme') === activeTheme) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// Theme button event listeners (using event delegation for dynamic content)
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.theme-option')) {
+        const btn = e.target.closest('.theme-option');
+        const theme = btn.getAttribute('data-theme');
+        applyTheme(theme);
+        updateThemeButtons(theme);
+        showToast(`Theme changed to ${theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : 'Med'} mode`);
+    }
+});
+
+// Load theme on page load
+loadTheme();
+
+// ==================== DELETE HISTORY ====================
+
+const deleteChatHistoryBtn = document.getElementById('deleteChatHistoryBtn');
+const deleteDiagnosisHistoryBtn = document.getElementById('deleteDiagnosisHistoryBtn');
+
+// Delete chat history
+if (deleteChatHistoryBtn) {
+    deleteChatHistoryBtn.addEventListener('click', async () => {
+        const confirmed = confirm(
+            '⚠️ WARNING: This will permanently delete ALL your chat history.\n\n' +
+            'This action cannot be undone. Are you sure you want to continue?'
+        );
+        
+        if (!confirmed) return;
+        
+        showLoading();
+        
+        try {
+            const response = await fetch('/api/delete-chat-history', {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast('Chat history deleted successfully');
+                // Reload chat history if on history page
+                if (document.getElementById('chatsHistory').style.display !== 'none') {
+                    loadChatHistory();
+                }
+                // Update stats
+                loadStats();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete chat history'));
+            }
+        } catch (error) {
+            alert('An error occurred. Please try again.');
+            console.error(error);
+        } finally {
+            hideLoading();
+        }
+    });
+}
+
+// Delete diagnosis history
+if (deleteDiagnosisHistoryBtn) {
+    deleteDiagnosisHistoryBtn.addEventListener('click', async () => {
+        const confirmed = confirm(
+            '⚠️ WARNING: This will permanently delete ALL your diagnosis history.\n\n' +
+            'This action cannot be undone. Are you sure you want to continue?'
+        );
+        
+        if (!confirmed) return;
+        
+        showLoading();
+        
+        try {
+            const response = await fetch('/api/delete-diagnosis-history', {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast('Diagnosis history deleted successfully');
+                // Reload diagnosis history if on history page
+                if (document.getElementById('diagnosesHistory').style.display !== 'none') {
+                    loadDiagnosisHistory();
+                }
+                // Update stats
+                loadStats();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete diagnosis history'));
+            }
+        } catch (error) {
+            alert('An error occurred. Please try again.');
+            console.error(error);
+        } finally {
+            hideLoading();
+        }
+    });
+}

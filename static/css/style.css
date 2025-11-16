@@ -11,6 +11,8 @@
     --border-color: #e5e7eb;
     --text-primary: #111827;
     --text-secondary: #6b7280;
+    --bg-primary: #ffffff;
+    --bg-secondary: #ffffff;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
