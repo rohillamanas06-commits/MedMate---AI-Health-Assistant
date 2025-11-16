@@ -631,12 +631,24 @@ body.med-mode .nav-brand {
 }
 
 body.med-mode .nav-link {
-    color: var(--text-primary);
+    color: #e9d5ff !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
 }
 
-body.med-mode .nav-link:hover,
+body.med-mode .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(167, 139, 250, 0.2);
+    transform: translateY(-2px);
+}
+
 body.med-mode .nav-link.active {
-    color: var(--primary-color);
+    color: #ffffff !important;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(167, 139, 250, 0.3));
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 body.med-mode .hero {
