@@ -145,6 +145,20 @@ body.dark-mode .sidebar-header {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    color: #333; /* Default color for light mode */
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+/* Dark mode styles for mobile sidebar toggle */
+body.dark-mode .mobile-sidebar-toggle {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .mobile-sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .topbar-user {
