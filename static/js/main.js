@@ -267,7 +267,12 @@ checkAuth();
 
 // Load saved theme from localStorage
 function loadTheme() {
-    const savedTheme = localStorage.getItem('medmate-theme') || 'light';
+    let savedTheme = localStorage.getItem('medmate-theme') || 'light';
+    // Convert med mode to light if it exists
+    if (savedTheme === 'med') {
+        savedTheme = 'light';
+        localStorage.setItem('medmate-theme', 'light');
+    }
     applyTheme(savedTheme);
 }
 
@@ -278,8 +283,11 @@ function applyTheme(theme) {
     
     if (theme === 'dark') {
         body.classList.add('dark-mode');
-    } else if (theme === 'med') {
-        body.classList.add('med-mode');
+    }
+    // If med mode was previously selected, default to light
+    if (theme === 'med') {
+        theme = 'light';
+        localStorage.setItem('medmate-theme', 'light');
     }
 }
 

@@ -916,8 +916,10 @@ function applyTheme(theme) {
     
     if (theme === 'dark') {
         body.classList.add('dark-mode');
-    } else if (theme === 'med') {
-        body.classList.add('med-mode');
+    }
+    // If med mode was previously selected, default to light
+    if (theme === 'med') {
+        theme = 'light';
     }
     
     localStorage.setItem('medmate-theme', theme);
@@ -941,7 +943,7 @@ document.addEventListener('click', (e) => {
         const theme = btn.getAttribute('data-theme');
         applyTheme(theme);
         updateThemeButtons(theme);
-        showToast(`Theme changed to ${theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : 'Med'} mode`);
+        showToast(`Theme changed to ${theme === 'light' ? 'Light' : 'Dark'} mode`);
     }
 });
 
