@@ -243,6 +243,17 @@ async function checkAuth() {
                 loginBtn.textContent = 'Dashboard';
                 loginBtn.onclick = () => window.location.href = '/dashboard';
             }
+            // Also update "Get Started" button to "Dashboard"
+            if (getStartedBtn) {
+                getStartedBtn.textContent = 'Dashboard';
+                // Remove old event listeners and add new one
+                const newBtn = getStartedBtn.cloneNode(true);
+                getStartedBtn.parentNode.replaceChild(newBtn, getStartedBtn);
+                newBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.href = '/dashboard';
+                });
+            }
         }
     } catch (error) {
         console.error('Auth check failed:', error);

@@ -433,20 +433,24 @@ textarea.form-control::placeholder {
     border-radius: 0.75rem;
     box-shadow: var(--shadow);
     height: 600px;
+    max-height: calc(100vh - 250px);
     display: flex;
     flex-direction: column;
     transition: background 0.3s;
-    max-height: calc(100vh - 250px);
+    overflow: hidden;
+    position: relative;
 }
 
 .chat-messages {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     background: var(--bg-primary);
+    min-height: 0;
 }
 
 .chat-message {
@@ -658,8 +662,9 @@ textarea.form-control::placeholder {
 
     .chat-container {
         height: calc(100vh - 200px);
-        max-height: none;
+        max-height: calc(100vh - 200px);
         min-height: 400px;
+        overflow: hidden;
     }
 
     .chat-messages {
@@ -705,8 +710,10 @@ textarea.form-control::placeholder {
 @media (max-width: 480px) {
     .chat-container {
         height: calc(100vh - 180px);
+        max-height: calc(100vh - 180px);
         min-height: 350px;
         border-radius: 0.5rem;
+        overflow: hidden;
     }
 
     .chat-input-form {
