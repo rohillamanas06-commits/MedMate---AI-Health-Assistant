@@ -8,7 +8,7 @@
 
 /* Ensure body background changes with theme */
 body.dark-mode .dashboard-body {
-    background: #000000 !important;
+    background: #121212 !important;
 }
 
 
@@ -22,6 +22,31 @@ body.dark-mode .dashboard-body {
     position: fixed;
     height: 100vh;
     z-index: 100;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode styles for sidebar */
+body.dark-mode .sidebar {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure sidebar links are visible in dark mode */
+body.dark-mode .sidebar-link {
+    color: #e0e0e0;
+}
+
+body.dark-mode .sidebar-link:hover,
+body.dark-mode .sidebar-link.active {
+    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.1);
+}
+
+/* Ensure sidebar header is visible in dark mode */
+body.dark-mode .sidebar-header {
+    color: #ffffff;
+    border-bottom-color: #333;
 }
 
 .sidebar-header {
