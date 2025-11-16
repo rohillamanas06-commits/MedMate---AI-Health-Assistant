@@ -1073,7 +1073,17 @@ body.dark-mode .sidebar {
 }
 
 body.dark-mode .topbar {
-    background: #0a0a0a !important;
+    background: var(--primary-color) !important; /* Keep the purple color in dark mode */
+    color: white; /* Ensure text is visible on the purple background */
+}
+
+/* Ensure topbar text is visible in dark mode */
+body.dark-mode .topbar-user {
+    color: white;
+}
+
+body.dark-mode .topbar-user i {
+    color: white;
 }
 
 body.dark-mode .hospital-item {
