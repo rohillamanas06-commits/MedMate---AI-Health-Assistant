@@ -27,6 +27,14 @@
     font-weight: bold;
     color: var(--primary-color);
     border-bottom: 1px solid var(--border-color);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+}
+
+.sidebar-header:hover {
+    background-color: var(--light-color);
+    opacity: 0.9;
 }
 
 .sidebar-header i {
@@ -74,6 +82,18 @@
     flex: 1;
     margin-left: 260px;
     padding: 2rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+}
+
+.main-content > .content-section.active {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Topbar */
@@ -116,6 +136,27 @@
 .content-section.active {
     display: block;
     animation: fadeIn 0.3s;
+}
+
+/* AI Assistant Section - Keep in one frame */
+#assistant.content-section.active {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+#assistant .page-title,
+#assistant .page-subtitle {
+    flex-shrink: 0;
+    margin-bottom: 1rem;
+}
+
+#assistant .chat-container {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
 }
 
 .page-title {
@@ -432,8 +473,9 @@ textarea.form-control::placeholder {
     background: var(--bg-secondary);
     border-radius: 0.75rem;
     box-shadow: var(--shadow);
-    height: 600px;
-    max-height: calc(100vh - 250px);
+    height: calc(100vh - 320px); /* Account for topbar, title, subtitle, padding */
+    max-height: calc(100vh - 320px);
+    min-height: 400px;
     display: flex;
     flex-direction: column;
     transition: background 0.3s;
@@ -651,6 +693,13 @@ textarea.form-control::placeholder {
     .main-content {
         margin-left: 0;
         padding: 1rem;
+        overflow: hidden;
+        height: 100vh;
+        max-height: 100vh;
+    }
+
+    .main-content > .content-section.active {
+        overflow-y: auto;
     }
 
     .mobile-sidebar-toggle {
@@ -669,10 +718,15 @@ textarea.form-control::placeholder {
         max-width: 90%;
     }
 
+    #assistant.content-section.active {
+        height: 100%;
+        max-height: 100%;
+    }
+
     .chat-container {
-        height: calc(100vh - 200px);
-        max-height: calc(100vh - 200px);
-        min-height: 400px;
+        height: 100%;
+        max-height: 100%;
+        min-height: 350px;
         overflow: hidden;
     }
 
@@ -719,10 +773,15 @@ textarea.form-control::placeholder {
 
 /* Android-specific optimizations */
 @media (max-width: 480px) {
+    #assistant.content-section.active {
+        height: 100%;
+        max-height: 100%;
+    }
+
     .chat-container {
-        height: calc(100vh - 180px);
-        max-height: calc(100vh - 180px);
-        min-height: 350px;
+        height: 100%;
+        max-height: 100%;
+        min-height: 300px;
         border-radius: 0.5rem;
         overflow: hidden;
     }
