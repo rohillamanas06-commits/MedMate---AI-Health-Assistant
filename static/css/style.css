@@ -508,12 +508,22 @@ body.dark-mode {
 }
 
 body.dark-mode .navbar {
-    background: #0a0a0a;
-    border-bottom: 1px solid #1a1a1a;
+    background: #121212;  /* Dark background color */
+    border-bottom: 1px solid #2d2d2d;  /* Slightly lighter border for depth */
 }
 
 body.dark-mode .nav-brand {
-    color: var(--primary-color);
+    color: #ffffff;  /* White text for better contrast */
+}
+
+body.dark-mode .nav-link {
+    color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white for links */
+}
+
+body.dark-mode .nav-link:hover,
+body.dark-mode .nav-link.active {
+    color: #ffffff;  /* Full white on hover/active */
+    opacity: 1;
 }
 
 body.dark-mode .nav-link {
