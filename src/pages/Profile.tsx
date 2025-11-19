@@ -63,7 +63,7 @@ export default function Profile() {
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-6">
               <div className="relative">
                 <Avatar className="h-20 w-20 sm:h-32 sm:w-32 border-4 border-primary/20">
-                  <AvatarImage src="/favicon.ico" alt={user.username} />
+                  <AvatarImage src="/medmate-logo.svg" alt={user.username} />
                 </Avatar>
               </div>
               <div className="text-center sm:text-left flex-1">
