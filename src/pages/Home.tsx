@@ -16,6 +16,7 @@ import {
   Github,
   Mail,
   Linkedin,
+  Users,
   HeartPulse,
   Stethoscope,
   Microscope,
@@ -342,6 +343,59 @@ export default function Home() {
                   title="Email"
                 >
                   <Mail className="h-6 w-6" />
+                </a>
+                <a 
+                  href="https://peerlist.io/rohillamanas06" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 hover:shadow-lg transition-all duration-300 flex items-center justify-center text-white hover:scale-110 group relative overflow-hidden shadow-lg"
+                  title="Peerlist"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                  <div className="relative w-7 h-7 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <svg 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      className="w-5 h-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path 
+                        d="M6 4H14C17.3137 4 20 6.68629 20 10C20 13.3137 17.3137 16 14 16H6V4Z" 
+                        className="stroke-current" 
+                        strokeWidth="2" 
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path 
+                        d="M6 4V20" 
+                        className="stroke-current" 
+                        strokeWidth="2" 
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path 
+                        d="M6 12H14" 
+                        className="stroke-current animate-draw" 
+                        strokeWidth="2" 
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          strokeDasharray: '0 1000',
+                          animation: 'draw 1.5s ease-out forwards',
+                        }}
+                      />
+                      <style>
+                        {`
+                        @keyframes draw {
+                          to {
+                            stroke-dasharray: 1000 1000;
+                          }
+                        }
+                        `}
+                      </style>
+                    </svg>
+                  </div>
+                  <div className="absolute inset-0 rounded-full border-2 border-white/10 group-hover:border-white/30 transition-all duration-300"></div>
                 </a>
                 <a 
                   href="https://www.linkedin.com/in/manas-rohilla-b73415338/" 
