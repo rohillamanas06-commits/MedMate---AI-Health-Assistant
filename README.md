@@ -1,4 +1,4 @@
-# 🏥 MedMate - AI Medical Assistant - v2
+# 🏥 MedMate - AI Medical Assistant
 
 
 ## About MedMate
