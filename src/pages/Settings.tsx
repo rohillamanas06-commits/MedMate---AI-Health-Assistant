@@ -222,20 +222,6 @@ export default function Settings() {
             </div>
           </Card>
 
-          {/* Warning Card */}
-          <Card className="p-3 sm:p-6 bg-yellow-500/10 border-yellow-500/20">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-yellow-600 mb-1 text-sm sm:text-base">Important Notice</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Deleting your history is permanent and irreversible. Once deleted, you will not be able to recover any of your data. 
-                  Make sure you really want to delete this information before proceeding.
-                </p>
-              </div>
-            </div>
-          </Card>
-
           {/* Account Deletion */}
           <Card className="p-4 sm:p-8 border border-destructive/20 bg-destructive/5 animate-fade-in">
             <div className="flex flex-col gap-4">
@@ -308,6 +294,20 @@ export default function Settings() {
                   </Button>
                 </div>
               )}
+            </div>
+          </Card>
+
+          {/* Warning Card */}
+          <Card className="p-3 sm:p-6 bg-yellow-500/10 border-yellow-500/20">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-yellow-600 mb-1 text-sm sm:text-base">Important Notice</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Deleting your history is permanent and irreversible. Once deleted, you will not be able to recover any of your data. 
+                  Make sure you really want to delete this information before proceeding.
+                </p>
+              </div>
             </div>
           </Card>
         </div>
