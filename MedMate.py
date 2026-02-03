@@ -268,6 +268,48 @@ def ensure_db_initialized():
             else:
                 print("⚠️ Database initialization failed, but continuing...")
     
+    # IMPORTANT: Ensure credits tables exist on EVERY request (fixes Google login issues)
+    # This runs once per app instance but ensures tables exist before any credits operation
+    if not hasattr(app, '_credits_tables_ensured'):
+        try:
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS credits_transactions (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                        transaction_type VARCHAR(50) NOT NULL,
+                        credits_amount INTEGER NOT NULL,
+                        credits_before INTEGER NOT NULL,
+                        credits_after INTEGER NOT NULL,
+                        description TEXT,
+                        payment_id VARCHAR(255),
+                        order_id VARCHAR(255),
+                        amount_paid DECIMAL(10, 2),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS payment_orders (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                        order_id VARCHAR(255) UNIQUE NOT NULL,
+                        amount DECIMAL(10, 2) NOT NULL,
+                        currency VARCHAR(3) DEFAULT 'INR',
+                        credits_amount INTEGER NOT NULL,
+                        status VARCHAR(50) DEFAULT 'created',
+                        payment_id VARCHAR(255),
+                        payment_signature VARCHAR(255),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.commit()
+            app._credits_tables_ensured = True
+            print("✅ Credits tables ensured in before_request")
+        except Exception as e:
+            print(f"⚠️ Credits tables check in before_request: {e}")
+    
     # Refresh session expiration time on each request if user is authenticated
     if 'user_id' in session:
         session.permanent = True
