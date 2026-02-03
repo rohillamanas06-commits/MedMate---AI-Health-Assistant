@@ -868,125 +868,165 @@ def ensure_credits_tables_exist():
         return False
 
 def add_credits(user_id, amount, description, payment_id=None, order_id=None, amount_paid=None):
-    """Add credits to user account and log transaction"""
+    """Add credits to user account and log transaction - uses raw SQL for reliability"""
     try:
-        user = User.query.get(user_id)
-        if not user:
-            return False
+        from sqlalchemy import text
         
-        current_credits = user.credits or 0
-        new_credits = current_credits + amount
-        
-        # Update user credits
-        user.credits = new_credits
-        
-        # Try to log transaction
+        # First, ensure credits tables exist
         try:
-            transaction = CreditsTransaction(
-                user_id=user_id,
-                transaction_type='purchase',
-                credits_amount=amount,
-                credits_before=current_credits,
-                credits_after=new_credits,
-                description=description,
-                payment_id=payment_id,
-                order_id=order_id,
-                amount_paid=amount_paid
-            )
-            db.session.add(transaction)
-        except Exception as trans_error:
-            print(f"⚠️ Could not log purchase transaction: {trans_error}")
-            # Ensure tables exist and retry
-            ensure_credits_tables_exist()
-            try:
-                transaction = CreditsTransaction(
-                    user_id=user_id,
-                    transaction_type='purchase',
-                    credits_amount=amount,
-                    credits_before=current_credits,
-                    credits_after=new_credits,
-                    description=description,
-                    payment_id=payment_id,
-                    order_id=order_id,
-                    amount_paid=amount_paid
-                )
-                db.session.add(transaction)
-            except:
-                pass  # Continue without transaction logging
+            with db.engine.connect() as conn:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS credits_transactions (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                        transaction_type VARCHAR(50) NOT NULL,
+                        credits_amount INTEGER NOT NULL,
+                        credits_before INTEGER NOT NULL,
+                        credits_after INTEGER NOT NULL,
+                        description TEXT,
+                        payment_id VARCHAR(255),
+                        order_id VARCHAR(255),
+                        amount_paid DECIMAL(10, 2),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.commit()
+        except Exception as table_err:
+            print(f"⚠️ Table creation check: {table_err}")
         
-        db.session.commit()
+        # Get user using raw SQL to avoid ORM issues
+        with db.engine.connect() as conn:
+            result = conn.execute(text("SELECT id, credits FROM \"user\" WHERE id = :user_id"), {"user_id": user_id})
+            user_row = result.fetchone()
+            
+            if not user_row:
+                return False
+            
+            current_credits = user_row[1] if user_row[1] is not None else 0
+            new_credits = current_credits + amount
+            
+            # Update user credits using raw SQL
+            conn.execute(text("""
+                UPDATE "user" SET credits = :new_credits WHERE id = :user_id
+            """), {"new_credits": new_credits, "user_id": user_id})
+            
+            # Log transaction using raw SQL
+            try:
+                conn.execute(text("""
+                    INSERT INTO credits_transactions (user_id, transaction_type, credits_amount, credits_before, credits_after, description, payment_id, order_id, amount_paid, created_at)
+                    VALUES (:user_id, 'purchase', :amount, :credits_before, :credits_after, :description, :payment_id, :order_id, :amount_paid, NOW())
+                """), {
+                    "user_id": user_id,
+                    "amount": amount,
+                    "credits_before": current_credits,
+                    "credits_after": new_credits,
+                    "description": description,
+                    "payment_id": payment_id,
+                    "order_id": order_id,
+                    "amount_paid": float(amount_paid) if amount_paid else None
+                })
+            except Exception as log_err:
+                print(f"⚠️ Could not log purchase transaction: {log_err}")
+            
+            conn.commit()
         
         print(f"✅ Added {amount} credits to user {user_id}. New balance: {new_credits}")
         return True
     except Exception as e:
         print(f"❌ Error adding credits: {e}")
-        db.session.rollback()
+        import traceback
+        traceback.print_exc()
         return False
 
 def deduct_credits(user_id, amount, description):
-    """Deduct credits from user account and log transaction"""
+    """Deduct credits from user account and log transaction - uses raw SQL for reliability"""
     try:
-        user = User.query.get(user_id)
-        if not user:
-            return False, "User not found"
+        from sqlalchemy import text
         
-        current_credits = user.credits or 0
-        
-        if current_credits < amount:
-            return False, "Insufficient credits"
-        
-        new_credits = current_credits - amount
-        
-        # Update user credits and usage
-        user.credits = new_credits
-        user.credits_used = (user.credits_used or 0) + amount
-        
-        # Try to log transaction - create table if it doesn't exist
+        # First, ensure credits tables exist
         try:
-            transaction = CreditsTransaction(
-                user_id=user_id,
-                transaction_type='deduct',
-                credits_amount=amount,
-                credits_before=current_credits,
-                credits_after=new_credits,
-                description=description
-            )
-            db.session.add(transaction)
-        except Exception as trans_error:
-            print(f"⚠️ Could not log transaction (table may not exist): {trans_error}")
-            # Ensure tables exist and retry
-            ensure_credits_tables_exist()
-            try:
-                transaction = CreditsTransaction(
-                    user_id=user_id,
-                    transaction_type='deduct',
-                    credits_amount=amount,
-                    credits_before=current_credits,
-                    credits_after=new_credits,
-                    description=description
-                )
-                db.session.add(transaction)
-            except Exception as retry_error:
-                print(f"⚠️ Could not log transaction after retry: {retry_error}")
-                # Continue without transaction logging - credits will still be deducted
+            with db.engine.connect() as conn:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS credits_transactions (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                        transaction_type VARCHAR(50) NOT NULL,
+                        credits_amount INTEGER NOT NULL,
+                        credits_before INTEGER NOT NULL,
+                        credits_after INTEGER NOT NULL,
+                        description TEXT,
+                        payment_id VARCHAR(255),
+                        order_id VARCHAR(255),
+                        amount_paid DECIMAL(10, 2),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.commit()
+        except Exception as table_err:
+            print(f"⚠️ Table creation check: {table_err}")
         
-        db.session.commit()
+        # Get user using raw SQL to avoid ORM issues
+        with db.engine.connect() as conn:
+            result = conn.execute(text("SELECT id, credits, credits_used FROM \"user\" WHERE id = :user_id"), {"user_id": user_id})
+            user_row = result.fetchone()
+            
+            if not user_row:
+                return False, "User not found"
+            
+            current_credits = user_row[1] if user_row[1] is not None else 0
+            current_credits_used = user_row[2] if user_row[2] is not None else 0
+            
+            if current_credits < amount:
+                return False, "Insufficient credits"
+            
+            new_credits = current_credits - amount
+            new_credits_used = current_credits_used + amount
+            
+            # Update user credits using raw SQL
+            conn.execute(text("""
+                UPDATE "user" SET credits = :new_credits, credits_used = :new_credits_used WHERE id = :user_id
+            """), {"new_credits": new_credits, "new_credits_used": new_credits_used, "user_id": user_id})
+            
+            # Log transaction using raw SQL
+            try:
+                conn.execute(text("""
+                    INSERT INTO credits_transactions (user_id, transaction_type, credits_amount, credits_before, credits_after, description, created_at)
+                    VALUES (:user_id, 'deduct', :amount, :credits_before, :credits_after, :description, NOW())
+                """), {
+                    "user_id": user_id,
+                    "amount": amount,
+                    "credits_before": current_credits,
+                    "credits_after": new_credits,
+                    "description": description
+                })
+            except Exception as log_err:
+                print(f"⚠️ Could not log transaction: {log_err}")
+                # Continue without logging - credits are still deducted
+            
+            conn.commit()
         
         print(f"✅ Deducted {amount} credits from user {user_id}. New balance: {new_credits}")
         return True, None
     except Exception as e:
         print(f"❌ Error deducting credits: {e}")
-        db.session.rollback()
+        import traceback
+        traceback.print_exc()
         return False, "Failed to deduct credits"
 
 def check_credits(user_id, required_credits=1):
-    """Check if user has enough credits"""
+    """Check if user has enough credits - uses raw SQL for reliability"""
     try:
-        user = User.query.get(user_id)
-        if not user:
-            return False
+        from sqlalchemy import text
         
-        return (user.credits or 0) >= required_credits
+        with db.engine.connect() as conn:
+            result = conn.execute(text("SELECT credits FROM \"user\" WHERE id = :user_id"), {"user_id": user_id})
+            row = result.fetchone()
+            
+            if not row:
+                return False
+            
+            credits = row[0] if row[0] is not None else 0
+            return credits >= required_credits
     except Exception as e:
         print(f"❌ Error checking credits: {e}")
         return False
