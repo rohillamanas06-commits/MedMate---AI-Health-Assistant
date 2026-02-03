@@ -3145,6 +3145,61 @@ def confirm_account_deletion():
 
 # ==================== UTILITY ROUTES ====================
 
+@app.route('/api/admin/fix-user-credits', methods=['POST'])
+def fix_user_credits():
+    """Temporary admin endpoint to fix user credits and ensure tables exist"""
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        admin_key = data.get('admin_key')
+        
+        # Simple security check
+        if admin_key != 'medmate_fix_credits_2026':
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        if not email:
+            return jsonify({'error': 'Email required'}), 400
+        
+        # First, ensure credits tables exist
+        print(f"🔧 Ensuring credits tables exist...")
+        ensure_credits_tables_exist()
+        
+        # Find user by email
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        old_credits = user.credits
+        old_credits_used = user.credits_used
+        
+        # Fix NULL credits
+        if user.credits is None:
+            user.credits = 5
+        if user.credits_used is None:
+            user.credits_used = 0
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'User credits fixed',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'old_credits': old_credits,
+                'old_credits_used': old_credits_used,
+                'new_credits': user.credits,
+                'new_credits_used': user.credits_used
+            },
+            'tables_ensured': True
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Fix credits error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
