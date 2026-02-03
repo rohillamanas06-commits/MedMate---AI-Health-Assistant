@@ -784,6 +784,47 @@ def speak_text(text):
 
 # ==================== CREDITS FUNCTIONS ====================
 
+def ensure_credits_tables_exist():
+    """Ensure credits system tables exist in database"""
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS credits_transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                    transaction_type VARCHAR(50) NOT NULL,
+                    credits_amount INTEGER NOT NULL,
+                    credits_before INTEGER NOT NULL,
+                    credits_after INTEGER NOT NULL,
+                    description TEXT,
+                    payment_id VARCHAR(255),
+                    order_id VARCHAR(255),
+                    amount_paid DECIMAL(10, 2),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS payment_orders (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                    order_id VARCHAR(255) UNIQUE NOT NULL,
+                    amount DECIMAL(10, 2) NOT NULL,
+                    currency VARCHAR(3) DEFAULT 'INR',
+                    credits_amount INTEGER NOT NULL,
+                    status VARCHAR(50) DEFAULT 'created',
+                    payment_id VARCHAR(255),
+                    payment_signature VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.commit()
+        return True
+    except Exception as e:
+        print(f"⚠️ Could not ensure credits tables: {e}")
+        return False
+
 def add_credits(user_id, amount, description, payment_id=None, order_id=None, amount_paid=None):
     """Add credits to user account and log transaction"""
     try:
@@ -797,20 +838,40 @@ def add_credits(user_id, amount, description, payment_id=None, order_id=None, am
         # Update user credits
         user.credits = new_credits
         
-        # Log transaction
-        transaction = CreditsTransaction(
-            user_id=user_id,
-            transaction_type='purchase',
-            credits_amount=amount,
-            credits_before=current_credits,
-            credits_after=new_credits,
-            description=description,
-            payment_id=payment_id,
-            order_id=order_id,
-            amount_paid=amount_paid
-        )
+        # Try to log transaction
+        try:
+            transaction = CreditsTransaction(
+                user_id=user_id,
+                transaction_type='purchase',
+                credits_amount=amount,
+                credits_before=current_credits,
+                credits_after=new_credits,
+                description=description,
+                payment_id=payment_id,
+                order_id=order_id,
+                amount_paid=amount_paid
+            )
+            db.session.add(transaction)
+        except Exception as trans_error:
+            print(f"⚠️ Could not log purchase transaction: {trans_error}")
+            # Ensure tables exist and retry
+            ensure_credits_tables_exist()
+            try:
+                transaction = CreditsTransaction(
+                    user_id=user_id,
+                    transaction_type='purchase',
+                    credits_amount=amount,
+                    credits_before=current_credits,
+                    credits_after=new_credits,
+                    description=description,
+                    payment_id=payment_id,
+                    order_id=order_id,
+                    amount_paid=amount_paid
+                )
+                db.session.add(transaction)
+            except:
+                pass  # Continue without transaction logging
         
-        db.session.add(transaction)
         db.session.commit()
         
         print(f"✅ Added {amount} credits to user {user_id}. New balance: {new_credits}")
@@ -838,17 +899,35 @@ def deduct_credits(user_id, amount, description):
         user.credits = new_credits
         user.credits_used = (user.credits_used or 0) + amount
         
-        # Log transaction
-        transaction = CreditsTransaction(
-            user_id=user_id,
-            transaction_type='deduct',
-            credits_amount=amount,
-            credits_before=current_credits,
-            credits_after=new_credits,
-            description=description
-        )
+        # Try to log transaction - create table if it doesn't exist
+        try:
+            transaction = CreditsTransaction(
+                user_id=user_id,
+                transaction_type='deduct',
+                credits_amount=amount,
+                credits_before=current_credits,
+                credits_after=new_credits,
+                description=description
+            )
+            db.session.add(transaction)
+        except Exception as trans_error:
+            print(f"⚠️ Could not log transaction (table may not exist): {trans_error}")
+            # Ensure tables exist and retry
+            ensure_credits_tables_exist()
+            try:
+                transaction = CreditsTransaction(
+                    user_id=user_id,
+                    transaction_type='deduct',
+                    credits_amount=amount,
+                    credits_before=current_credits,
+                    credits_after=new_credits,
+                    description=description
+                )
+                db.session.add(transaction)
+            except Exception as retry_error:
+                print(f"⚠️ Could not log transaction after retry: {retry_error}")
+                # Continue without transaction logging - credits will still be deducted
         
-        db.session.add(transaction)
         db.session.commit()
         
         print(f"✅ Deducted {amount} credits from user {user_id}. New balance: {new_credits}")
