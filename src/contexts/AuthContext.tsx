@@ -16,7 +16,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -59,17 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const googleLogin = async (credential: string) => {
-    try {
-      const response: any = await api.googleLogin(credential);
-      setUser(response.user);
-      toast.success('Welcome back!');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Google login failed');
-      throw error;
-    }
-  };
-
   const register = async (username: string, email: string, password: string) => {
     try {
       const response: any = await api.register(username, email, password);
@@ -98,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, googleLogin, register, logout, checkAuth, updateCredits }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth, updateCredits }}>
       {children}
     </AuthContext.Provider>
   );
