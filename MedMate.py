@@ -59,11 +59,12 @@ CORS(app,
          'http://localhost:5173', 
          'http://127.0.0.1:5173',
          'https://med-mate-ai-health-assistant-v2.vercel.app',  # Your Vercel domain
-         'https://*.vercel.app',  # All Vercel preview deployments
-         'https://*.onrender.com'  # Render deployment
+         'https://medmate-ai-health-assistant-lhwk.onrender.com',  # Render deployment
      ],
-     allow_headers=['Content-Type', 'Authorization'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     expose_headers=['Content-Type', 'Authorization'],
+     max_age=3600)
 
 # Session configuration for proper cookie handling
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -197,6 +198,32 @@ def ensure_db_initialized():
     if 'user_id' in session:
         session.permanent = True
         session.modified = True  # This tells Flask to send a new cookie with updated expiration
+
+# Hook to add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    """Add CORS headers to all responses"""
+    origin = request.headers.get('Origin')
+    allowed_origins = [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'https://med-mate-ai-health-assistant-v2.vercel.app',
+        'https://medmate-ai-health-assistant-lhwk.onrender.com',
+    ]
+    
+    if origin in allowed_origins:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept'
+        response.headers['Access-Control-Expose-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Max-Age'] = '3600'
+    
+    return response
 
 # Initialize text-to-speech engine
 tts_engine = None
@@ -1793,10 +1820,13 @@ def get_latest_reset_link():
 
 # ==================== CREDITS & PAYMENT ROUTES ====================
 
-@app.route('/api/credits/balance', methods=['GET'])
+@app.route('/api/credits/balance', methods=['GET', 'OPTIONS'])
 @login_required
 def get_credits_balance():
     """Get user's credit balance"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         user = User.query.get(session['user_id'])
         if not user:
@@ -1808,12 +1838,17 @@ def get_credits_balance():
         }), 200
     except Exception as e:
         print(f"❌ Get credits error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': 'Internal server error'}), 500
 
-@app.route('/api/credits/transactions', methods=['GET'])
+@app.route('/api/credits/transactions', methods=['GET', 'OPTIONS'])
 @login_required
 def get_credit_transactions():
     """Get user's credit transaction history"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         limit = request.args.get('limit', 50, type=int)
         transactions = CreditsTransaction.query.filter_by(
@@ -1840,11 +1875,16 @@ def get_credit_transactions():
         return jsonify({'transactions': transactions_list}), 200
     except Exception as e:
         print(f"❌ Get transactions error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': 'Internal server error'}), 500
 
-@app.route('/api/credits/packages', methods=['GET'])
+@app.route('/api/credits/packages', methods=['GET', 'OPTIONS'])
 def get_credit_packages():
     """Get available credit packages"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     return jsonify({
         'packages': [
             {
@@ -1867,16 +1907,26 @@ def get_credit_packages():
         ]
     }), 200
 
-@app.route('/api/payment/create-order', methods=['POST'])
+@app.route('/api/payment/create-order', methods=['POST', 'OPTIONS'])
 @login_required
 def create_payment_order():
     """Create Razorpay order for credit purchase"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
+        print(f"💳 Payment order request received from user {session.get('user_id')}")
+        
         if not razorpay_client:
+            print("❌ Razorpay client not configured")
             return jsonify({'error': 'Payment service not configured'}), 503
         
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid request data'}), 400
+            
         package_id = data.get('package_id')
+        print(f"📦 Package ID requested: {package_id}")
         
         if package_id not in CREDIT_PACKAGES:
             return jsonify({'error': 'Invalid package selected'}), 400
@@ -1888,6 +1938,8 @@ def create_payment_order():
         user = User.query.get(session['user_id'])
         if not user:
             return jsonify({'error': 'User not found'}), 404
+        
+        print(f"👤 Creating order for user: {user.username} ({user.email})")
         
         # Create Razorpay order
         order_data = {
@@ -1930,20 +1982,26 @@ def create_payment_order():
         }), 201
     except Exception as e:
         db.session.rollback()
-        print(f"❌ Create order error: {e}")
+        print(f"❌ Create order error: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': 'Failed to create payment order'}), 500
+        return jsonify({'error': f'Failed to create payment order: {str(e)}'}), 500
 
-@app.route('/api/payment/verify', methods=['POST'])
+@app.route('/api/payment/verify', methods=['POST', 'OPTIONS'])
 @login_required
 def verify_payment():
     """Verify Razorpay payment and add credits"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         if not razorpay_client:
             return jsonify({'error': 'Payment service not configured'}), 503
         
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid request data'}), 400
+            
         razorpay_order_id = data.get('razorpay_order_id')
         razorpay_payment_id = data.get('razorpay_payment_id')
         razorpay_signature = data.get('razorpay_signature')
@@ -2009,10 +2067,13 @@ def verify_payment():
 
 # ==================== DIAGNOSIS ROUTES ====================
 
-@app.route('/api/diagnose', methods=['POST'])
+@app.route('/api/diagnose', methods=['POST', 'OPTIONS'])
 @login_required
 def diagnose():
     """Analyze symptoms and provide diagnosis"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         # Check if user has enough credits
         if not check_credits(session['user_id'], 1):
@@ -2022,6 +2083,9 @@ def diagnose():
             }), 402  # Payment Required
         
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid request data'}), 400
+            
         symptoms = data.get('symptoms', '')
         
         if not symptoms:
@@ -2056,12 +2120,18 @@ def diagnose():
     
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Diagnose error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Diagnosis failed: {str(e)}'}), 500
 
-@app.route('/api/diagnose-image', methods=['POST'])
+@app.route('/api/diagnose-image', methods=['POST', 'OPTIONS'])
 @login_required
 def diagnose_image():
     """Analyze medical image with optional symptoms"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         # Check if user has enough credits
         if not check_credits(session['user_id'], 1):
@@ -2188,10 +2258,13 @@ def diagnosis_history():
 
 # ==================== CHAT ASSISTANT ROUTES ====================
 
-@app.route('/api/chat', methods=['POST'])
+@app.route('/api/chat', methods=['POST', 'OPTIONS'])
 @login_required
 def chat():
     """Chat with AI assistant"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     try:
         # Check if user has enough credits
         if not check_credits(session['user_id'], 1):
@@ -2201,6 +2274,9 @@ def chat():
             }), 402  # Payment Required
         
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid request data'}), 400
+            
         message = data.get('message', '')
         
         if not message:
@@ -2243,7 +2319,10 @@ def chat():
     
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Chat error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
 
 @app.route('/api/chat-history', methods=['GET'])
 @login_required
