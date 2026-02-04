@@ -204,7 +204,7 @@ export const Navbar = () => {
               <NavLinks isMobile={true} />
               {user ? (
                 <>
-                  <Button variant="outline" onClick={handleBuyCredits} className="justify-start">
+                  <Button variant="outline" onClick={handleBuyCredits}>
                     <Coins className="h-4 w-4 mr-2" />
                     Buy Credits
                   </Button>
