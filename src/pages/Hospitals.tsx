@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, Star, Clock, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Star, Clock, Loader2, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -88,7 +88,23 @@ export default function Hospitals() {
             <p className="text-muted-foreground">Searching for hospitals...</p>
           </Card>
         ) : hospitals.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCurrentLocation}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
             {hospitals.map((hospital, index) => (
               <Card
                 key={index}
@@ -138,6 +154,7 @@ export default function Hospitals() {
                 </Button>
               </Card>
             ))}
+            </div>
           </div>
         ) : (
           <Card className="p-12 text-center glass">
