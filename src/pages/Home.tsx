@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Footer } from '@/components/Footer';
 import heroImage from '@/assets/hero-medical.jpg';
 import diagnosisIcon from '@/assets/diagnosis-icon.png';
 import chatIcon from '@/assets/chat-icon.png';
@@ -240,6 +241,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Footer />
 
     </div>
   );

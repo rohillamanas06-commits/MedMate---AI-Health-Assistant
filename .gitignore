@@ -47,3 +47,6 @@ static/uploads/*
 *.njsproj
 *.sln
 *.sw?
+
+# view_accounts.py
+view_accounts.py
