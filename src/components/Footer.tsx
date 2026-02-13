@@ -19,7 +19,7 @@ export function Footer() {
             <img
               src="https://dqy38fnwh4fqs.cloudfront.net/website/project-spotlight/project-week-rank-one-dark.svg"
               alt="Peerlist Project of the Week"
-              className="h-12 w-auto"
+              className="h-16 w-auto md:h-12"
             />
           </a>
         </div>
