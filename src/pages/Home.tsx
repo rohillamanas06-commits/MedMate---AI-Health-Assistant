@@ -160,33 +160,39 @@ export default function Home() {
       {/* Video Demo Section - Desktop Only */}
       <section className="hidden lg:block py-8 sm:py-16 lg:py-24 bg-gradient-to-br from-background via-primary/5 to-background overflow-hidden">
         <div className="container px-4 sm:px-6">
-          <div className="text-center space-y-3 sm:space-y-4 mb-6 sm:mb-8 lg:mb-12 animate-slide-up">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold px-4">
-              Experience the Future of{' '}
-              <span className="gradient-text">Healthcare</span>
-            </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-              Watch how MedMate transforms healthcare with AI-powered assistance
-            </p>
-          </div>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left Side - Text Content */}
+            <div className="space-y-6 animate-slide-up">
+              <h2 className="text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
+                Experience the Future of{' '}
+                <span className="gradient-text">Healthcare</span>
+              </h2>
+              
+              <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+                Watch how MedMate transforms healthcare with AI-powered assistance. 
+                Our intelligent platform provides instant medical insights, accurate 
+                symptom analysis, and connects you with healthcare professionals seamlessly.
+              </p>
+            </div>
 
-          <div className="relative max-w-4xl mx-auto animate-fade-in px-2 sm:px-0">
-            {/* Video container */}
-            <div className="relative rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl sm:shadow-2xl">
-              <div className="relative aspect-video overflow-hidden">
-                <video
-                  ref={videoRef}
-                  className="w-full h-[135%] object-cover border-none outline-none -translate-y-[13.5%]"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  <source src="/MedMate.mp4#t=4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+            {/* Right Side - Video */}
+            <div className="relative animate-fade-in">
+              <div className="relative rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl sm:shadow-2xl">
+                <div className="relative aspect-video overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-[135%] object-cover border-none outline-none -translate-y-[13.5%]"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    <source src="/MedMate.mp4#t=4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
               </div>
             </div>
           </div>
