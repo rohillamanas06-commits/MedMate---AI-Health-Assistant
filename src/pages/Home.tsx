@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,6 +20,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Medical images for carousel - Original girl image + 3 realistic medical images
   const medicalImages = [
@@ -39,6 +40,30 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [medicalImages.length]);
+
+  // Set video playback rate and start time
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 2.5;
+      videoRef.current.currentTime = 11;
+
+      // Stop video 3 seconds before the end
+      const handleTimeUpdate = () => {
+        if (videoRef.current) {
+          const video = videoRef.current;
+          if (video.duration - video.currentTime <= 5) {
+            video.currentTime = 11; // Restart from beginning
+          }
+        }
+      };
+
+      videoRef.current.addEventListener('timeupdate', handleTimeUpdate);
+
+      return () => {
+        videoRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
+      };
+    }
+  }, []);
 
   const features = [
     {
@@ -126,6 +151,48 @@ export default function Home() {
                     }`}
                   />
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Video Demo Section */}
+      <section className="py-8 sm:py-16 lg:py-24 bg-gradient-to-br from-background via-primary/5 to-background overflow-hidden">
+        <div className="container">
+          <div className="text-center space-y-3 sm:space-y-4 mb-8 sm:mb-12 animate-slide-up">
+            <h2 className="text-4xl lg:text-5xl font-bold">
+              Experience the Future of{' '}
+              <span className="gradient-text">Healthcare</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Watch how MedMate transforms healthcare with AI-powered assistance
+            </p>
+          </div>
+
+          <div className="relative max-w-4xl mx-auto animate-fade-in">
+            {/* Outer glow effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-[2.5rem] blur-2xl opacity-30"></div>
+            
+            {/* Video container */}
+            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+              {/* Subtle shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none"></div>
+              
+              <div className="relative aspect-video overflow-hidden">
+                <video
+                  ref={videoRef}
+                  className="w-full h-[135%] object-cover border-none outline-none -translate-y-[13.5%]"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  <source src="/MedMate.mp4#t=4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
               </div>
             </div>
           </div>

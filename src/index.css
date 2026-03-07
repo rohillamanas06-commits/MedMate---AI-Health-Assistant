@@ -211,4 +211,43 @@ All colors MUST be HSL.
   html {
     scroll-behavior: smooth;
   }
+
+  /* Hide scrollbars globally */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* Remove black lines and borders from video containers */
+  video {
+    border: none;
+    outline: none;
+    display: block;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  video::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ensure video containers have no scrollbars */
+  .aspect-video {
+    overflow: hidden;
+  }
+
+  /* Ensure body and html have no scrollbar */
+  html, body {
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar, body::-webkit-scrollbar {
+    display: none;
+  }
 }
