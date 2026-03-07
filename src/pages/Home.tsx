@@ -157,8 +157,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Video Demo Section */}
-      <section className="py-8 sm:py-16 lg:py-24 bg-gradient-to-br from-background via-primary/5 to-background overflow-hidden">
+      {/* Video Demo Section - Desktop Only */}
+      <section className="hidden lg:block py-8 sm:py-16 lg:py-24 bg-gradient-to-br from-background via-primary/5 to-background overflow-hidden">
         <div className="container px-4 sm:px-6">
           <div className="text-center space-y-3 sm:space-y-4 mb-6 sm:mb-8 lg:mb-12 animate-slide-up">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold px-4">
@@ -171,14 +171,8 @@ export default function Home() {
           </div>
 
           <div className="relative max-w-4xl mx-auto animate-fade-in px-2 sm:px-0">
-            {/* Outer glow effect - hidden on mobile for better performance */}
-            <div className="hidden sm:block absolute -inset-1 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-[2.5rem] blur-2xl opacity-30"></div>
-            
             {/* Video container */}
-            <div className="relative rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl sm:shadow-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
-              {/* Subtle shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none"></div>
-              
+            <div className="relative rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-xl sm:shadow-2xl">
               <div className="relative aspect-video overflow-hidden">
                 <video
                   ref={videoRef}
