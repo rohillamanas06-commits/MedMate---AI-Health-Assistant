@@ -207,9 +207,9 @@ All colors MUST be HSL.
     background-clip: text;
   }
 
-  /* Smooth scrolling */
+  /* Instant page navigation (ScrollToTop handles this) */
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 
   /* Hide scrollbars globally */
