@@ -41,7 +41,7 @@ const sections = [
   },
   {
     title: '11. Governing Law',
-    body: `These Terms shall be governed by and construed in accordance with the laws of the State of California, United States, without regard to its conflict of law provisions.`,
+    body: `These Terms shall be governed by and construed in accordance with the laws`,
   },
   {
     title: '12. Contact',
