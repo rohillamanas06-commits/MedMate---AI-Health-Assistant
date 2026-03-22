@@ -201,7 +201,7 @@ export function AppSidebar() {
                       {t('navbar.language')}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="max-h-48 overflow-y-auto w-48 sm:w-56" sideOffset={8}>
+                      <DropdownMenuSubContent className="max-h-64 overflow-y-auto w-48 sm:w-56 sm:-translate-y-24" sideOffset={8}>
                         {LANGUAGES.map(lang => (
                           <DropdownMenuItem
                             key={lang.code}

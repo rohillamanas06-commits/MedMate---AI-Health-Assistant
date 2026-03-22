@@ -200,7 +200,7 @@ export default function ReportExplainer() {
             {t('explainer.subtitle')}
           </p>
           <div className={`mt-3 inline-flex items-center gap-2 px-3 sm:px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
-            <p className="text-xs sm:text-sm font-medium">
+            <p className="text-sm font-medium">
               💳 {hasCredits ? 'Each report analysis uses 1 credit' : '0 credits remaining. Please buy credits.'}
             </p>
             {!hasCredits && (
@@ -217,7 +217,7 @@ export default function ReportExplainer() {
             <Card className="p-4 sm:p-6 glass animate-fade-in w-full">
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label className="text-xs sm:text-sm">{t('explainer.upload_label')}</Label>
+                  <Label className="text-sm">{t('explainer.upload_label')}</Label>
                   <div
                     className="mt-2 border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-primary transition-colors"
                     onClick={() => document.getElementById('report-upload')?.click()}
@@ -225,7 +225,7 @@ export default function ReportExplainer() {
                     {selectedFile ? (
                       <div className="space-y-2">
                         <FileText className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-primary" />
-                        <p className="text-xs sm:text-sm font-medium truncate">{selectedFile.name}</p>
+                        <p className="text-sm font-medium truncate">{selectedFile.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {t('explainer.change_click')}
                         </p>
@@ -233,7 +233,7 @@ export default function ReportExplainer() {
                     ) : (
                       <div className="space-y-2">
                         <Upload className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-muted-foreground" />
-                        <p className="text-xs sm:text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           {t('explainer.upload_click')}
                         </p>
                         <p className="text-xs text-muted-foreground">{t('explainer.upload_desc')}</p>
@@ -249,20 +249,20 @@ export default function ReportExplainer() {
                   />
                 </div>
                 
-                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-xs sm:text-sm ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
+                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-sm ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-3 sm:h-4 w-3 sm:w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       {t('explainer.analyzing')}
                     </>
                   ) : !hasCredits ? (
                     <>
-                      <AlertCircle className="mr-2 h-3 sm:h-4 w-3 sm:w-4" />
+                      <AlertCircle className="mr-2 h-4 w-4" />
                       No Credits Available
                     </>
                   ) : (
                     <>
-                      <FileText className="mr-2 h-3 sm:h-4 w-3 sm:w-4" />
+                      <FileText className="mr-2 h-4 w-4" />
                       {t('explainer.analyze_btn')}
                     </>
                   )}
@@ -270,8 +270,8 @@ export default function ReportExplainer() {
               </div>
             </Card>
 
-            <Alert className="text-xs sm:text-sm w-full">
-              <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4" />
+            <Alert className="text-sm w-full">
+              <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <strong>{t('explainer.disclaimer_title')}</strong>{' '}
                 {t('explainer.disclaimer_text')}
@@ -284,43 +284,43 @@ export default function ReportExplainer() {
             {result ? (
               <div className="space-y-3 sm:space-y-4 animate-scale-in w-full">
                 <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
-                  <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 break-words">{t('explainer.summary_title')}</h2>
+                  <h2 className="text-2xl font-bold mb-3 sm:mb-4 break-words">{t('explainer.summary_title')}</h2>
                   
                   {/* Handle new text/PDF explanation format (english/hindi) */}
                   {result.explanation && (result.explanation.english || result.explanation.hindi) && !result.explanation.summary && (
                     <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
-                      <p className="text-xs sm:text-sm leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
+                      <p className="text-sm leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
                     </Card>
                   )}
 
                   {/* Handle legacy or image fallback explanation format */}
                   {(result.explanation?.summary || result.summary) && (
                     <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
-                      <p className="text-xs sm:text-sm leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
+                      <p className="text-sm leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
                     </Card>
                   )}
 
                   {/* Interpret Results Table handling */}
                   {result.interpreted && result.interpreted.length > 0 && (
                     <div className="mb-4 sm:mb-6 overflow-hidden">
-                      <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 break-words">Extracted Lab Results Table</h3>
+                      <h3 className="font-semibold text-lg mb-2 sm:mb-3 break-words">Extracted Lab Results Table</h3>
                       <div className="rounded-md border border-border/50 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                        <table className="w-full text-xs sm:text-sm text-left">
+                        <table className="w-full text-sm text-left">
                           <thead className="bg-muted/50 border-b border-border/50 sticky top-0">
                             <tr>
-                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm">Test</th>
-                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm">Value</th>
-                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm">Status</th>
-                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm hidden sm:table-cell">Note</th>
+                              <th className="p-2 sm:p-3 font-medium text-sm">Test</th>
+                              <th className="p-2 sm:p-3 font-medium text-sm">Value</th>
+                              <th className="p-2 sm:p-3 font-medium text-sm">Status</th>
+                              <th className="p-2 sm:p-3 font-medium text-sm hidden sm:table-cell">Note</th>
                             </tr>
                           </thead>
                           <tbody>
                             {result.interpreted.map((item: any, i: number) => (
                               <tr key={i} className="border-b border-border/10 hover:bg-muted/20 transition-colors">
-                                <td className="p-2 sm:p-3 font-medium text-primary text-xs sm:text-sm whitespace-nowrap">{item.test_name}</td>
-                                <td className="p-2 sm:p-3 text-xs sm:text-sm whitespace-nowrap">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
+                                <td className="p-2 sm:p-3 font-medium text-primary text-sm whitespace-nowrap">{item.test_name}</td>
+                                <td className="p-2 sm:p-3 text-sm whitespace-nowrap">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
                                 <td className="p-2 sm:p-3">
-                                  <span className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-semibold ${item.status === 'Normal' ? 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-400' : item.status === 'Unknown' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' : 'bg-red-100/80 text-red-800 dark:bg-red-900/40 dark:text-red-400'}`}>
+                                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.status === 'Normal' ? 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-400' : item.status === 'Unknown' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' : 'bg-red-100/80 text-red-800 dark:bg-red-900/40 dark:text-red-400'}`}>
                                     {item.status}
                                   </span>
                                 </td>
@@ -339,10 +339,10 @@ export default function ReportExplainer() {
                       (r: any) => r.status !== 'Normal' && r.status !== 'Unknown' && r.status !== 'Review'
                     ).length > 0 && (
                     <div className="mt-4 sm:mt-6 mb-4 sm:mb-6 overflow-hidden">
-                      <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-1 flex items-center gap-2 break-words">
+                      <h3 className="text-lg font-semibold mb-1 sm:mb-1 flex items-center gap-2 break-words">
                         <span>📊</span> Abnormal Values
                       </h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+                      <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
                         The bar shows where your value falls relative to the normal range.
                       </p>
                       {result.interpreted
@@ -364,11 +364,11 @@ export default function ReportExplainer() {
                   {/* Key Findings List handling */}
                   {((result.explanation?.key_findings) || result.key_findings) && ((result.explanation?.key_findings) || result.key_findings).length > 0 && (
                     <div className="mb-4 sm:mb-6">
-                      <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 break-words">{t('explainer.key_findings')}</h3>
+                      <h3 className="font-semibold text-lg mb-2 sm:mb-3 break-words">{t('explainer.key_findings')}</h3>
                       <ul className="space-y-1 sm:space-y-2">
                         {((result.explanation?.key_findings) || result.key_findings).map((finding: string, i: number) => (
-                          <li key={i} className="text-xs sm:text-sm flex items-start gap-2">
-                            <CheckCircle2 className="h-3 sm:h-4 w-3 sm:w-4 text-secondary mt-0.5 flex-shrink-0" />
+                          <li key={i} className="text-sm flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
                             <span className="break-words">{finding}</span>
                           </li>
                         ))}
@@ -379,12 +379,12 @@ export default function ReportExplainer() {
                   {/* Terms Explained handling */}
                   {((result.explanation?.terms) || result.terms) && ((result.explanation?.terms) || result.terms).length > 0 && (
                     <div className="mb-4 sm:mb-6">
-                      <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 break-words">{t('explainer.terms_explained')}</h3>
+                      <h3 className="font-semibold text-lg mb-2 sm:mb-3 break-words">{t('explainer.terms_explained')}</h3>
                       <div className="grid gap-2 sm:gap-3">
                         {((result.explanation?.terms) || result.terms).map((termItem: any, i: number) => (
                           <div key={i} className="p-2 sm:p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <h4 className="font-semibold text-primary text-xs sm:text-sm break-words">{termItem.term}</h4>
-                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{termItem.meaning}</p>
+                            <h4 className="font-semibold text-primary text-sm break-words">{termItem.term}</h4>
+                            <p className="text-sm text-muted-foreground mt-1 break-words">{termItem.meaning}</p>
                           </div>
                         ))}
                       </div>
@@ -393,8 +393,8 @@ export default function ReportExplainer() {
 
                   {/* Next Steps handling */}
                   {(result.explanation?.next_steps || result.next_steps) && (
-                    <Alert className="mb-4 bg-primary/5 border-primary/20 text-xs sm:text-sm">
-                      <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4 text-primary" />
+                    <Alert className="mb-4 bg-primary/5 border-primary/20 text-sm">
+                      <AlertCircle className="h-4 w-4 text-primary" />
                       <AlertDescription>
                         <strong className="text-primary">{t('explainer.next_steps')}</strong> <span className="break-words">{result.explanation?.next_steps || result.next_steps}</span>
                       </AlertDescription>
