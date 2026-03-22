@@ -53,12 +53,12 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLanguage: language, setLanguage } = useLanguage()
-  const { state, setOpen, isMobile } = useSidebar()
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar()
 
   // Helper function to close sidebar only on mobile
   const closeOnMobile = () => {
-    if (window.innerWidth < 768) { // md breakpoint
-      setOpen(false)
+    if (isMobile || window.innerWidth < 768) { // md breakpoint
+      setOpenMobile(false)
     }
   }
 
