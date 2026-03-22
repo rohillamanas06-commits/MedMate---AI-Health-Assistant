@@ -53,7 +53,7 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLanguage: language, setLanguage } = useLanguage()
-  const { state, setOpen } = useSidebar()
+  const { state, setOpen, isMobile } = useSidebar()
 
   // Helper function to close sidebar only on mobile
   const closeOnMobile = () => {
@@ -135,7 +135,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className={`flex items-center gap-2 p-2 ${state === "collapsed" ? "justify-center" : ""}`}>
+        <div className={`flex items-center gap-2 p-2 ${!isMobile && state === "collapsed" ? "justify-center" : ""}`}>
           <Activity className="h-6 w-6 text-primary" />
           <span className="font-bold text-xl gradient-text group-data-[collapsible=icon]:hidden">MedMate</span>
         </div>
@@ -171,10 +171,10 @@ export function AppSidebar() {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ${state === "collapsed" ? "justify-center" : ""}`}
+                    className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ${!isMobile && state === "collapsed" ? "justify-center" : ""}`}
                   >
                     <User className="h-4 w-4" />
-                    {state === "expanded" && (
+                    {(isMobile || state === "expanded") && (
                       <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                         <span className="truncate font-semibold">{user.username}</span>
                         <span className="truncate text-xs">{user.email}</span>
