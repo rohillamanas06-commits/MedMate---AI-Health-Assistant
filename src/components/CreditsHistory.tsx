@@ -3,6 +3,7 @@ import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, TrendingDown, TrendingUp, Gift, Trash2 } from 'lucide-react';
+import { parseUTCDate } from '@/lib/utils';
 
 interface Transaction {
   id: number;
@@ -145,7 +146,7 @@ export function CreditsHistory() {
                       <p className="text-xs text-muted-foreground">{tx.description}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString()}
+                      {parseUTCDate(tx.created_at).toLocaleDateString()} {parseUTCDate(tx.created_at).toLocaleTimeString()}
                     </p>
                   </div>
                 </div>

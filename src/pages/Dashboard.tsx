@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { parseUTCDate } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -100,7 +101,7 @@ export default function Dashboard() {
       }
 
       // Sort by date (newest first) and limit to 5
-      combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      combined.sort((a, b) => parseUTCDate(b.created_at).getTime() - parseUTCDate(a.created_at).getTime());
       setRecentHistory(combined.slice(0, 5));
     } catch (error) {
       console.error('Dashboard data loading error:', error);
@@ -174,6 +175,14 @@ export default function Dashboard() {
                 {t('dashboard.subtitle')}
               </p>
             </div>
+          </div>
+        </div>
+
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">{t('dashboard.quick_actions')}</h2>
             <button
               onClick={() => setShowBuyCredits(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:border-yellow-500/60 hover:bg-gradient-to-r hover:from-yellow-500/30 hover:to-amber-500/30 transition-all cursor-pointer"
@@ -183,12 +192,6 @@ export default function Dashboard() {
               <span className="font-semibold text-yellow-700 dark:text-yellow-300">{user?.credits ?? 0}</span>
             </button>
           </div>
-        </div>
-
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6">{t('dashboard.quick_actions')}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
             {quickActions.map((action, index) => (
               <div
@@ -276,9 +279,9 @@ export default function Dashboard() {
                         <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
                           <Calendar className="h-3 w-3" />
-                          {new Date(item.created_at).toLocaleDateString()}
+                          {parseUTCDate(item.created_at).toLocaleDateString()}
                           <Clock className="h-3 w-3" />
-                          {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {parseUTCDate(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     </div>

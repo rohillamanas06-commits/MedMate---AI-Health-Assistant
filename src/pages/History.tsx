@@ -6,6 +6,7 @@ import { Brain, MessageSquare, Calendar, Clock, Trash2, FileText, ChevronDown, C
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
+import { parseUTCDate } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -222,11 +223,11 @@ export default function History() {
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
-                              {new Date(diagnosis.created_at).toLocaleDateString()}
+                              {parseUTCDate(diagnosis.created_at).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
-                              {new Date(diagnosis.created_at).toLocaleTimeString()}
+                              {parseUTCDate(diagnosis.created_at).toLocaleTimeString()}
                             </div>
                           </div>
                         </div>
@@ -462,7 +463,7 @@ export default function History() {
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-xs font-medium text-primary">{t('history.you', 'You')}</span>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(chat.created_at).toLocaleString()}
+                              {parseUTCDate(chat.created_at).toLocaleString()}
                             </span>
                           </div>
                           <p className="text-sm bg-muted/50 rounded-lg p-3 whitespace-pre-wrap">
@@ -534,11 +535,11 @@ export default function History() {
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
-                              {new Date(report.created_at).toLocaleDateString()}
+                              {parseUTCDate(report.created_at).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
-                              {new Date(report.created_at).toLocaleTimeString()}
+                              {parseUTCDate(report.created_at).toLocaleTimeString()}
                             </div>
                           </div>
                         </div>

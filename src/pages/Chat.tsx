@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
-import { MessageSquare, Send, Loader2, Bot, User, Mic, Volume2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Bot, User, Mic, Volume2, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { BuyCreditsModal } from '@/components/BuyCreditsModal';
 
 interface Message {
   id: string;
@@ -19,15 +20,22 @@ interface Message {
 }
 
 export default function Chat() {
-  const { user, updateCredits } = useAuth();
+  const { user, updateCredits, checkAuth } = useAuth();
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
+  const hasCredits = (user?.credits ?? 0) > 0;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleCreditsSuccess = async () => {
+    await checkAuth();
+    toast.success('Credits added! You can continue chatting.');
+  };
 
   useEffect(() => {
     loadChatHistory();
@@ -155,8 +163,15 @@ export default function Chat() {
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-2 gradient-text">{t('chat.title', 'AI Medical Assistant')}</h1>
             <p className="text-muted-foreground">{t('chat.subtitle', 'Ask me anything about your health concerns')}</p>
-            <div className="mt-3 inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
-              <p className="text-sm text-primary font-medium">💳 Each message uses 1 credit</p>
+            <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
+              <p className="text-sm font-medium">
+                💳 {hasCredits ? 'Each message uses 1 credit' : '0 credits remaining. Please buy credits.'}
+              </p>
+              {!hasCredits && (
+                <Button variant="outline" size="sm" className="h-6 text-xs bg-white text-destructive shadow-sm" onClick={() => setShowBuyCredits(true)}>
+                  Buy Credits
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -227,19 +242,19 @@ export default function Chat() {
 
             <div className="border-t bg-background/50 p-4">
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={startVoiceRecognition} disabled={isListening || loading}>
+                <Button variant="outline" size="icon" onClick={startVoiceRecognition} disabled={isListening || loading || !hasCredits}>
                   <Mic className={`h-4 w-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
                 </Button>
                 <Input
-                  placeholder={t('chat.placeholder', 'Type your message...')}
+                  placeholder={hasCredits ? t('chat.placeholder', 'Type your message...') : 'You have 0 credits. Please purchase more.'}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  disabled={loading}
+                  disabled={loading || !hasCredits}
                   className="flex-1"
                 />
-                <Button onClick={handleSend} disabled={loading || !input.trim()}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleSend} disabled={loading || (!input.trim() && hasCredits)} className={!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hasCredits ? <AlertCircle className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">{t('chat.enter_to_send', 'Press Enter to send • Shift+Enter for new line')}</p>
@@ -247,6 +262,12 @@ export default function Chat() {
           </div>
         </Card>
       </div>
+      <BuyCreditsModal
+        isOpen={showBuyCredits}
+        onClose={() => setShowBuyCredits(false)}
+        onSuccess={handleCreditsSuccess}
+        currentCredits={user?.credits ?? 0}
+      />
     </div>
   );
 }

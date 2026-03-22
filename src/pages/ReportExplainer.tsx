@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { BuyCreditsModal } from '@/components/BuyCreditsModal';
 
 function RangeChart({
   testName,
@@ -142,10 +143,17 @@ function RangeChart({
 export default function ReportExplainer() {
   const { currentLanguage } = useLanguage();
   const { t } = useTranslation();
-  const { updateCredits } = useAuth();
+  const { user, updateCredits, checkAuth } = useAuth();
+  const hasCredits = (user?.credits ?? 0) > 0;
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
+
+  const handleCreditsSuccess = async () => {
+    await checkAuth();
+    toast.success('Credits added! You can continue.');
+  };
   
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -191,8 +199,15 @@ export default function ReportExplainer() {
           <p className="text-muted-foreground text-sm sm:text-lg px-0 sm:px-2">
             {t('explainer.subtitle')}
           </p>
-          <div className="mt-3 inline-block px-3 sm:px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
-            <p className="text-xs sm:text-sm text-primary font-medium">💳 Each report analysis uses 1 credit</p>
+          <div className={`mt-3 inline-flex items-center gap-2 px-3 sm:px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
+            <p className="text-xs sm:text-sm font-medium">
+              💳 {hasCredits ? 'Each report analysis uses 1 credit' : '0 credits remaining. Please buy credits.'}
+            </p>
+            {!hasCredits && (
+              <Button variant="outline" size="sm" className="h-6 text-xs bg-white text-destructive shadow-sm" onClick={() => setShowBuyCredits(true)}>
+                Buy Credits
+              </Button>
+            )}
           </div>
         </div>
 
@@ -234,11 +249,16 @@ export default function ReportExplainer() {
                   />
                 </div>
                 
-                <Button onClick={handleAnalysis} disabled={loading || !selectedFile} className="w-full text-xs sm:text-sm">
+                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-xs sm:text-sm ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-3 sm:h-4 w-3 sm:w-4 animate-spin" />
                       {t('explainer.analyzing')}
+                    </>
+                  ) : !hasCredits ? (
+                    <>
+                      <AlertCircle className="mr-2 h-3 sm:h-4 w-3 sm:w-4" />
+                      No Credits Available
                     </>
                   ) : (
                     <>
@@ -398,6 +418,12 @@ export default function ReportExplainer() {
           </div>
         </div>
       </div>
+      <BuyCreditsModal
+        isOpen={showBuyCredits}
+        onClose={() => setShowBuyCredits(false)}
+        onSuccess={handleCreditsSuccess}
+        currentCredits={user?.credits ?? 0}
+      />
     </div>
   );
 }

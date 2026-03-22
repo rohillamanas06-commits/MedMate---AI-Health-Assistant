@@ -23,11 +23,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { BuyCreditsModal } from '@/components/BuyCreditsModal';
 
 export default function Diagnose() {
   const { user, updateCredits, checkAuth } = useAuth();
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
+  const hasCredits = (user?.credits ?? 0) > 0;
   const [symptoms, setSymptoms] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -236,8 +238,15 @@ export default function Diagnose() {
           <p className="text-muted-foreground text-lg px-2">
             {t('diagnose.subtitle')}
           </p>
-          <div className="mt-3 inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
-            <p className="text-sm text-primary font-medium">💳 Each analysis uses 1 credit</p>
+          <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
+            <p className="text-sm font-medium">
+              💳 {hasCredits ? 'Each analysis uses 1 credit' : '0 credits remaining. Please buy credits.'}
+            </p>
+            {!hasCredits && (
+              <Button variant="outline" size="sm" className="h-6 text-xs bg-white text-destructive shadow-sm" onClick={() => setShowBuyCredits(true)}>
+                Buy Credits
+              </Button>
+            )}
           </div>
         </div>
 
@@ -269,11 +278,16 @@ export default function Diagnose() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={handleTextDiagnosis} disabled={loading} className="flex-1">
+                    <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleTextDiagnosis} disabled={loading || (!symptoms.trim() && hasCredits)} className={`flex-1 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           {t('diagnose.analyzing')}
+                        </>
+                      ) : !hasCredits ? (
+                        <>
+                          <AlertCircle className="mr-2 h-4 w-4" />
+                          No Credits Available
                         </>
                       ) : (
                         <>
@@ -364,11 +378,16 @@ export default function Diagnose() {
                       className="mt-2"
                     />
                   </div>
-                  <Button onClick={handleImageDiagnosis} disabled={loading} className="w-full">
+                  <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis} disabled={loading || (selectedImages.length === 0 && hasCredits)} className={`w-full ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         {t('diagnose.analyzing_image')}
+                      </>
+                    ) : !hasCredits ? (
+                      <>
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                        No Credits Available
                       </>
                     ) : (
                       <>
@@ -522,8 +541,12 @@ export default function Diagnose() {
           </div>
         </div>
       </div>
-
-
+      <BuyCreditsModal
+        isOpen={showBuyCredits}
+        onClose={() => setShowBuyCredits(false)}
+        onSuccess={handleCreditsSuccess}
+        currentCredits={user?.credits ?? 0}
+      />
     </div>
   );
 }
