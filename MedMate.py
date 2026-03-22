@@ -58,23 +58,38 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
 
 # Enable CORS for frontend communication
+# Auto-detect production environment
+is_vercel = os.getenv('VERCEL') == '1'
+vercel_url = os.getenv('VERCEL_URL')
+deployment_url = os.getenv('DEPLOYMENT_URL')
+
+# Build allowed origins dynamically
+cors_origins = [
+    'http://localhost:8000',  # Vite dev server port
+    'http://127.0.0.1:8000', 
+    'http://localhost:8080', 
+    'http://127.0.0.1:8080', 
+    'http://localhost:5173', 
+    'http://127.0.0.1:5173',
+    'https://med-mate-ai-health-assistant-v2.vercel.app',
+    'https://medmate-ecru.vercel.app',
+    'https://medmate-ai-health-assistant-lhwk.onrender.com',
+]
+
+# Add Vercel URL if available
+if is_vercel and vercel_url:
+    cors_origins.append(f'https://{vercel_url}')
+if deployment_url:
+    cors_origins.append(deployment_url)
+
 CORS(app, 
      supports_credentials=True, 
-     origins=[
-         'http://localhost:8000',  # Vite dev server port
-         'http://127.0.0.1:8000', 
-         'http://localhost:8080', 
-         'http://127.0.0.1:8080', 
-         'http://localhost:5173', 
-         'http://127.0.0.1:5173',
-         'https://med-mate-ai-health-assistant-v2.vercel.app',  # Your Vercel domain
-         'https://medmate-ecru.vercel.app',  # New Vercel origin
-         'https://medmate-ai-health-assistant-lhwk.onrender.com',  # Render deployment
-     ],
-     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     expose_headers=['Content-Type', 'Authorization'],
-     max_age=3600)
+     origins=cors_origins,
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-CSRF-Token'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+     expose_headers=['Content-Type', 'Authorization', 'X-Total-Count'],
+     max_age=86400,  # 24 hours
+     vary_header=True)
 
 # Session configuration for proper cookie handling
 app.config['SESSION_COOKIE_HTTPONLY'] = True
