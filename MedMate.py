@@ -108,6 +108,20 @@ else:
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # Extended to 30 days
 
+# Handle CORS preflight requests explicitly
+@app.before_request
+def handle_preflight():
+    """Handle CORS preflight requests"""
+    if request.method == 'OPTIONS':
+        response = jsonify()
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-CSRF-Token')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Max-Age', '86400')
+        return response, 200
+    return None
+
 # Database configuration - PostgreSQL for production, SQLite for local
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -2864,7 +2878,7 @@ def chat():
         traceback.print_exc()
         return jsonify({'error': f'Chat failed: {str(e)}'}), 500
 
-@app.route('/api/chat-history', methods=['GET'])
+@app.route('/api/chat-history', methods=['GET', 'OPTIONS'])
 @login_required
 def chat_history():
     """Get chat history - optimized for speed"""
@@ -2903,7 +2917,7 @@ def chat_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/deleted-chat-history', methods=['GET'])
+@app.route('/api/deleted-chat-history', methods=['GET', 'OPTIONS'])
 @login_required
 def deleted_chat_history():
     """Get deleted chat history"""
@@ -2938,7 +2952,7 @@ def deleted_chat_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/report-history', methods=['GET'])
+@app.route('/api/report-history', methods=['GET', 'OPTIONS'])
 @login_required
 def report_history():
     """Get report history"""
