@@ -230,13 +230,13 @@ export default function History() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-2 shrink-0">
+                        <div className="flex items-center gap-1 ml-2 flex-shrink min-w-0">
                           {/* View Results toggle — show if there is any result data */}
                           {(diagnosis.result?.diseases?.length > 0 || diagnosis.result?.conditions?.length > 0 || diagnosis.result?.observation || diagnosis.result?.analysis || diagnosis.image_url) && (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs h-8"
+                              className="text-xs h-8 hidden xs:flex whitespace-nowrap"
                               onClick={() => setExpandedDiagnosis(expandedDiagnosis === diagnosis.id ? null : diagnosis.id)}
                             >
                               {expandedDiagnosis === diagnosis.id ? (
@@ -246,10 +246,25 @@ export default function History() {
                               )}
                             </Button>
                           )}
+                          {/* Mobile icon button for View Results */}
+                          {(diagnosis.result?.diseases?.length > 0 || diagnosis.result?.conditions?.length > 0 || diagnosis.result?.observation || diagnosis.result?.analysis || diagnosis.image_url) && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 xs:hidden"
+                              onClick={() => setExpandedDiagnosis(expandedDiagnosis === diagnosis.id ? null : diagnosis.id)}
+                            >
+                              {expandedDiagnosis === diagnosis.id ? (
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="outline" 
                             size="icon"
-                            className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent"
+                            className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent flex-shrink-0"
                             onClick={() => handleDeleteDiagnosis(diagnosis.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -527,13 +542,13 @@ export default function History() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-2 shrink-0">
+                        <div className="flex items-center gap-1 ml-2 flex-shrink min-w-0">
                           {/* View Results toggle */}
                           {(report.result?.interpreted?.length > 0 || report.result?.summary || report.result?.explanation) && (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs h-8"
+                              className="text-xs h-8 hidden xs:flex whitespace-nowrap"
                               onClick={() => setExpandedReport(expandedReport === report.id ? null : report.id)}
                             >
                               {expandedReport === report.id ? (
@@ -543,10 +558,25 @@ export default function History() {
                               )}
                             </Button>
                           )}
+                          {/* Mobile icon button for View Results */}
+                          {(report.result?.interpreted?.length > 0 || report.result?.summary || report.result?.explanation) && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 xs:hidden"
+                              onClick={() => setExpandedReport(expandedReport === report.id ? null : report.id)}
+                            >
+                              {expandedReport === report.id ? (
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="outline" 
                             size="icon"
-                            className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent"
+                            className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent flex-shrink-0"
                             onClick={() => handleDeleteReport(report.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />

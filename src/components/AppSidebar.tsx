@@ -52,7 +52,7 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLanguage: language, setLanguage } = useLanguage()
-  const { state } = useSidebar()
+  const { state, setOpen } = useSidebar()
 
   const LANGUAGES = [
     { code: 'en', label: 'English' },
@@ -66,6 +66,7 @@ export function AppSidebar() {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+    setOpen(false);
   };
 
   const isActive = (path: string) => location.pathname === path
@@ -132,7 +133,12 @@ export function AppSidebar() {
             <SidebarMenu>
               {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.url)} 
+                    tooltip={item.title}
+                    onClick={() => setOpen(false)}
+                  >
                     <Link to={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -171,7 +177,10 @@ export function AppSidebar() {
                   align="end"
                   sideOffset={4}
                 >
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <DropdownMenuItem onClick={() => {
+                    navigate('/profile');
+                    setOpen(false);
+                  }}>
                     <User className="mr-2 h-4 w-4" />
                     {t('navbar.profile')}
                   </DropdownMenuItem>
@@ -181,9 +190,15 @@ export function AppSidebar() {
                       {t('navbar.language')}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
+                      <DropdownMenuSubContent className="max-h-48 overflow-y-auto">
                         {LANGUAGES.map(lang => (
-                          <DropdownMenuItem key={lang.code} onClick={() => setLanguage(lang.code as any)}>
+                          <DropdownMenuItem 
+                            key={lang.code} 
+                            onClick={() => {
+                              setLanguage(lang.code as any);
+                              setOpen(false);
+                            }}
+                          >
                             {lang.label}
                           </DropdownMenuItem>
                         ))}
