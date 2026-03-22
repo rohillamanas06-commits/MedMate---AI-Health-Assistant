@@ -28,8 +28,10 @@ import {
   User,
   Settings,
   Languages,
-  Clock
+  Clock,
+  ChevronLeft
 } from "lucide-react"
+import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTranslation } from "react-i18next"
 import { useLocation, Link, useNavigate } from "react-router-dom"
@@ -54,6 +56,7 @@ export function AppSidebar() {
   const navigate = useNavigate()
   const { currentLanguage: language, setLanguage } = useLanguage()
   const { state, setOpen, setOpenMobile, isMobile } = useSidebar()
+  const [showMobileLanguages, setShowMobileLanguages] = useState(false)
 
   // Helper function to close sidebar only on mobile
   const closeOnMobile = () => {
@@ -167,7 +170,11 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             {user ? (
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={(open) => {
+                if (!open) {
+                  setTimeout(() => setShowMobileLanguages(false), 200);
+                }
+              }}>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
@@ -188,42 +195,88 @@ export function AppSidebar() {
                   align="start"
                   sideOffset={8}
                 >
-                  <DropdownMenuItem onClick={() => {
-                    navigate('/profile');
-                    closeOnMobile();
-                  }}>
-                    <User className="mr-2 h-4 w-4" />
-                    {t('navbar.profile')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Languages className="mr-2 h-4 w-4" />
-                      {t('navbar.language')}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="max-h-64 overflow-y-auto w-48 sm:w-56 sm:-translate-y-24" sideOffset={8}>
+                  {isMobile && showMobileLanguages ? (
+                    <>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowMobileLanguages(false);
+                        }}
+                      >
+                        <ChevronLeft className="mr-2 h-4 w-4" />
+                        {t('common.back') || 'Back'}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <div className="max-h-64 overflow-y-auto">
                         {LANGUAGES.map(lang => (
                           <DropdownMenuItem
                             key={lang.code}
                             onClick={() => {
                               setLanguage(lang.code as any);
+                              setShowMobileLanguages(false);
                               closeOnMobile();
                             }}
-                            className="text-xs sm:text-sm"
+                            className="text-sm"
                           >
                             {lang.label}
                           </DropdownMenuItem>
                         ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async () => {
-                    await handleLogout();
-                  }}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t('navbar.logout')}
-                  </DropdownMenuItem>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => {
+                        navigate('/profile');
+                        closeOnMobile();
+                      }}>
+                        <User className="mr-2 h-4 w-4" />
+                        {t('navbar.profile')}
+                      </DropdownMenuItem>
+                      
+                      {isMobile ? (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowMobileLanguages(true);
+                          }}
+                        >
+                          <Languages className="mr-2 h-4 w-4" />
+                          {t('navbar.language')}
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <Languages className="mr-2 h-4 w-4" />
+                            {t('navbar.language')}
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent className="max-h-64 overflow-y-auto w-48 sm:w-56 sm:-translate-y-24" sideOffset={8}>
+                              {LANGUAGES.map(lang => (
+                                <DropdownMenuItem
+                                  key={lang.code}
+                                  onClick={() => {
+                                    setLanguage(lang.code as any);
+                                    closeOnMobile();
+                                  }}
+                                  className="text-xs sm:text-sm"
+                                >
+                                  {lang.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                      )}
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={async () => {
+                        await handleLogout();
+                      }}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        {t('navbar.logout')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
