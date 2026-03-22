@@ -204,7 +204,7 @@ export function AppSidebar() {
                         }}
                       >
                         <ChevronLeft className="mr-2 h-4 w-4" />
-                        {t('common.back') || 'Back'}
+                        {t('back') || 'Back'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <div className="max-h-64 overflow-y-auto">
@@ -232,7 +232,7 @@ export function AppSidebar() {
                         <User className="mr-2 h-4 w-4" />
                         {t('navbar.profile')}
                       </DropdownMenuItem>
-                      
+
                       {isMobile ? (
                         <DropdownMenuItem
                           onClick={(e) => {
