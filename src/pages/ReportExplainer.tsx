@@ -198,7 +198,7 @@ export default function ReportExplainer() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Input Section */}
-          <div className="space-y-4 sm:space-y-6 w-full">
+          <div className="space-y-4 sm:space-y-6 w-full min-w-0">
             <Card className="p-4 sm:p-6 glass animate-fade-in w-full">
               <div className="space-y-3 sm:space-y-4">
                 <div>
@@ -260,7 +260,7 @@ export default function ReportExplainer() {
           </div>
 
           {/* Results Section */}
-          <div className="space-y-4 sm:space-y-6 overflow-hidden w-full">
+          <div className="space-y-4 sm:space-y-6 overflow-hidden w-full min-w-0">
             {result ? (
               <div className="space-y-3 sm:space-y-4 animate-scale-in w-full">
                 <Card className="p-4 sm:p-6 glass overflow-hidden w-full">

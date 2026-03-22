@@ -135,7 +135,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 p-2">
+        <div className={`flex items-center gap-2 p-2 ${state === "collapsed" ? "justify-center" : ""}`}>
           <Activity className="h-6 w-6 text-primary" />
           <span className="font-bold text-xl gradient-text group-data-[collapsible=icon]:hidden">MedMate</span>
         </div>
@@ -147,9 +147,9 @@ export function AppSidebar() {
             <SidebarMenu>
               {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.url)} 
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
                     tooltip={item.title}
                   >
                     <Link to={item.url} onClick={closeOnMobile}>
@@ -171,10 +171,10 @@ export function AppSidebar() {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                    className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ${state === "collapsed" ? "justify-center" : ""}`}
                   >
                     <User className="h-4 w-4" />
-                    {state === "expanded" && window.innerWidth >= 768 && (
+                    {state === "expanded" && (
                       <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                         <span className="truncate font-semibold">{user.username}</span>
                         <span className="truncate text-xs">{user.email}</span>
@@ -184,9 +184,9 @@ export function AppSidebar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                  side="bottom"
-                  align="end"
-                  sideOffset={4}
+                  side="top"
+                  align="start"
+                  sideOffset={8}
                 >
                   <DropdownMenuItem onClick={() => {
                     navigate('/profile');
@@ -201,10 +201,10 @@ export function AppSidebar() {
                       {t('navbar.language')}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="max-h-48 overflow-y-auto max-w-xs">
+                      <DropdownMenuSubContent className="max-h-48 overflow-y-auto w-48 sm:w-56" sideOffset={8}>
                         {LANGUAGES.map(lang => (
-                          <DropdownMenuItem 
-                            key={lang.code} 
+                          <DropdownMenuItem
+                            key={lang.code}
                             onClick={() => {
                               setLanguage(lang.code as any);
                               closeOnMobile();
@@ -227,14 +227,14 @@ export function AppSidebar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-             <SidebarMenuItem onClick={closeOnMobile}>
+              <SidebarMenuItem onClick={closeOnMobile}>
                 <SidebarMenuButton asChild>
-                    <Link to="/auth" onClick={closeOnMobile}>
-                        <User className="h-4 w-4" />
-                        <span>{t('navbar.login')}</span>
-                    </Link>
+                  <Link to="/auth" onClick={closeOnMobile}>
+                    <User className="h-4 w-4" />
+                    <span>{t('navbar.login')}</span>
+                  </Link>
                 </SidebarMenuButton>
-             </SidebarMenuItem>
+              </SidebarMenuItem>
             )}
           </SidebarMenuItem>
         </SidebarMenu>
