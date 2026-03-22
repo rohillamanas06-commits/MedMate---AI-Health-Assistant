@@ -164,10 +164,10 @@ export function AppSidebar() {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:justify-center"
                   >
                     <User className="h-4 w-4" />
-                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0 md:hidden">
                       <span className="truncate font-semibold">{user.username}</span>
                       <span className="truncate text-xs">{user.email}</span>
                     </div>

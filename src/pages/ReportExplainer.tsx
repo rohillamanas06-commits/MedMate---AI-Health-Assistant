@@ -182,43 +182,43 @@ export default function ReportExplainer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
-      <div className="container max-w-6xl">
-        <div className="mb-8 px-4 text-center animate-slide-up">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-6 sm:py-8 px-4 sm:px-0">
+      <div className="container max-w-6xl mx-auto">
+        <div className="mb-6 sm:mb-8 px-0 sm:px-4 text-center animate-slide-up">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight">
             {t('explainer.title')}
           </h1>
-          <p className="text-muted-foreground text-lg px-2">
+          <p className="text-muted-foreground text-sm sm:text-lg px-0 sm:px-2">
             {t('explainer.subtitle')}
           </p>
-          <div className="mt-3 inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
-            <p className="text-sm text-primary font-medium">💳 Each report analysis uses 1 credit</p>
+          <div className="mt-3 inline-block px-3 sm:px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
+            <p className="text-xs sm:text-sm text-primary font-medium">💳 Each report analysis uses 1 credit</p>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Input Section */}
-          <div className="space-y-6">
-            <Card className="p-6 glass animate-fade-in">
-              <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6 glass animate-fade-in">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label>{t('explainer.upload_label')}</Label>
+                  <Label className="text-xs sm:text-sm">{t('explainer.upload_label')}</Label>
                   <div
-                    className="mt-2 border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                    className="mt-2 border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-primary transition-colors"
                     onClick={() => document.getElementById('report-upload')?.click()}
                   >
                     {selectedFile ? (
                       <div className="space-y-2">
-                        <FileText className="h-12 w-12 mx-auto text-primary" />
-                        <p className="text-sm font-medium">{selectedFile.name}</p>
+                        <FileText className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-primary" />
+                        <p className="text-xs sm:text-sm font-medium truncate">{selectedFile.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {t('explainer.change_click')}
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
+                        <Upload className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-muted-foreground" />
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {t('explainer.upload_click')}
                         </p>
                         <p className="text-xs text-muted-foreground">{t('explainer.upload_desc')}</p>
@@ -234,15 +234,15 @@ export default function ReportExplainer() {
                   />
                 </div>
                 
-                <Button onClick={handleAnalysis} disabled={loading || !selectedFile} className="w-full">
+                <Button onClick={handleAnalysis} disabled={loading || !selectedFile} className="w-full text-xs sm:text-sm">
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-3 sm:h-4 w-3 sm:w-4 animate-spin" />
                       {t('explainer.analyzing')}
                     </>
                   ) : (
                     <>
-                      <FileText className="mr-2 h-4 w-4" />
+                      <FileText className="mr-2 h-3 sm:h-4 w-3 sm:w-4" />
                       {t('explainer.analyze_btn')}
                     </>
                   )}
@@ -250,8 +250,8 @@ export default function ReportExplainer() {
               </div>
             </Card>
 
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
+            <Alert className="text-xs sm:text-sm">
+              <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4" />
               <AlertDescription>
                 <strong>{t('explainer.disclaimer_title')}</strong>{' '}
                 {t('explainer.disclaimer_text')}
@@ -260,51 +260,51 @@ export default function ReportExplainer() {
           </div>
 
           {/* Results Section */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 overflow-hidden">
             {result ? (
-              <div className="space-y-4 animate-scale-in">
-                <Card className="p-6 glass">
-                  <h2 className="text-2xl font-bold mb-4">{t('explainer.summary_title')}</h2>
+              <div className="space-y-3 sm:space-y-4 animate-scale-in">
+                <Card className="p-4 sm:p-6 glass overflow-hidden">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{t('explainer.summary_title')}</h2>
                   
                   {/* Handle new text/PDF explanation format (english/hindi) */}
                   {result.explanation && (result.explanation.english || result.explanation.hindi) && !result.explanation.summary && (
-                    <Card className="p-4 mb-6 bg-primary/10 border-primary/20">
-                      <p className="text-sm leading-relaxed">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
+                    <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
+                      <p className="text-xs sm:text-sm leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
                     </Card>
                   )}
 
                   {/* Handle legacy or image fallback explanation format */}
                   {(result.explanation?.summary || result.summary) && (
-                    <Card className="p-4 mb-6 bg-primary/10 border-primary/20">
-                      <p className="text-sm leading-relaxed">{result.explanation?.summary || result.summary}</p>
+                    <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
+                      <p className="text-xs sm:text-sm leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
                     </Card>
                   )}
 
                   {/* Interpret Results Table handling */}
                   {result.interpreted && result.interpreted.length > 0 && (
-                    <div className="mb-6 overflow-hidden">
-                      <h3 className="font-semibold text-lg mb-3">Extracted Lab Results Table</h3>
-                      <div className="rounded-md border border-border/50 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-                        <table className="w-full text-sm text-left">
+                    <div className="mb-4 sm:mb-6 overflow-hidden">
+                      <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 break-words">Extracted Lab Results Table</h3>
+                      <div className="rounded-md border border-border/50 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                        <table className="w-full text-xs sm:text-sm text-left">
                           <thead className="bg-muted/50 border-b border-border/50 sticky top-0">
                             <tr>
-                              <th className="p-3 font-medium text-xs sm:text-sm">Test Name</th>
-                              <th className="p-3 font-medium text-xs sm:text-sm">Value</th>
-                              <th className="p-3 font-medium text-xs sm:text-sm">Status</th>
-                              <th className="p-3 font-medium text-xs sm:text-sm hidden sm:table-cell">Condition Note</th>
+                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm">Test</th>
+                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm">Value</th>
+                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm">Status</th>
+                              <th className="p-2 sm:p-3 font-medium text-xs sm:text-sm hidden sm:table-cell">Note</th>
                             </tr>
                           </thead>
                           <tbody>
                             {result.interpreted.map((item: any, i: number) => (
                               <tr key={i} className="border-b border-border/10 hover:bg-muted/20 transition-colors">
-                                <td className="p-3 font-medium text-primary text-xs sm:text-sm whitespace-nowrap">{item.test_name}</td>
-                                <td className="p-3 text-xs sm:text-sm whitespace-nowrap">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
-                                <td className="p-3">
-                                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.status === 'Normal' ? 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-400' : item.status === 'Unknown' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' : 'bg-red-100/80 text-red-800 dark:bg-red-900/40 dark:text-red-400'}`}>
+                                <td className="p-2 sm:p-3 font-medium text-primary text-xs sm:text-sm whitespace-nowrap">{item.test_name}</td>
+                                <td className="p-2 sm:p-3 text-xs sm:text-sm whitespace-nowrap">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
+                                <td className="p-2 sm:p-3">
+                                  <span className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-semibold ${item.status === 'Normal' ? 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-400' : item.status === 'Unknown' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' : 'bg-red-100/80 text-red-800 dark:bg-red-900/40 dark:text-red-400'}`}>
                                     {item.status}
                                   </span>
                                 </td>
-                                <td className="p-3 text-muted-foreground text-xs hidden sm:table-cell">{item.condition}</td>
+                                <td className="p-2 sm:p-3 text-muted-foreground text-xs hidden sm:table-cell">{item.condition}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -318,11 +318,11 @@ export default function ReportExplainer() {
                     result.interpreted.filter(
                       (r: any) => r.status !== 'Normal' && r.status !== 'Unknown' && r.status !== 'Review'
                     ).length > 0 && (
-                    <div className="mt-6 mb-6">
-                      <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">
-                        <span>📊</span> Abnormal Values — Visual Range
+                    <div className="mt-4 sm:mt-6 mb-4 sm:mb-6 overflow-hidden">
+                      <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-1 flex items-center gap-2 break-words">
+                        <span>📊</span> Abnormal Values
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                         The bar shows where your value falls relative to the normal range.
                       </p>
                       {result.interpreted
@@ -343,13 +343,13 @@ export default function ReportExplainer() {
 
                   {/* Key Findings List handling */}
                   {((result.explanation?.key_findings) || result.key_findings) && ((result.explanation?.key_findings) || result.key_findings).length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="font-semibold text-lg mb-3">{t('explainer.key_findings')}</h3>
-                      <ul className="space-y-2">
+                    <div className="mb-4 sm:mb-6">
+                      <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 break-words">{t('explainer.key_findings')}</h3>
+                      <ul className="space-y-1 sm:space-y-2">
                         {((result.explanation?.key_findings) || result.key_findings).map((finding: string, i: number) => (
-                          <li key={i} className="text-sm flex items-start gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
-                            <span>{finding}</span>
+                          <li key={i} className="text-xs sm:text-sm flex items-start gap-2">
+                            <CheckCircle2 className="h-3 sm:h-4 w-3 sm:w-4 text-secondary mt-0.5 flex-shrink-0" />
+                            <span className="break-words">{finding}</span>
                           </li>
                         ))}
                       </ul>
@@ -358,13 +358,13 @@ export default function ReportExplainer() {
 
                   {/* Terms Explained handling */}
                   {((result.explanation?.terms) || result.terms) && ((result.explanation?.terms) || result.terms).length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="font-semibold text-lg mb-3">{t('explainer.terms_explained')}</h3>
-                      <div className="grid gap-3">
+                    <div className="mb-4 sm:mb-6">
+                      <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3 break-words">{t('explainer.terms_explained')}</h3>
+                      <div className="grid gap-2 sm:gap-3">
                         {((result.explanation?.terms) || result.terms).map((termItem: any, i: number) => (
-                          <div key={i} className="p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <h4 className="font-semibold text-primary">{termItem.term}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{termItem.meaning}</p>
+                          <div key={i} className="p-2 sm:p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
+                            <h4 className="font-semibold text-primary text-xs sm:text-sm break-words">{termItem.term}</h4>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{termItem.meaning}</p>
                           </div>
                         ))}
                       </div>
@@ -373,24 +373,24 @@ export default function ReportExplainer() {
 
                   {/* Next Steps handling */}
                   {(result.explanation?.next_steps || result.next_steps) && (
-                    <Alert className="mb-4 bg-primary/5 border-primary/20">
-                      <AlertCircle className="h-4 w-4 text-primary" />
+                    <Alert className="mb-4 bg-primary/5 border-primary/20 text-xs sm:text-sm">
+                      <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4 text-primary" />
                       <AlertDescription>
-                        <strong className="text-primary">{t('explainer.next_steps')}</strong> {result.explanation?.next_steps || result.next_steps}
+                        <strong className="text-primary">{t('explainer.next_steps')}</strong> <span className="break-words">{result.explanation?.next_steps || result.next_steps}</span>
                       </AlertDescription>
                     </Alert>
                   )}
 
                   {(result.explanation?.disclaimer || result.disclaimer) && (
-                    <p className="text-xs text-muted-foreground mt-4 text-center pb-2">{result.explanation?.disclaimer || result.disclaimer}</p>
+                    <p className="text-xs text-muted-foreground mt-3 sm:mt-4 text-center pb-1 sm:pb-2 break-words">{result.explanation?.disclaimer || result.disclaimer}</p>
                   )}
                 </Card>
               </div>
             ) : (
-             <Card className="p-12 text-center glass">
-               <FileText className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30 animate-float" />
-               <h3 className="text-xl font-semibold mb-2">{t('explainer.ready_title')}</h3>
-               <p className="text-muted-foreground">
+             <Card className="p-6 sm:p-12 text-center glass">
+               <FileText className="h-16 sm:h-24 w-16 sm:w-24 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-30 animate-float" />
+               <h3 className="text-lg sm:text-xl font-semibold mb-2">{t('explainer.ready_title')}</h3>
+               <p className="text-xs sm:text-sm text-muted-foreground break-words">
                  {t('explainer.ready_desc')}
                </p>
              </Card>
