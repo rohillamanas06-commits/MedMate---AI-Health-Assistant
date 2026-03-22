@@ -64,7 +64,7 @@ export default function Dashboard() {
             title: chat.message.substring(0, 50) + (chat.message.length > 50 ? '...' : ''),
             description: chat.response.substring(0, 80) + (chat.response.length > 80 ? '...' : ''),
             created_at: chat.created_at,
-            link: '/chat',
+            link: '/history',
           });
         });
       }
@@ -94,7 +94,7 @@ export default function Dashboard() {
             title: (report.file_name || report.filename || 'Medical Report').substring(0, 50),
             description: 'Report Analysis',
             created_at: report.created_at,
-            link: '/explain',
+            link: '/history',
           });
         });
       }

@@ -27,7 +27,8 @@ import {
   LogOut,
   User,
   Settings,
-  Languages
+  Languages,
+  Clock
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTranslation } from "react-i18next"
@@ -109,6 +110,12 @@ export function AppSidebar() {
       public: false,
     },
     {
+      title: t('navbar.history'),
+      url: "/history",
+      icon: Clock,
+      public: false,
+    },
+    {
       title: t('navbar.about'),
       url: "/about",
       icon: Info,
@@ -137,9 +144,8 @@ export function AppSidebar() {
                     asChild 
                     isActive={isActive(item.url)} 
                     tooltip={item.title}
-                    onClick={() => setOpen(false)}
                   >
-                    <Link to={item.url}>
+                    <Link to={item.url} onClick={() => setOpen(false)}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -158,17 +164,13 @@ export function AppSidebar() {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
-                    className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ${
-                      state === "collapsed" ? "justify-center" : ""
-                    }`}
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <User className="h-4 w-4" />
-                    {state === "expanded" && (
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">{user.username}</span>
-                        <span className="truncate text-xs">{user.email}</span>
-                      </div>
-                    )}
+                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                      <span className="truncate font-semibold">{user.username}</span>
+                      <span className="truncate text-xs">{user.email}</span>
+                    </div>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -190,7 +192,7 @@ export function AppSidebar() {
                       {t('navbar.language')}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="max-h-48 overflow-y-auto">
+                      <DropdownMenuSubContent className="max-h-48 overflow-y-auto max-w-xs">
                         {LANGUAGES.map(lang => (
                           <DropdownMenuItem 
                             key={lang.code} 
@@ -198,6 +200,7 @@ export function AppSidebar() {
                               setLanguage(lang.code as any);
                               setOpen(false);
                             }}
+                            className="text-xs sm:text-sm"
                           >
                             {lang.label}
                           </DropdownMenuItem>
@@ -206,16 +209,18 @@ export function AppSidebar() {
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={async () => {
+                    await handleLogout();
+                  }}>
                     <LogOut className="mr-2 h-4 w-4" />
                     {t('navbar.logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-             <SidebarMenuItem>
+             <SidebarMenuItem onClick={() => setOpen(false)}>
                 <SidebarMenuButton asChild>
-                    <Link to="/auth">
+                    <Link to="/auth" onClick={() => setOpen(false)}>
                         <User className="h-4 w-4" />
                         <span>{t('navbar.login')}</span>
                     </Link>

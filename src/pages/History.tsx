@@ -602,23 +602,23 @@ export default function History() {
 
                           {/* Interpreted table */}
                           {report.result?.interpreted?.length > 0 && (
-                            <div>
+                            <div className="overflow-hidden">
                               <h4 className="font-semibold text-sm mb-2">🧪 Lab Results</h4>
-                              <div className="rounded-md border border-border/50 overflow-x-auto">
+                              <div className="rounded-md border border-border/50 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
                                 <table className="w-full text-sm">
-                                  <thead className="bg-muted/50 border-b border-border/50">
+                                  <thead className="bg-muted/50 border-b border-border/50 sticky top-0">
                                     <tr>
-                                      <th className="p-2 text-left font-medium">Test</th>
-                                      <th className="p-2 text-left font-medium">Value</th>
-                                      <th className="p-2 text-left font-medium">Status</th>
-                                      <th className="p-2 text-left font-medium hidden sm:table-cell">Note</th>
+                                      <th className="p-2 text-left font-medium text-xs sm:text-sm">Test</th>
+                                      <th className="p-2 text-left font-medium text-xs sm:text-sm">Value</th>
+                                      <th className="p-2 text-left font-medium text-xs sm:text-sm">Status</th>
+                                      <th className="p-2 text-left font-medium text-xs sm:text-sm hidden sm:table-cell">Note</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {report.result.interpreted.map((item: any, i: number) => (
                                       <tr key={i} className="border-b border-border/10 hover:bg-muted/20">
-                                        <td className="p-2 font-medium text-primary">{item.test_name}</td>
-                                        <td className="p-2">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
+                                        <td className="p-2 font-medium text-primary text-xs sm:text-sm whitespace-nowrap">{item.test_name}</td>
+                                        <td className="p-2 text-xs sm:text-sm whitespace-nowrap">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
                                         <td className="p-2">
                                           <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                                             item.status === 'Normal' ? 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-400' :
