@@ -282,29 +282,29 @@ export default function ReportExplainer() {
 
                   {/* Interpret Results Table handling */}
                   {result.interpreted && result.interpreted.length > 0 && (
-                    <div className="mb-6">
+                    <div className="mb-6 overflow-hidden">
                       <h3 className="font-semibold text-lg mb-3">Extracted Lab Results Table</h3>
-                      <div className="rounded-md border border-border/50 overflow-x-auto">
+                      <div className="rounded-md border border-border/50 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
                         <table className="w-full text-sm text-left">
-                          <thead className="bg-muted/50 border-b border-border/50">
+                          <thead className="bg-muted/50 border-b border-border/50 sticky top-0">
                             <tr>
-                              <th className="p-3 font-medium">Test Name</th>
-                              <th className="p-3 font-medium">Value</th>
-                              <th className="p-3 font-medium">Status</th>
-                              <th className="p-3 font-medium">Condition Note</th>
+                              <th className="p-3 font-medium text-xs sm:text-sm">Test Name</th>
+                              <th className="p-3 font-medium text-xs sm:text-sm">Value</th>
+                              <th className="p-3 font-medium text-xs sm:text-sm">Status</th>
+                              <th className="p-3 font-medium text-xs sm:text-sm hidden sm:table-cell">Condition Note</th>
                             </tr>
                           </thead>
                           <tbody>
                             {result.interpreted.map((item: any, i: number) => (
                               <tr key={i} className="border-b border-border/10 hover:bg-muted/20 transition-colors">
-                                <td className="p-3 font-medium text-primary">{item.test_name}</td>
-                                <td className="p-3">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
+                                <td className="p-3 font-medium text-primary text-xs sm:text-sm whitespace-nowrap">{item.test_name}</td>
+                                <td className="p-3 text-xs sm:text-sm whitespace-nowrap">{item.value} <span className="text-muted-foreground text-xs">{item.unit}</span></td>
                                 <td className="p-3">
                                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${item.status === 'Normal' ? 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-400' : item.status === 'Unknown' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' : 'bg-red-100/80 text-red-800 dark:bg-red-900/40 dark:text-red-400'}`}>
                                     {item.status}
                                   </span>
                                 </td>
-                                <td className="p-3 text-muted-foreground">{item.condition}</td>
+                                <td className="p-3 text-muted-foreground text-xs hidden sm:table-cell">{item.condition}</td>
                               </tr>
                             ))}
                           </tbody>
