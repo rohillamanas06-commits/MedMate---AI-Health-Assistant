@@ -55,6 +55,13 @@ export function AppSidebar() {
   const { currentLanguage: language, setLanguage } = useLanguage()
   const { state, setOpen } = useSidebar()
 
+  // Helper function to close sidebar only on mobile
+  const closeOnMobile = () => {
+    if (window.innerWidth < 768) { // md breakpoint
+      setOpen(false)
+    }
+  }
+
   const LANGUAGES = [
     { code: 'en', label: 'English' },
     { code: 'hi', label: 'Hindi (हिंदी)' },
@@ -67,7 +74,7 @@ export function AppSidebar() {
   const handleLogout = async () => {
     await logout();
     navigate('/');
-    setOpen(false);
+    closeOnMobile();
   };
 
   const isActive = (path: string) => location.pathname === path
@@ -145,7 +152,7 @@ export function AppSidebar() {
                     isActive={isActive(item.url)} 
                     tooltip={item.title}
                   >
-                    <Link to={item.url} onClick={() => setOpen(false)}>
+                    <Link to={item.url} onClick={closeOnMobile}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -167,7 +174,7 @@ export function AppSidebar() {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <User className="h-4 w-4" />
-                    {state === "expanded" && (
+                    {state === "expanded" && window.innerWidth >= 768 && (
                       <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                         <span className="truncate font-semibold">{user.username}</span>
                         <span className="truncate text-xs">{user.email}</span>
@@ -183,7 +190,7 @@ export function AppSidebar() {
                 >
                   <DropdownMenuItem onClick={() => {
                     navigate('/profile');
-                    setOpen(false);
+                    closeOnMobile();
                   }}>
                     <User className="mr-2 h-4 w-4" />
                     {t('navbar.profile')}
@@ -200,7 +207,7 @@ export function AppSidebar() {
                             key={lang.code} 
                             onClick={() => {
                               setLanguage(lang.code as any);
-                              setOpen(false);
+                              closeOnMobile();
                             }}
                             className="text-xs sm:text-sm"
                           >
@@ -220,9 +227,9 @@ export function AppSidebar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-             <SidebarMenuItem onClick={() => setOpen(false)}>
+             <SidebarMenuItem onClick={closeOnMobile}>
                 <SidebarMenuButton asChild>
-                    <Link to="/auth" onClick={() => setOpen(false)}>
+                    <Link to="/auth" onClick={closeOnMobile}>
                         <User className="h-4 w-4" />
                         <span>{t('navbar.login')}</span>
                     </Link>
