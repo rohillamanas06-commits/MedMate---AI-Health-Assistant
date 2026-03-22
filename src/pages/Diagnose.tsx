@@ -232,7 +232,7 @@ export default function Diagnose() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-6xl">
         <div className="mb-8 px-4 text-center animate-slide-up">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight">
+          <h1 className="text-4xl font-bold mb-3 gradient-text leading-tight">
             {t('diagnose.title')}
           </h1>
           <p className="text-muted-foreground text-lg px-2">

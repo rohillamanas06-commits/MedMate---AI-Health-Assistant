@@ -192,14 +192,14 @@ export default function ReportExplainer() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-6 sm:py-8 px-4 sm:px-0">
       <div className="container max-w-6xl mx-auto">
-        <div className="mb-6 sm:mb-8 px-0 sm:px-4 text-center animate-slide-up">
-          <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight">
+        <div className="mb-8 px-4 text-center animate-slide-up">
+          <h1 className="text-4xl font-bold mb-3 gradient-text leading-tight">
             {t('explainer.title')}
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-lg px-0 sm:px-2">
+          <p className="text-muted-foreground text-lg px-2">
             {t('explainer.subtitle')}
           </p>
-          <div className={`mt-3 inline-flex items-center gap-2 px-3 sm:px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
+          <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
             <p className="text-sm font-medium">
               💳 {hasCredits ? 'Each report analysis uses 1 credit' : '0 credits remaining. Please buy credits.'}
             </p>
@@ -217,7 +217,7 @@ export default function ReportExplainer() {
             <Card className="p-4 sm:p-6 glass animate-fade-in w-full">
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label className="text-sm">{t('explainer.upload_label')}</Label>
+                  <Label className="text-base">{t('explainer.upload_label')}</Label>
                   <div
                     className="mt-2 border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-primary transition-colors"
                     onClick={() => document.getElementById('report-upload')?.click()}
@@ -225,7 +225,7 @@ export default function ReportExplainer() {
                     {selectedFile ? (
                       <div className="space-y-2">
                         <FileText className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-primary" />
-                        <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                        <p className="text-base font-medium truncate">{selectedFile.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {t('explainer.change_click')}
                         </p>
@@ -233,7 +233,7 @@ export default function ReportExplainer() {
                     ) : (
                       <div className="space-y-2">
                         <Upload className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-base text-muted-foreground">
                           {t('explainer.upload_click')}
                         </p>
                         <p className="text-xs text-muted-foreground">{t('explainer.upload_desc')}</p>
@@ -249,7 +249,7 @@ export default function ReportExplainer() {
                   />
                 </div>
                 
-                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-sm ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
+                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -270,7 +270,7 @@ export default function ReportExplainer() {
               </div>
             </Card>
 
-            <Alert className="text-sm w-full">
+            <Alert className="w-full">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <strong>{t('explainer.disclaimer_title')}</strong>{' '}
@@ -289,14 +289,14 @@ export default function ReportExplainer() {
                   {/* Handle new text/PDF explanation format (english/hindi) */}
                   {result.explanation && (result.explanation.english || result.explanation.hindi) && !result.explanation.summary && (
                     <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
-                      <p className="text-sm leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
+                      <p className="leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
                     </Card>
                   )}
 
                   {/* Handle legacy or image fallback explanation format */}
                   {(result.explanation?.summary || result.summary) && (
                     <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
-                      <p className="text-sm leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
+                      <p className="leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
                     </Card>
                   )}
 
