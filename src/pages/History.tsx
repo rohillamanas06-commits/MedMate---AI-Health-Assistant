@@ -179,13 +179,13 @@ export default function History() {
                 <h2 className="text-xl font-semibold hidden md:block">{t('history.diagnosis_history', 'Diagnosis History')}</h2>
                 {diagnoses.length > 0 && !loading && (
                   <Button 
-                    variant="destructive" 
-                    size="default" 
+                    variant="outline" 
+                    size="icon" 
                     onClick={handleClearAllDiagnoses} 
-                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
+                    title={t('history.remove_all', 'Remove All')}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t('history.remove_all', 'Remove All')}
+                    <Trash2 className="h-4.5 w-4.5" />
                   </Button>
                 )}
               </div>
@@ -415,13 +415,13 @@ export default function History() {
                 <h2 className="text-xl font-semibold hidden md:block">{t('history.chats_tab', 'Chat History')}</h2>
                 {chats.length > 0 && !loading && (
                   <Button 
-                    variant="destructive" 
-                    size="default" 
+                    variant="outline" 
+                    size="icon" 
                     onClick={handleClearAllChats} 
-                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
+                    title={t('history.remove_all', 'Remove All')}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t('history.remove_all', 'Remove All')}
+                    <Trash2 className="h-4.5 w-4.5" />
                   </Button>
                 )}
               </div>
@@ -490,13 +490,13 @@ export default function History() {
                 <h2 className="text-xl font-semibold hidden md:block">{t('history.reports_tab', 'Report History')}</h2>
                 {reports.length > 0 && !loading && (
                   <Button 
-                    variant="destructive" 
-                    size="default" 
+                    variant="outline" 
+                    size="icon" 
                     onClick={handleClearAllReports} 
-                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
+                    title={t('history.remove_all', 'Remove All')}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t('history.remove_all', 'Remove All')}
+                    <Trash2 className="h-4.5 w-4.5" />
                   </Button>
                 )}
               </div>

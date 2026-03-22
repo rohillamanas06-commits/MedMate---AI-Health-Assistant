@@ -125,12 +125,6 @@ export function AppSidebar() {
       icon: Clock,
       public: false,
     },
-    {
-      title: t('navbar.about'),
-      url: "/about",
-      icon: Info,
-      public: true,
-    },
   ]
 
   const filteredItems = navItems.filter(item => item.public || user)

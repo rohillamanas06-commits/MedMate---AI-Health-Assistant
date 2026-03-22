@@ -163,16 +163,6 @@ export default function Chat() {
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-2 gradient-text">{t('chat.title', 'AI Medical Assistant')}</h1>
             <p className="text-muted-foreground">{t('chat.subtitle', 'Ask me anything about your health concerns')}</p>
-            <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
-              <p className="text-sm font-medium">
-                💳 {hasCredits ? 'Each message uses 1 credit' : '0 credits remaining. Please buy credits.'}
-              </p>
-              {!hasCredits && (
-                <Button variant="outline" size="sm" className="h-6 text-xs bg-white text-destructive shadow-sm" onClick={() => setShowBuyCredits(true)}>
-                  Buy Credits
-                </Button>
-              )}
-            </div>
           </div>
         </div>
 
@@ -257,7 +247,15 @@ export default function Chat() {
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hasCredits ? <AlertCircle className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">{t('chat.enter_to_send', 'Press Enter to send • Shift+Enter for new line')}</p>
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <p className="text-xs text-muted-foreground">{t('chat.enter_to_send', 'Press Enter to send • Shift+Enter for new line')}</p>
+                {hasCredits && (
+                  <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-primary/5 border-primary/20 text-primary/80`}>
+                    <span>💳 1 credit / msg</span>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         </Card>

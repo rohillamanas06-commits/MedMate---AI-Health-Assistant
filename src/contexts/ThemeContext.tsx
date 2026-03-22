@@ -22,7 +22,9 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage.getItem('theme') as Theme) || 'light'
+  );
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -31,14 +33,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.classList.remove('light', 'dark');
     
     // Add current theme class
-    root.classList.add('light');
+    root.classList.add(theme);
     
     // Save to localStorage
     localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    // Do nothing as user requested only one mode
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   return (

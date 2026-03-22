@@ -199,16 +199,6 @@ export default function ReportExplainer() {
           <p className="text-muted-foreground text-lg px-2">
             {t('explainer.subtitle')}
           </p>
-          <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 border rounded-lg ${hasCredits ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
-            <p className="text-sm font-medium">
-              💳 {hasCredits ? 'Each report analysis uses 1 credit' : '0 credits remaining. Please buy credits.'}
-            </p>
-            {!hasCredits && (
-              <Button variant="outline" size="sm" className="h-6 text-xs bg-white text-destructive shadow-sm" onClick={() => setShowBuyCredits(true)}>
-                Buy Credits
-              </Button>
-            )}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
@@ -267,6 +257,13 @@ export default function ReportExplainer() {
                     </>
                   )}
                 </Button>
+                {hasCredits && (
+                  <div className="flex justify-center mt-2">
+                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-primary/5 border-primary/20 text-primary/80`}>
+                      <span>💳 1 credit / analysis</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
 
