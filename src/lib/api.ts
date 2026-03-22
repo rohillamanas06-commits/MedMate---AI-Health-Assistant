@@ -29,9 +29,9 @@ class ApiClient {
     timeoutMs: number = 10000
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const isFormData = options.body instanceof FormData;
-    
+
     const config: RequestInit = {
       ...options,
       credentials: 'include', // Important for session cookies
@@ -45,12 +45,12 @@ class ApiClient {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      
+
       const response = await fetch(url, {
         ...config,
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       const data = await response.json();
 
@@ -115,10 +115,10 @@ class ApiClient {
   }
 
   // Diagnosis
-  async diagnose(symptoms: string) {
+  async diagnose(symptoms: string, language: string = 'en') {
     return this.requestWithTimeout('/api/diagnose', {
       method: 'POST',
-      body: JSON.stringify({ symptoms }),
+      body: JSON.stringify({ symptoms, language }),
     }, 60000); // 60 second timeout for diagnosis
   }
 
@@ -138,7 +138,7 @@ class ApiClient {
         body: formData,
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       const data = await response.json();
 
@@ -159,20 +159,69 @@ class ApiClient {
     }
   }
 
+  async explainReport(file: File, language: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('language', language);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/explain_report`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Report analysis failed');
+      }
+
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Analysis timeout - please try again');
+        }
+        throw error;
+      }
+      throw new Error('Network error occurred');
+    }
+  }
+
   async getDiagnosisHistory(page = 1, perPage = 10) {
     return this.requestWithTimeout(`/api/diagnosis-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
   }
 
+  async getDeletedDiagnosisHistory(page = 1, perPage = 10) {
+    return this.requestWithTimeout(`/api/deleted-diagnosis-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
+  }
+
+  // Reports
+  async getReportHistory(page = 1, perPage = 20) {
+    return this.requestWithTimeout(`/api/report-history?page=${page}&per_page=${perPage}`, {}, 30000);
+  }
+
   // Chat
-  async sendChatMessage(message: string) {
+  async sendChatMessage(message: string, language: string = 'en') {
     return this.requestWithTimeout('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, language }),
     }, 30000); // 30 second timeout for chat
   }
 
   async getChatHistory(page = 1, perPage = 20) {
     return this.requestWithTimeout(`/api/chat-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
+  }
+
+  async getDeletedChatHistory(page = 1, perPage = 20) {
+    return this.requestWithTimeout(`/api/deleted-chat-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
   }
 
   // Hospital Finder
@@ -247,14 +296,38 @@ class ApiClient {
   }
 
   // Settings
-  async deleteChatHistory() {
-    return this.request('/api/settings/delete-chat-history', {
+  async deleteChatHistoryItem(id: number | string) {
+    return this.request(`/api/chat-history/${id}`, {
       method: 'DELETE',
     });
   }
 
-  async deleteDiagnosisHistory() {
-    return this.request('/api/settings/delete-diagnosis-history', {
+  async deleteAllChatHistory() {
+    return this.request('/api/chat-history/all', {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteDiagnosisHistoryItem(id: number | string) {
+    return this.request(`/api/diagnosis-history/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllDiagnosisHistory() {
+    return this.request('/api/diagnosis-history/all', {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteReportHistoryItem(id: number | string) {
+    return this.request(`/api/report-history/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllReportHistory() {
+    return this.request('/api/report-history/all', {
       method: 'DELETE',
     });
   }
@@ -272,6 +345,49 @@ class ApiClient {
     });
   }
 
+  // Credits & Payments
+  async getCreditPackages() {
+    return this.request('/api/credits/packages');
+  }
+
+  async getCreditsBalance() {
+    return this.request('/api/credits/balance');
+  }
+
+  async getCreditTransactions() {
+    return this.request('/api/credits/transactions');
+  }
+
+  async deleteTransaction(transactionId: number) {
+    return this.request(`/api/credits/transactions/${transactionId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllTransactions() {
+    return this.request('/api/credits/transactions/clear/all', {
+      method: 'DELETE',
+    });
+  }
+
+  async createPaymentOrder(packageId: string) {
+    return this.request('/api/payments/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ package_id: packageId }),
+    });
+  }
+
+  async verifyPayment(razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
+    return this.request('/api/payments/verify', {
+      method: 'POST',
+      body: JSON.stringify({
+        razorpay_order_id: razorpayOrderId,
+        razorpay_payment_id: razorpayPaymentId,
+        razorpay_signature: razorpaySignature,
+      }),
+    });
+  }
+
   // Feedback
   async submitFeedback(name: string, email: string, message: string) {
     return this.request('/api/feedback', {
@@ -280,36 +396,7 @@ class ApiClient {
     });
   }
 
-  // Credits & Payments
-  async getCreditsBalance() {
-    return this.request('/api/credits/balance');
-  }
 
-  async getCreditsTransactions(limit = 50) {
-    return this.request(`/api/credits/transactions?limit=${limit}`);
-  }
-
-  async getCreditsPackages() {
-    return this.request('/api/credits/packages');
-  }
-
-  async createPaymentOrder(packageId: string) {
-    return this.request('/api/payment/create-order', {
-      method: 'POST',
-      body: JSON.stringify({ package_id: packageId }),
-    });
-  }
-
-  async verifyPayment(paymentData: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }) {
-    return this.request('/api/payment/verify', {
-      method: 'POST',
-      body: JSON.stringify(paymentData),
-    });
-  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

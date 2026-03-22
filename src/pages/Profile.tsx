@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Calendar, Loader2 } from 'lucide-react';
+import { User, Calendar, Loader2, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
+  const { currentLanguage, setLanguage, t } = useLanguage();
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -34,10 +36,10 @@ export default function Profile() {
     setLoading(true);
     try {
       await api.updateProfile(profileData);
-      
+
       // Refresh user data to get updated info
       await checkAuth();
-      
+
       toast.success('Profile updated successfully!');
       setEditMode(false);
     } catch (error) {
@@ -47,17 +49,25 @@ export default function Profile() {
     }
   };
 
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'hi', name: 'हिंदी', flag: '🇮🇳' },
+    { code: 'bn', name: 'বাংলা', flag: '🇮🇳' },
+    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
+    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 px-4 sm:py-8">
       <div className="container max-w-4xl mx-auto">
         <div className="mb-6 sm:mb-8 text-center animate-slide-up">
-          <h1 className="text-2xl sm:text-4xl font-bold mb-2 gradient-text">Your Profile</h1>
-          <p className="text-muted-foreground text-sm sm:text-lg">
-            Manage your account information
-          </p>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2 gradient-text">{t('settings_title')}</h1>
+
         </div>
 
         <div className="grid gap-4 sm:gap-6">
+
           {/* Profile Picture Section */}
           <Card className="p-4 sm:p-8 glass animate-fade-in">
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-6">
@@ -78,7 +88,7 @@ export default function Profile() {
           {/* Profile Information */}
           <Card className="p-4 sm:p-8 glass animate-fade-in">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold">Profile Information</h3>
+              <h3 className="text-xl font-bold">{t('settings_profile')}</h3>
               <Button
                 onClick={() => editMode ? handleUpdate() : setEditMode(true)}
                 disabled={loading}
@@ -87,19 +97,19 @@ export default function Profile() {
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    Saving...
+                    {t('common_loading')}
                   </>
                 ) : editMode ? (
-                  'Save Changes'
+                  t('settings_save')
                 ) : (
-                  'Edit Profile'
+                  'Edit'
                 )}
               </Button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">{t('settings_username')}</Label>
                 <Input
                   id="username"
                   value={profileData.username}
@@ -110,7 +120,7 @@ export default function Profile() {
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('settings_email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -131,7 +141,7 @@ export default function Profile() {
                     }}
                     disabled={loading}
                   >
-                    Cancel
+                    {t('common_cancel')}
                   </Button>
                 </div>
               )}
@@ -148,10 +158,10 @@ export default function Profile() {
                     <p className="font-semibold">
                       {user.created_at
                         ? new Date(user.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
                         : 'N/A'}
                     </p>
                   </div>

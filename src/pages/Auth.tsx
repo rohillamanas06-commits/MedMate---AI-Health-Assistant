@@ -72,7 +72,7 @@ export default function Auth() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate username
     if (registerData.username.length < 3 || registerData.username.length > 20) {
       toast.error('Username must be between 3 and 20 characters');

@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { Navbar } from "@/components/Navbar";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -17,7 +19,6 @@ import Chat from "./pages/Chat";
 import Hospitals from "./pages/Hospitals";
 import History from "./pages/History";
 import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
@@ -26,6 +27,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import ReportExplainer from "./pages/ReportExplainer";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -40,12 +42,17 @@ const App = () => (
     <TooltipProvider>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <ScrollToTop />
-            <div className="min-h-screen">
-              <Navbar />
-              <Routes>
-                <Route path="/" element={<Home />} />
+          <LanguageProvider>
+            <BrowserRouter>
+              <ScrollToTop />
+              <SidebarProvider>
+                <AppSidebar />
+                <main className="w-full min-h-screen bg-background">
+                  <div className="p-4 flex items-center gap-4">
+                    <SidebarTrigger />
+                  </div>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
@@ -54,6 +61,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/explain"
+                  element={
+                    <ProtectedRoute>
+                      <ReportExplainer />
                     </ProtectedRoute>
                   }
                 />
@@ -97,14 +112,6 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/faq" element={<FAQ />} />
@@ -113,10 +120,12 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </div>
+              </main>
+            </SidebarProvider>
           </BrowserRouter>
-          <Toaster />
-          <Sonner />
+            <Toaster />
+            <Sonner />
+          </LanguageProvider>
         </AuthProvider>
       </ThemeProvider>
     </TooltipProvider>

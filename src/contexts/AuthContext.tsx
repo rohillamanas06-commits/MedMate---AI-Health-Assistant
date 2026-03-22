@@ -8,8 +8,8 @@ interface User {
   email: string;
   profile_picture?: string;
   profile_picture_url?: string;
-  credits?: number;
   created_at?: string;
+  credits?: number;
 }
 
 interface AuthContextType {

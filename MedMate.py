@@ -24,6 +24,8 @@ import json
 from openai import OpenAI
 import requests
 import base64
+import fitz # PyMuPDF
+import docx
 from functools import wraps
 import secrets
 import threading
@@ -31,15 +33,22 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 import re
 from email_validator import validate_email, EmailNotValidError
-import razorpay
+# Text-to-speech disabled on backend (handled by frontend Web Speech API) to prevent comtypes crash
+PYTTSX3_AVAILABLE = False
+pyttsx3 = None
 
-# Optional import for text-to-speech (not available in serverless)
 try:
-    import pyttsx3
-    PYTTSX3_AVAILABLE = True
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
 except ImportError:
-    PYTTSX3_AVAILABLE = False
-    pyttsx3 = None
+    PDFPLUMBER_AVAILABLE = False
+
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
+    print("⚠️ scispaCy not available, using regex fallback")
 
 # Load environment variables
 load_dotenv()
@@ -59,6 +68,7 @@ CORS(app,
          'http://localhost:5173', 
          'http://127.0.0.1:5173',
          'https://med-mate-ai-health-assistant-v2.vercel.app',  # Your Vercel domain
+         'https://medmate-ecru.vercel.app',  # New Vercel origin
          'https://medmate-ai-health-assistant-lhwk.onrender.com',  # Render deployment
      ],
      allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -133,6 +143,24 @@ db = SQLAlchemy(app)
 # Email configuration - SendGrid
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 
+# Razorpay configuration
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
+
+# Credit packages - pricing in rupees
+CREDIT_PACKAGES = [
+    {'id': 'starter', 'name': 'Starter Pack', 'price': 50, 'credits': 20, 'currency': 'INR'},
+    {'id': 'professional', 'name': 'Professional Pack', 'price': 100, 'credits': 50, 'currency': 'INR'},
+]
+
+# Credit costs for different features
+CREDIT_COSTS = {
+    'chat': 1,
+    'report': 1,
+    'image': 1,
+    'symptoms': 1
+}
+
 # Database initialization function for serverless
 def init_db():
     """Initialize database tables - called on each request in serverless"""
@@ -145,87 +173,31 @@ def init_db():
             if 'profile_picture' not in columns:
                 print("⚠️ Adding profile_picture column to user table...")
                 with db.engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(300)"))
+                    conn.execute(text("ALTER TABLE \"user\" ADD COLUMN profile_picture VARCHAR(300)"))
                     conn.commit()
                 print("✅ profile_picture column added successfully")
+            
+            if 'diagnosis' in inspector.get_table_names():
+                diag_columns = [col['name'] for col in inspector.get_columns('diagnosis')]
+                if 'is_deleted' not in diag_columns:
+                    print("⚠️ Adding is_deleted to diagnosis table...")
+                    with db.engine.connect() as conn:
+                        conn.execute(text("ALTER TABLE diagnosis ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE"))
+                        conn.execute(text("ALTER TABLE diagnosis ADD COLUMN deleted_at TIMESTAMP"))
+                        conn.commit()
+
+            if 'chat_history' in inspector.get_table_names():
+                chat_columns = [col['name'] for col in inspector.get_columns('chat_history')]
+                if 'is_deleted' not in chat_columns:
+                    print("⚠️ Adding is_deleted to chat_history table...")
+                    with db.engine.connect() as conn:
+                        conn.execute(text("ALTER TABLE chat_history ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE"))
+                        conn.execute(text("ALTER TABLE chat_history ADD COLUMN deleted_at TIMESTAMP"))
+                        conn.commit()
         except Exception as migration_error:
             print(f"⚠️ Migration check skipped (development mode): {migration_error}")
         
         db.create_all()
-        
-        # Ensure credits system tables and columns exist (for new deployments)
-        try:
-            from sqlalchemy import inspect, text
-            inspector = inspect(db.engine)
-            
-            # Check if credits columns exist in user table
-            user_columns = [col['name'] for col in inspector.get_columns('user')]
-            
-            with db.engine.connect() as conn:
-                # Add credits column if not exists
-                if 'credits' not in user_columns:
-                    print("⚠️ Adding credits column to user table...")
-                    conn.execute(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 5 NOT NULL"))
-                    conn.execute(text("UPDATE \"user\" SET credits = 5 WHERE credits IS NULL"))
-                    print("✅ credits column added successfully")
-                
-                # Add credits_used column if not exists
-                if 'credits_used' not in user_columns:
-                    print("⚠️ Adding credits_used column to user table...")
-                    conn.execute(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS credits_used INTEGER DEFAULT 0 NOT NULL"))
-                    conn.execute(text("UPDATE \"user\" SET credits_used = 0 WHERE credits_used IS NULL"))
-                    print("✅ credits_used column added successfully")
-                
-                # Check if credits_transactions table exists
-                existing_tables = inspector.get_table_names()
-                
-                if 'credits_transactions' not in existing_tables:
-                    print("⚠️ Creating credits_transactions table...")
-                    conn.execute(text("""
-                        CREATE TABLE IF NOT EXISTS credits_transactions (
-                            id SERIAL PRIMARY KEY,
-                            user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                            transaction_type VARCHAR(50) NOT NULL,
-                            credits_amount INTEGER NOT NULL,
-                            credits_before INTEGER NOT NULL,
-                            credits_after INTEGER NOT NULL,
-                            description TEXT,
-                            payment_id VARCHAR(255),
-                            order_id VARCHAR(255),
-                            amount_paid DECIMAL(10, 2),
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )
-                    """))
-                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_credits_transactions_user_id ON credits_transactions(user_id)"))
-                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_credits_transactions_created_at ON credits_transactions(created_at)"))
-                    print("✅ credits_transactions table created successfully")
-                
-                if 'payment_orders' not in existing_tables:
-                    print("⚠️ Creating payment_orders table...")
-                    conn.execute(text("""
-                        CREATE TABLE IF NOT EXISTS payment_orders (
-                            id SERIAL PRIMARY KEY,
-                            user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                            order_id VARCHAR(255) UNIQUE NOT NULL,
-                            amount DECIMAL(10, 2) NOT NULL,
-                            currency VARCHAR(3) DEFAULT 'INR',
-                            credits_amount INTEGER NOT NULL,
-                            status VARCHAR(50) DEFAULT 'created',
-                            payment_id VARCHAR(255),
-                            payment_signature VARCHAR(255),
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )
-                    """))
-                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_payment_orders_user_id ON payment_orders(user_id)"))
-                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_payment_orders_order_id ON payment_orders(order_id)"))
-                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_payment_orders_status ON payment_orders(status)"))
-                    print("✅ payment_orders table created successfully")
-                
-                conn.commit()
-            print("✅ Credits system tables verified successfully")
-        except Exception as credits_migration_error:
-            print(f"⚠️ Credits migration check: {credits_migration_error}")
         
         # Create indexes for better query performance
         try:
@@ -268,48 +240,6 @@ def ensure_db_initialized():
             else:
                 print("⚠️ Database initialization failed, but continuing...")
     
-    # IMPORTANT: Ensure credits tables exist on EVERY request
-    # This runs once per app instance but ensures tables exist before any credits operation
-    if not hasattr(app, '_credits_tables_ensured'):
-        try:
-            from sqlalchemy import text
-            with db.engine.connect() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS credits_transactions (
-                        id SERIAL PRIMARY KEY,
-                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                        transaction_type VARCHAR(50) NOT NULL,
-                        credits_amount INTEGER NOT NULL,
-                        credits_before INTEGER NOT NULL,
-                        credits_after INTEGER NOT NULL,
-                        description TEXT,
-                        payment_id VARCHAR(255),
-                        order_id VARCHAR(255),
-                        amount_paid DECIMAL(10, 2),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS payment_orders (
-                        id SERIAL PRIMARY KEY,
-                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                        order_id VARCHAR(255) UNIQUE NOT NULL,
-                        amount DECIMAL(10, 2) NOT NULL,
-                        currency VARCHAR(3) DEFAULT 'INR',
-                        credits_amount INTEGER NOT NULL,
-                        status VARCHAR(50) DEFAULT 'created',
-                        payment_id VARCHAR(255),
-                        payment_signature VARCHAR(255),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """))
-                conn.commit()
-            app._credits_tables_ensured = True
-            print("✅ Credits tables ensured in before_request")
-        except Exception as e:
-            print(f"⚠️ Credits tables check in before_request: {e}")
-    
     # Refresh session expiration time on each request if user is authenticated
     if 'user_id' in session:
         session.permanent = True
@@ -328,6 +258,7 @@ def after_request(response):
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'https://med-mate-ai-health-assistant-v2.vercel.app',
+        'https://medmate-ecru.vercel.app',
         'https://medmate-ai-health-assistant-lhwk.onrender.com',
     ]
     
@@ -363,32 +294,6 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
 razorpay_client = None
-if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
-    razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
-    print(f"✓ Razorpay configured")
-else:
-    print("⚠️ Razorpay not configured - payment features disabled")
-
-# Credit packages (same as ResuAI)
-CREDIT_PACKAGES = {
-    '20': {
-        'id': '20',
-        'name': 'Starter Pack',
-        'credits': 20,
-        'price': 50,
-        'currency': 'INR',
-        'description': '20 credits for ₹50'
-    },
-    '100': {
-        'id': '100',
-        'name': 'Pro Pack',
-        'credits': 100,
-        'price': 100,
-        'currency': 'INR',
-        'description': '100 credits for ₹100',
-        'popular': True
-    }
-}
 
 # Initialize AI clients (prioritize Gemini over OpenAI)
 openai_client = None
@@ -421,7 +326,7 @@ if not ai_provider:
     print("✗ No AI API configured - using demo mode")
 
 # Allowed file extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'pdf', 'docx', 'txt'}
 
 # ==================== DATABASE MODELS ====================
 
@@ -432,13 +337,15 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     profile_picture = db.Column(db.String(300), nullable=True)
-    credits = db.Column(db.Integer, default=5, nullable=False)
-    credits_used = db.Column(db.Integer, default=0, nullable=False)
+    credits = db.Column(db.Integer, default=10)  # 10 free credits on signup
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
     diagnoses = db.relationship('Diagnosis', backref='user', lazy=True, cascade='all, delete-orphan')
     chat_history = db.relationship('ChatHistory', backref='user', lazy=True, cascade='all, delete-orphan')
+    report_history = db.relationship('ReportHistory', backref='user', lazy=True, cascade='all, delete-orphan')
+    credit_transactions = db.relationship('CreditsTransaction', backref='user', lazy=True, cascade='all, delete-orphan')
+    payment_orders = db.relationship('PaymentOrder', backref='user', lazy=True, cascade='all, delete-orphan')
     reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade='all, delete-orphan')
     account_deletion_tokens = db.relationship('AccountDeletionToken', backref='user', lazy=True, cascade='all, delete-orphan')
     
@@ -482,6 +389,8 @@ class Diagnosis(db.Model):
     diagnosis_result = db.Column(db.Text, nullable=False)  # JSON string
     image_path = db.Column(db.String(300), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
     
     def get_result_dict(self):
         try:
@@ -496,6 +405,45 @@ class ChatHistory(db.Model):
     message = db.Column(db.Text, nullable=False)
     response = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+
+class ReportHistory(db.Model):
+    """Store medical report explanations"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    file_name = db.Column(db.String(300), nullable=True)
+    result = db.Column(db.Text, nullable=False)  # JSON string
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    is_deleted = db.Column(db.Boolean, default=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
+
+    def get_result_dict(self):
+        try:
+            return json.loads(self.result)
+        except:
+            return {}
+
+class CreditsTransaction(db.Model):
+    """Track credit transactions (usage and purchases)"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    credits = db.Column(db.Integer, nullable=False)  # Positive for purchase, negative for usage
+    transaction_type = db.Column(db.String(50), nullable=False)  # 'chat', 'report', 'image', 'symptoms', 'purchase', 'free'
+    description = db.Column(db.String(300), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+class PaymentOrder(db.Model):
+    """Track Razorpay payment orders"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    razorpay_order_id = db.Column(db.String(100), unique=True, nullable=True)
+    razorpay_payment_id = db.Column(db.String(100), unique=True, nullable=True)
+    amount = db.Column(db.Integer, nullable=False)  # Amount in paise (1 rupee = 100 paise)
+    credits = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='created')  # 'created', 'pending', 'completed', 'failed', 'cancelled'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
 
 class Hospital(db.Model):
     """Store hospital information"""
@@ -505,38 +453,7 @@ class Hospital(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
-    rating = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class CreditsTransaction(db.Model):
-    """Track all credit transactions"""
-    __tablename__ = 'credits_transactions'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-    transaction_type = db.Column(db.String(50), nullable=False)  # 'purchase', 'deduct', 'refund', 'bonus'
-    credits_amount = db.Column(db.Integer, nullable=False)
-    credits_before = db.Column(db.Integer, nullable=False)
-    credits_after = db.Column(db.Integer, nullable=False)
-    description = db.Column(db.Text)
-    payment_id = db.Column(db.String(255))
-    order_id = db.Column(db.String(255))
-    amount_paid = db.Column(db.Numeric(10, 2))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-
-class PaymentOrder(db.Model):
-    """Track Razorpay payment orders"""
-    __tablename__ = 'payment_orders'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-    order_id = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
-    currency = db.Column(db.String(3), default='INR')
-    credits_amount = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(50), default='created', index=True)
-    payment_id = db.Column(db.String(255))
-    payment_signature = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -574,6 +491,61 @@ def validate_password_strength(password):
         return False, "Password must contain at least one special character"
     
     return True, None
+
+# ==================== CREDIT SYSTEM FUNCTIONS ====================
+
+def deduct_credits(user_id, cost, transaction_type, description=None):
+    """Deduct credits from user account"""
+    try:
+        user = db.session.get(User, user_id)
+        if not user:
+            return False, 'User not found'
+        
+        if user.credits < cost:
+            return False, f'Insufficient credits. You have {user.credits} credits but need {cost}'
+        
+        # Deduct credits
+        user.credits -= cost
+        
+        # Log transaction
+        transaction = CreditsTransaction(
+            user_id=user_id,
+            credits=-cost,
+            transaction_type=transaction_type,
+            description=description
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        return True, f'Deducted {cost} credits for {transaction_type}'
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error deducting credits: {e}")
+        return False, str(e)
+
+def add_credits(user_id, credits, transaction_type, description=None):
+    """Add credits to user account"""
+    try:
+        user = db.session.get(User, user_id)
+        if not user:
+            return False, 'User not found'
+        
+        user.credits += credits
+        
+        transaction = CreditsTransaction(
+            user_id=user_id,
+            credits=credits,
+            transaction_type=transaction_type,
+            description=description
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        return True, f'Added {credits} credits from {transaction_type}'
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error adding credits: {e}")
+        return False, str(e)
 
 def send_feedback_email(name, email, message):
     """Send feedback email to author using SendGrid"""
@@ -824,222 +796,21 @@ def speak_text(text):
     thread.daemon = True
     thread.start()
 
-# ==================== CREDITS FUNCTIONS ====================
-
-def ensure_credits_tables_exist():
-    """Ensure credits system tables exist in database"""
-    try:
-        from sqlalchemy import text
-        with db.engine.connect() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS credits_transactions (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                    transaction_type VARCHAR(50) NOT NULL,
-                    credits_amount INTEGER NOT NULL,
-                    credits_before INTEGER NOT NULL,
-                    credits_after INTEGER NOT NULL,
-                    description TEXT,
-                    payment_id VARCHAR(255),
-                    order_id VARCHAR(255),
-                    amount_paid DECIMAL(10, 2),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """))
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS payment_orders (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                    order_id VARCHAR(255) UNIQUE NOT NULL,
-                    amount DECIMAL(10, 2) NOT NULL,
-                    currency VARCHAR(3) DEFAULT 'INR',
-                    credits_amount INTEGER NOT NULL,
-                    status VARCHAR(50) DEFAULT 'created',
-                    payment_id VARCHAR(255),
-                    payment_signature VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """))
-            conn.commit()
-        return True
-    except Exception as e:
-        print(f"⚠️ Could not ensure credits tables: {e}")
-        return False
-
-def add_credits(user_id, amount, description, payment_id=None, order_id=None, amount_paid=None):
-    """Add credits to user account and log transaction - uses raw SQL for reliability"""
-    try:
-        from sqlalchemy import text
-        
-        # First, ensure credits tables exist
-        try:
-            with db.engine.connect() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS credits_transactions (
-                        id SERIAL PRIMARY KEY,
-                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                        transaction_type VARCHAR(50) NOT NULL,
-                        credits_amount INTEGER NOT NULL,
-                        credits_before INTEGER NOT NULL,
-                        credits_after INTEGER NOT NULL,
-                        description TEXT,
-                        payment_id VARCHAR(255),
-                        order_id VARCHAR(255),
-                        amount_paid DECIMAL(10, 2),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """))
-                conn.commit()
-        except Exception as table_err:
-            print(f"⚠️ Table creation check: {table_err}")
-        
-        # Get user using raw SQL to avoid ORM issues
-        with db.engine.connect() as conn:
-            result = conn.execute(text("SELECT id, credits FROM \"user\" WHERE id = :user_id"), {"user_id": user_id})
-            user_row = result.fetchone()
-            
-            if not user_row:
-                return False
-            
-            current_credits = user_row[1] if user_row[1] is not None else 0
-            new_credits = current_credits + amount
-            
-            # Update user credits using raw SQL
-            conn.execute(text("""
-                UPDATE "user" SET credits = :new_credits WHERE id = :user_id
-            """), {"new_credits": new_credits, "user_id": user_id})
-            
-            # Log transaction using raw SQL
-            try:
-                conn.execute(text("""
-                    INSERT INTO credits_transactions (user_id, transaction_type, credits_amount, credits_before, credits_after, description, payment_id, order_id, amount_paid, created_at)
-                    VALUES (:user_id, 'purchase', :amount, :credits_before, :credits_after, :description, :payment_id, :order_id, :amount_paid, NOW())
-                """), {
-                    "user_id": user_id,
-                    "amount": amount,
-                    "credits_before": current_credits,
-                    "credits_after": new_credits,
-                    "description": description,
-                    "payment_id": payment_id,
-                    "order_id": order_id,
-                    "amount_paid": float(amount_paid) if amount_paid else None
-                })
-            except Exception as log_err:
-                print(f"⚠️ Could not log purchase transaction: {log_err}")
-            
-            conn.commit()
-        
-        print(f"✅ Added {amount} credits to user {user_id}. New balance: {new_credits}")
-        return True
-    except Exception as e:
-        print(f"❌ Error adding credits: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def deduct_credits(user_id, amount, description):
-    """Deduct credits from user account and log transaction - uses raw SQL for reliability"""
-    try:
-        from sqlalchemy import text
-        
-        # First, ensure credits tables exist
-        try:
-            with db.engine.connect() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS credits_transactions (
-                        id SERIAL PRIMARY KEY,
-                        user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-                        transaction_type VARCHAR(50) NOT NULL,
-                        credits_amount INTEGER NOT NULL,
-                        credits_before INTEGER NOT NULL,
-                        credits_after INTEGER NOT NULL,
-                        description TEXT,
-                        payment_id VARCHAR(255),
-                        order_id VARCHAR(255),
-                        amount_paid DECIMAL(10, 2),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """))
-                conn.commit()
-        except Exception as table_err:
-            print(f"⚠️ Table creation check: {table_err}")
-        
-        # Get user using raw SQL to avoid ORM issues
-        with db.engine.connect() as conn:
-            result = conn.execute(text("SELECT id, credits, credits_used FROM \"user\" WHERE id = :user_id"), {"user_id": user_id})
-            user_row = result.fetchone()
-            
-            if not user_row:
-                return False, "User not found"
-            
-            current_credits = user_row[1] if user_row[1] is not None else 0
-            current_credits_used = user_row[2] if user_row[2] is not None else 0
-            
-            if current_credits < amount:
-                return False, "Insufficient credits"
-            
-            new_credits = current_credits - amount
-            new_credits_used = current_credits_used + amount
-            
-            # Update user credits using raw SQL
-            conn.execute(text("""
-                UPDATE "user" SET credits = :new_credits, credits_used = :new_credits_used WHERE id = :user_id
-            """), {"new_credits": new_credits, "new_credits_used": new_credits_used, "user_id": user_id})
-            
-            # Log transaction using raw SQL
-            try:
-                conn.execute(text("""
-                    INSERT INTO credits_transactions (user_id, transaction_type, credits_amount, credits_before, credits_after, description, created_at)
-                    VALUES (:user_id, 'deduct', :amount, :credits_before, :credits_after, :description, NOW())
-                """), {
-                    "user_id": user_id,
-                    "amount": amount,
-                    "credits_before": current_credits,
-                    "credits_after": new_credits,
-                    "description": description
-                })
-            except Exception as log_err:
-                print(f"⚠️ Could not log transaction: {log_err}")
-                # Continue without logging - credits are still deducted
-            
-            conn.commit()
-        
-        print(f"✅ Deducted {amount} credits from user {user_id}. New balance: {new_credits}")
-        return True, None
-    except Exception as e:
-        print(f"❌ Error deducting credits: {e}")
-        import traceback
-        traceback.print_exc()
-        return False, "Failed to deduct credits"
-
-def check_credits(user_id, required_credits=1):
-    """Check if user has enough credits - uses raw SQL for reliability"""
-    try:
-        from sqlalchemy import text
-        
-        with db.engine.connect() as conn:
-            result = conn.execute(text("SELECT credits FROM \"user\" WHERE id = :user_id"), {"user_id": user_id})
-            row = result.fetchone()
-            
-            if not row:
-                return False
-            
-            credits = row[0] if row[0] is not None else 0
-            return credits >= required_credits
-    except Exception as e:
-        print(f"❌ Error checking credits: {e}")
-        return False
-
 # ==================== AI FUNCTIONS ====================
 
-def analyze_symptoms_with_ai(symptoms):
+def analyze_symptoms_with_ai(symptoms, language='en'):
     """
     Analyze symptoms using AI (Gemini or OpenAI) to predict possible diseases
     Returns: List of diseases with confidence percentages and solutions
     """
     try:
-        prompt = f"""You are a medical AI assistant. Analyze the following symptoms and provide:
+        lang_names = {'en':'English','hi':'Hindi','bn':'Bengali','pa':'Punjabi','ml':'Malayalam','kn':'Kannada'}
+        lang_name = lang_names.get(language, 'English')
+        
+        prompt = f"""You are a medical AI assistant.
+IMPORTANT: Respond entirely in {lang_name}.
+
+Analyze the following symptoms and provide:
 1. Top 3-5 possible diseases/conditions with confidence percentages (must add up to 100%)
 2. Brief explanation for each
 3. Recommended solutions/treatments
@@ -1277,35 +1048,62 @@ def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def chat_with_assistant(message, chat_history=[]):
+def chat_with_assistant(message, chat_history=[], language='en'):
     """
     Chat with AI medical assistant - ChatGPT-like conversational experience
     Returns: AI response
     """
     try:
-        system_prompt = """You are MedMate, a friendly and knowledgeable medical AI assistant. 
+        lang_names = {'en':'English','hi':'Hindi','bn':'Bengali','pa':'Punjabi','ml':'Malayalam','kn':'Kannada'}
+        lang_name = lang_names.get(language, 'English')
+        
+        system_prompt = f"""IMPORTANT: You must respond only in {lang_name}. All your responses must be in {lang_name} only.
 
-Your personality:
-- Conversational and empathetic, like ChatGPT
-- Explain medical concepts in simple, easy-to-understand language
-- Answer ANY health-related questions: diseases, symptoms, medications, nutrition, fitness, mental health, etc.
-- Provide detailed, helpful responses
-- Be supportive and understanding
-- Use examples and analogies when helpful
+You are MedMate, a personal health assistant 
+for Indian patients. You are NOT a general purpose chatbot.
 
-You can discuss:
-- General health and wellness
-- Disease information and symptoms
-- Medications and treatments
-- Nutrition and diet
-- Exercise and fitness
-- Mental health
-- First aid
-- Preventive care
-- Medical procedures
-- And any other health topics
+YOUR ONLY JOB:
+Help patients understand their health in simple, clear language 
+that anyone — even with no medical education — can understand.
 
-Always remind users to consult healthcare professionals for diagnosis and treatment, but provide comprehensive information to help them understand their health better."""
+HOW YOU SPEAK:
+- Use extremely simple language. No medical jargon ever.
+- Speak like a trusted family doctor, not a textbook.
+- Keep answers short — 3 to 5 sentences maximum.
+- Use examples from daily Indian life where helpful.
+  Example: instead of "elevated glucose indicates hyperglycemia",
+  say "your sugar is high — like having too much mithai in your blood."
+- Always end with one specific action the person should take.
+- Never give a diagnosis. Always recommend seeing a doctor 
+  for anything serious.
+
+WHAT YOU CAN DISCUSS:
+- Understanding lab report values and what they mean
+- Symptoms and what they might indicate
+- Medications — what they do, side effects in simple words
+- Diet and lifestyle advice for specific conditions
+- When to see a doctor urgently vs when it can wait
+- Explaining what a doctor told them in simpler words
+
+WHAT YOU MUST REFUSE:
+- Any question not related to health or medicine
+- General knowledge questions
+- News, entertainment, technology, sports, politics
+- Coding, math, writing help
+
+If someone asks a non-medical question, say exactly:
+"I'm only able to help with health and medical questions. 
+Is there something about your health I can help you with?"
+
+CONTEXT AWARENESS:
+If the conversation includes previous diagnosis results or 
+report data, refer to them naturally.
+Example: "Based on what you shared earlier about your 
+high platelet count..."
+
+TONE:
+Warm, calm, and reassuring — like a doctor who has time for you.
+Never alarming. Never dismissive. Never robotic."""
 
         # Try Gemini first with timeout
         if gemini_model:
@@ -1457,6 +1255,513 @@ def get_fallback_image_analysis():
         "professional_evaluation": "Required"
     }
 
+MEDICAL_KB = {
+    "HbA1c": {
+        "aliases": ["glycated hemoglobin", "glycosylated hemoglobin", "a1c"],
+        "unit": "%",
+        "ranges": [
+            {"label": "Normal", "max": 5.7, "condition": "Normal blood sugar"},
+            {"label": "Borderline", "max": 6.4, "condition": "Prediabetes risk"},
+            {"label": "High", "max": 999, "condition": "Diabetes risk"}
+        ]
+    },
+    "Hemoglobin": {
+        "aliases": ["hb", "haemoglobin", "hgb"],
+        "unit": "g/dL",
+        "ranges": [
+            {"label": "Low", "max": 12.9, "condition": "Anemia"},
+            {"label": "Normal", "max": 17.0, "condition": "Normal"},
+            {"label": "High", "max": 999, "condition": "Polycythemia"}
+        ]
+    },
+    "WBC": {
+        "aliases": ["white blood cell", "wbc count", "total wbc", "leukocyte"],
+        "unit": "cells/mcL",
+        "ranges": [
+            {"label": "Low", "max": 3999, "condition": "Immune issue"},
+            {"label": "Normal", "max": 11000, "condition": "Normal"},
+            {"label": "High", "max": 999999, "condition": "Infection/Inflammation"}
+        ]
+    },
+    "Platelets": {
+        "aliases": ["platelet count", "plt", "thrombocyte"],
+        "unit": "/mcL",
+        "ranges": [
+            {"label": "Low", "max": 149999, "condition": "Thrombocytopenia"},
+            {"label": "Normal", "max": 450000, "condition": "Normal"},
+            {"label": "High", "max": 9999999, "condition": "Thrombocytosis"}
+        ]
+    },
+    "Glucose": {
+        "aliases": ["blood sugar", "fasting glucose", "fbs", "rbs", "blood glucose"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Low", "max": 69, "condition": "Hypoglycemia"},
+            {"label": "Normal", "max": 99, "condition": "Normal"},
+            {"label": "Borderline", "max": 125, "condition": "Prediabetes"},
+            {"label": "High", "max": 9999, "condition": "Diabetes risk"}
+        ]
+    },
+    "Cholesterol": {
+        "aliases": ["total cholesterol", "serum cholesterol"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Normal", "max": 199, "condition": "Normal"},
+            {"label": "Borderline", "max": 239, "condition": "Borderline high"},
+            {"label": "High", "max": 9999, "condition": "High cholesterol"}
+        ]
+    },
+    "HDL": {
+        "aliases": ["hdl cholesterol", "good cholesterol"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Low", "max": 39, "condition": "Low HDL - heart risk"},
+            {"label": "Normal", "max": 59, "condition": "Normal"},
+            {"label": "High", "max": 9999, "condition": "Good - protective"}
+        ]
+    },
+    "LDL": {
+        "aliases": ["ldl cholesterol", "bad cholesterol"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Normal", "max": 99, "condition": "Optimal"},
+            {"label": "Borderline", "max": 159, "condition": "Borderline high"},
+            {"label": "High", "max": 9999, "condition": "High LDL - heart risk"}
+        ]
+    },
+    "Triglycerides": {
+        "aliases": ["tg", "triglyceride"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Normal", "max": 149, "condition": "Normal"},
+            {"label": "Borderline", "max": 199, "condition": "Borderline high"},
+            {"label": "High", "max": 9999, "condition": "High triglycerides"}
+        ]
+    },
+    "Creatinine": {
+        "aliases": ["serum creatinine", "creatinine"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Low", "max": 0.59, "condition": "Low creatinine"},
+            {"label": "Normal", "max": 1.2, "condition": "Normal kidney function"},
+            {"label": "High", "max": 99, "condition": "Possible kidney issue"}
+        ]
+    },
+    "Urea": {
+        "aliases": ["blood urea", "bun", "urea nitrogen"],
+        "unit": "mg/dL",
+        "ranges": [
+            {"label": "Normal", "max": 20, "condition": "Normal"},
+            {"label": "High", "max": 999, "condition": "Possible kidney issue"}
+        ]
+    },
+    "SGPT": {
+        "aliases": ["alt", "alanine aminotransferase", "alanine transaminase"],
+        "unit": "U/L",
+        "ranges": [
+            {"label": "Normal", "max": 56, "condition": "Normal liver function"},
+            {"label": "High", "max": 9999, "condition": "Possible liver issue"}
+        ]
+    },
+    "SGOT": {
+        "aliases": ["ast", "aspartate aminotransferase"],
+        "unit": "U/L",
+        "ranges": [
+            {"label": "Normal", "max": 40, "condition": "Normal"},
+            {"label": "High", "max": 9999, "condition": "Possible liver/heart issue"}
+        ]
+    },
+    "TSH": {
+        "aliases": ["thyroid stimulating hormone", "thyrotropin"],
+        "unit": "mIU/L",
+        "ranges": [
+            {"label": "Low", "max": 0.39, "condition": "Hyperthyroidism"},
+            {"label": "Normal", "max": 4.0, "condition": "Normal thyroid"},
+            {"label": "High", "max": 999, "condition": "Hypothyroidism"}
+        ]
+    }
+}
+
+def extract_text_from_pdf(filepath):
+    """Extract text from PDF using pdfplumber"""
+    text = ""
+    try:
+        if PDFPLUMBER_AVAILABLE:
+            with pdfplumber.open(filepath) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+        else:
+            # fallback to fitz if available
+            import fitz
+            doc = fitz.open(filepath)
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+    except Exception as e:
+        print(f"PDF extraction error: {e}")
+    return text
+
+def get_range_from_umls(test_name):
+    """
+    Query UMLS API for reference ranges of a medical test.
+    Returns dict with ref_min, ref_max, unit, note — or None if unavailable.
+    """
+    umls_api_key = os.getenv('UMLS_API_KEY')
+    if not umls_api_key:
+        return None  # UMLS key not configured, skip silently
+    try:
+        params = {
+            'string': test_name,
+            'apiKey': umls_api_key,
+            'searchType': 'words',
+            'returnIdType': 'concept'
+        }
+        resp = requests.get(
+            'https://uts-ws.nlm.nih.gov/rest/search/current',
+            params=params, timeout=5
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            results = data.get('result', {}).get('results', [])
+            if results:
+                # Placeholder: return None until full UMLS range mapping implemented
+                return None
+    except Exception as e:
+        print(f"⚠️ UMLS API error for '{test_name}': {e}")
+    return None
+
+
+spacy_nlp = None
+
+def get_spacy_model():
+    """Load scispaCy model once and reuse"""
+    global spacy_nlp
+    if spacy_nlp is not None:
+        return spacy_nlp
+    try:
+        if SPACY_AVAILABLE:
+            spacy_nlp = spacy.load("en_core_sci_sm")
+            print("✅ scispaCy model loaded")
+            return spacy_nlp
+    except Exception as e:
+        print(f"⚠️ scispaCy model load failed: {e}")
+    return None
+
+
+def extract_medical_terms_nlp(text):
+    """
+    Use scispaCy NER to identify medical entity positions in text.
+    Returns list of identified medical terms with their positions.
+    Falls back to empty list if scispaCy unavailable.
+    """
+    nlp_model = get_spacy_model()
+    if not nlp_model:
+        return []
+
+    try:
+        max_length = 100000
+        if len(text) > max_length:
+            text = text[:max_length]
+
+        doc = nlp_model(text)
+
+        medical_terms = []
+        for ent in doc.ents:
+            medical_terms.append({
+                "text": ent.text,
+                "label": ent.label_,
+                "start": ent.start_char,
+                "end": ent.end_char
+            })
+
+        print(f"✅ scispaCy found {len(medical_terms)} medical entities")
+        return medical_terms
+
+    except Exception as e:
+        print(f"⚠️ scispaCy extraction error: {e}")
+        return []
+
+
+def extract_medical_entities(text):
+    """
+    3-layer NLP extraction pipeline:
+    Layer 1 — scispaCy NER identifies medical term positions
+    Layer 2 — Regex extracts values relative to NER-identified positions
+    Layer 3 — If no range found, UMLS API fetches standard range
+    Falls back to pure regex if scispaCy unavailable.
+    """
+    entities = []
+    seen = set()
+    lines = text.split('\n')
+
+    skip_words = ['date', 'age', 'sex', 'name', 'lab no', 'ref by',
+                  'phone', 'mobile', 'sample', 'patient', 'doctor',
+                  'report', 'www.', 'http', 'end of report',
+                  'signature', 'address', 'consultant']
+
+    # LAYER 1: Run scispaCy NER on full text
+    nlp_entities = extract_medical_terms_nlp(text)
+
+    # Build a set of NLP-confirmed medical term texts for validation
+    nlp_confirmed_terms = {
+        ent['text'].lower().strip()
+        for ent in nlp_entities
+    }
+
+    print(f"NLP confirmed terms: {nlp_confirmed_terms}")
+
+    # LAYER 2: Line-by-line extraction guided by NLP confirmation
+    for line in lines:
+        line = line.strip()
+        if not line or len(line) < 3:
+            continue
+
+        if any(skip in line.lower() for skip in skip_words):
+            continue
+
+        first_num_match = re.search(r'\b(\d+\.?\d*)\b', line)
+        if not first_num_match:
+            continue
+
+        test_name_raw = line[:first_num_match.start()].strip()
+        test_name_raw = re.sub(r'[:\-\u2013\*\s]+$', '', test_name_raw).strip()
+
+        if len(test_name_raw) < 2 or len(test_name_raw) > 50:
+            continue
+
+        if re.match(r'^\d+$', test_name_raw):
+            continue
+
+        if any(skip in test_name_raw.lower() for skip in skip_words):
+            continue
+
+        # NLP VALIDATION STEP
+        nlp_confirmed = False
+
+        if nlp_confirmed_terms:
+            test_lower = test_name_raw.lower()
+            for nlp_term in nlp_confirmed_terms:
+                if (nlp_term in test_lower or
+                        test_lower in nlp_term or
+                        any(word in nlp_term for word in test_lower.split()
+                            if len(word) > 3)):
+                    nlp_confirmed = True
+                    break
+
+            if not nlp_confirmed:
+                has_range = bool(re.search(
+                    r'\d+\.?\d*\s*[-\u2013]\s*\d+\.?\d*', line
+                ))
+                if not has_range:
+                    continue
+
+        try:
+            patient_value = float(first_num_match.group(1))
+        except:
+            continue
+
+        if patient_value == 0:
+            continue
+
+        if patient_value > 50000:
+            continue
+
+        if 'www.' in line.lower() or 'http' in line.lower():
+            continue
+
+        unit_search = re.search(
+            r'\b' + re.escape(first_num_match.group(1)) +
+            r'\s*([A-Za-z%/\xb5][A-Za-z0-9%/\xb5\.]*)',
+            line
+        )
+        unit = unit_search.group(1).strip() if unit_search else ""
+
+        ref_min = None
+        ref_max = None
+        ref_type = None
+        status = "Review"
+        condition = "Ask your doctor about this value"
+
+        after_value = line[first_num_match.end():]
+        ref_range_match = re.search(r'(\d+\.?\d*)\s*[-\u2013]\s*(\d+\.?\d*)', after_value)
+        less_than_match = re.search(r'<\s*(\d+\.?\d*)', after_value)
+        greater_than_match = re.search(r'>\s*(\d+\.?\d*)', after_value)
+
+        if ref_range_match:
+            ref_min = float(ref_range_match.group(1))
+            ref_max = float(ref_range_match.group(2))
+            ref_type = 'range'
+        elif less_than_match:
+            ref_max = float(less_than_match.group(1))
+            ref_type = 'less_than'
+        elif greater_than_match:
+            ref_min = float(greater_than_match.group(1))
+            ref_type = 'greater_than'
+
+        if ref_type == 'range' and ref_min is not None and ref_max is not None:
+            if patient_value < ref_min:
+                status = "Low"
+                condition = f"Below normal range ({ref_min}-{ref_max})"
+            elif patient_value > ref_max:
+                status = "High"
+                condition = f"Above normal range ({ref_min}-{ref_max})"
+            else:
+                status = "Normal"
+                condition = "Within normal range"
+        elif ref_type == 'less_than' and ref_max:
+            status = "High" if patient_value > ref_max else "Normal"
+            condition = (f"Above normal (should be <{ref_max})"
+                         if status == "High" else "Within normal range")
+        elif ref_type == 'greater_than' and ref_min:
+            status = "Low" if patient_value < ref_min else "Normal"
+            condition = (f"Below normal (should be >{ref_min})"
+                         if status == "Low" else "Within normal range")
+
+        # LAYER 3: No range in report — call UMLS API
+        if ref_type is None:
+            print(f"No range in report for {test_name_raw}, querying UMLS...")
+            api_range = get_range_from_umls(test_name_raw)
+
+            if api_range:
+                ref_min = api_range.get('ref_min')
+                ref_max = api_range.get('ref_max')
+                api_unit = api_range.get('unit', '')
+                note = api_range.get('note', '')
+
+                if ref_min is not None and ref_max is not None:
+                    ref_type = 'range'
+                    if patient_value < ref_min:
+                        status = "Low"
+                        condition = (f"Below normal ({ref_min}-{ref_max})"
+                                     f" — {note}")
+                    elif patient_value > ref_max:
+                        status = "High"
+                        condition = (f"Above normal ({ref_min}-{ref_max})"
+                                     f" — {note}")
+                    else:
+                        status = "Normal"
+                        condition = "Within normal range"
+
+                    if not unit and api_unit:
+                        unit = api_unit
+
+        test_key = test_name_raw.lower().strip()
+        if test_key in seen:
+            continue
+        seen.add(test_key)
+
+        entities.append({
+            "test_name": test_name_raw,
+            "value": patient_value,
+            "unit": unit,
+            "ref_min": ref_min,
+            "ref_max": ref_max,
+            "ref_type": ref_type,
+            "status": status,
+            "condition": condition,
+            "nlp_confirmed": nlp_confirmed,
+            "confidence": "matched" if ref_type else "unmatched"
+        })
+
+    print(f"✅ Extracted {len(entities)} entities total")
+    return entities
+
+
+def interpret_results(entities):
+    interpreted = []
+    for entity in entities:
+        interpreted.append({
+            "test_name": entity["test_name"],
+            "value": entity["value"],
+            "unit": entity.get("unit", ""),
+            "status": entity.get("status", "Review"),
+            "condition": entity.get("condition", ""),
+            "ref_min": entity.get("ref_min"),
+            "ref_max": entity.get("ref_max"),
+            "nlp_confirmed": entity.get("nlp_confirmed", False),
+            "confidence": entity.get("confidence", "unmatched")
+        })
+    return interpreted
+
+def explain_medical_report_with_ai(file_content, is_image=False, language='en'):
+    """
+    Analyze medical report (image or text) to extract terms and generate simplified explanation.
+    """
+    lang_instruction = "Hindi" if language == 'hi' else "English"
+    
+    prompt = f"""You are a medical AI assistant helping a patient understand their medical report.
+Analyze the provided medical report and provide a simplified explanation in {lang_instruction}.
+
+Provide the response strictly in JSON format:
+{{
+    "summary": "Overall simplified summary of the report",
+    "terms": [
+        {{"term": "Medical Term 1", "meaning": "Simple explanation of the term"}}
+    ],
+    "key_findings": ["Finding 1 in simple terms", "Finding 2 in simple terms"],
+    "next_steps": "What the patient should do next (e.g., consult doctor)",
+    "disclaimer": "Medical disclaimer in {lang_instruction}"
+}}
+"""
+    try:
+        if gemini_model:
+            print(f"🔄 Calling Gemini API for report explanation ({language})")
+            import threading
+            result_container = {'data': None, 'error': None}
+            
+            def call_gemini():
+                try:
+                    target = [prompt, file_content] if is_image else f"{prompt}\n\nReport Text:\n{file_content}"
+                    response = gemini_model.generate_content(target)
+                    result_text = response.text
+                    if '```json' in result_text:
+                        result_text = result_text.split('```json')[1].split('```')[0].strip()
+                    elif '```' in result_text:
+                        result_text = result_text.split('```')[1].split('```')[0].strip()
+                    result_container['data'] = json.loads(result_text)
+                except Exception as e:
+                    result_container['error'] = e
+                    
+            thread = threading.Thread(target=call_gemini)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout=60)
+            
+            if thread.is_alive():
+                print("⏰ Gemini API timed out")
+                raise TimeoutError("API Timeout")
+                
+            if result_container['error']:
+                raise result_container['error']
+                
+            return result_container['data']
+            
+        elif openai_client and not is_image:
+            print(f"🔄 Calling OpenAI API for report explanation ({language})")
+            response = openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful medical assistant."},
+                    {"role": "user", "content": f"{prompt}\n\nReport Text:\n{file_content}"}
+                ],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            return json.loads(response.choices[0].message.content)
+            
+    except Exception as e:
+        print(f"❌ Report Explanation Error: {e}")
+        
+    return {
+        "summary": "Could not analyze the report at this time. Please try again later.",
+        "terms": [],
+        "key_findings": ["System error occurred."],
+        "next_steps": "Show this report to a qualified healthcare provider.",
+        "disclaimer": "This is a fallback message due to a system error."
+    }
+
 # ==================== GOOGLE MAPS FUNCTIONS ====================
 
 def find_nearby_hospitals(latitude, longitude, radius=5000):
@@ -1591,6 +1896,225 @@ def index():
         'frontend': frontend_url
     })
 
+@app.route('/api/explain_report', methods=['POST', 'OPTIONS'])
+@login_required
+def explain_report():
+    """Upgraded Medical Report Analyzer with structured NLP extraction pipeline"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        # Check credits first
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        credit_cost = CREDIT_COSTS.get('report', 1)
+        if user.credits < credit_cost:
+            return jsonify({
+                'error': f'Insufficient credits. You have {user.credits} credits but need {credit_cost} credit(s) for report analysis.',
+                'credits': user.credits,
+                'required': credit_cost
+            }), 402  # 402 Payment Required
+        
+        language = request.form.get('language', 'en')
+        
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Deduct credits after file is saved but before processing
+        user.credits -= credit_cost
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=-credit_cost,
+            transaction_type='report',
+            description='Medical report analysis'
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+        
+        # STEP 1: Extract text
+        if ext == 'pdf':
+            raw_text = extract_text_from_pdf(filepath)
+        elif ext in ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif']:
+            raw_text = ""
+            try:
+                if gemini_model:
+                    from PIL import Image as PILImage
+                    img = PILImage.open(filepath)
+                    if img.mode != 'RGB':
+                        img = img.convert('RGB')
+                    
+                    extraction_prompt = """Look at this medical lab report image.
+Extract ALL test results you can see. For each result write it as:
+TestName: Value Unit
+One result per line. Only extract actual lab test results.
+Ignore hospital names, patient info, dates, watermarks, URLs.
+Example:
+Hemoglobin: 11 g/dL
+WBC: 8000 cells/mcL
+HbA1c: 7.8 %"""
+                    
+                    import threading
+                    result_container = {'data': None}
+                    
+                    def extract_from_image():
+                        try:
+                            response = gemini_model.generate_content([extraction_prompt, img])
+                            result_container['data'] = response.text
+                        except Exception as e:
+                            print(f"Image text extraction error: {e}")
+                    
+                    thread = threading.Thread(target=extract_from_image)
+                    thread.daemon = True
+                    thread.start()
+                    thread.join(timeout=30)
+                    
+                    if result_container['data']:
+                        raw_text = result_container['data']
+                        print(f"Extracted text from image: {raw_text[:200]}")
+            except Exception as e:
+                print(f"Image extraction error: {e}")
+        elif ext == 'docx':
+            try:
+                from docx import Document
+                doc = Document(filepath)
+                raw_text = "\n".join([p.text for p in doc.paragraphs])
+            except:
+                raw_text = ""
+        else:
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                raw_text = f.read()
+        
+        # STEP 2 & 3: Extract entities and interpret (only for text-based files)
+        extracted = []
+        interpreted = []
+        if raw_text.strip():
+            extracted = extract_medical_entities(raw_text)
+            interpreted = interpret_results(extracted)
+        
+        abnormal_count = sum(1 for r in interpreted if r.get('status') not in ['Normal', 'Unknown'])
+        
+        # STEP 4: Call LLM only for explanation
+        # Build a focused prompt using structured data (not raw text)
+        if interpreted:
+            abnormal_results = [r for r in interpreted if r.get('status') != 'Normal']
+            normal_results = [r['test_name'] for r in interpreted if r.get('status') == 'Normal']
+
+            explanation_prompt = f"""You are a doctor explaining lab results to a patient 
+with zero medical background. Be specific, not vague.
+
+For each abnormal result, write exactly:
+- What the test measures in one simple sentence
+- Whether the value is too high or too low and what that means 
+  for their health specifically
+- One concrete action they should take
+
+Use actual numbers in your explanation 
+(e.g. "your HbA1c is 7.8%, normal is below 5.7%").
+Keep total explanation to 4-5 sentences maximum.
+Do not use medical jargon.
+If all results are normal, say so clearly and reassuringly.
+
+Abnormal results: {json.dumps(abnormal_results, indent=2)}
+Normal results: {normal_results}
+
+Respond ONLY in this exact JSON format, nothing else:
+{{
+  "english": "specific 4-5 sentence explanation mentioning actual values and actions",
+  "hindi": "exact same explanation translated to Hindi"
+}}"""
+        else:
+            # Fallback if no structured data extracted (e.g. image upload)
+            explanation_prompt = f"""You are a doctor explaining a medical report to a patient in simple language.
+{"Report text: " + raw_text[:3000] if raw_text else "An image report was uploaded."}
+
+Respond ONLY in this JSON format:
+{{
+  "english": "3-4 sentence plain English explanation",
+  "hindi": "Same explanation in Hindi"
+}}"""
+        
+        explanation = {"english": "", "hindi": ""}
+        
+        try:
+            if gemini_model:
+                import threading
+                result_container = {'data': None, 'error': None}
+                
+                def call_gemini():
+                    try:
+                        if ext in ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif']:
+                            from PIL import Image
+                            img = Image.open(filepath)
+                            if img.mode != 'RGB':
+                                img = img.convert('RGB')
+                            response = gemini_model.generate_content([explanation_prompt, img])
+                        else:
+                            response = gemini_model.generate_content(explanation_prompt)
+                        
+                        result_text = response.text
+                        if '```json' in result_text:
+                            result_text = result_text.split('```json')[1].split('```')[0].strip()
+                        elif '```' in result_text:
+                            result_text = result_text.split('```')[1].split('```')[0].strip()
+                        result_container['data'] = json.loads(result_text)
+                    except Exception as e:
+                        result_container['error'] = e
+                
+                thread = threading.Thread(target=call_gemini)
+                thread.daemon = True
+                thread.start()
+                thread.join(timeout=60)
+                
+                if result_container['data']:
+                    explanation = result_container['data']
+        except Exception as e:
+            print(f"LLM explanation error: {e}")
+        
+        # Save to report history
+        try:
+            report_entry = ReportHistory(
+                user_id=session['user_id'],
+                file_name=filename,
+                result=json.dumps({
+                    'extracted': extracted,
+                    'interpreted': interpreted,
+                    'explanation': explanation,
+                    'abnormal_count': abnormal_count
+                })
+            )
+            db.session.add(report_entry)
+            db.session.commit()
+        except Exception as db_err:
+            print(f"Failed to save report history: {db_err}")
+            db.session.rollback()
+        
+        return jsonify({
+            'extracted': extracted,
+            'interpreted': interpreted,
+            'explanation': explanation,
+            'abnormal_count': abnormal_count,
+            'credits_deducted': credit_cost,
+            'remaining_credits': user.credits
+        }), 200
+    
+    except Exception as e:
+        print(f"❌ Explain Report Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to process report'}), 500
+
 # ==================== AUTHENTICATION ROUTES ====================
 
 @app.route('/api/register', methods=['POST'])
@@ -1639,15 +2163,24 @@ def register():
         user = User(
             username=username, 
             email=email,
-            credits=5,  # Initialize with default credits
-            credits_used=0  # Initialize credits used
+            credits=10  # Award 10 free credits on signup
         )
         user.set_password(password)
         
         db.session.add(user)
         db.session.commit()
         
-        print(f"✅ User registered successfully: ID={user.id}, username={user.username}, credits={user.credits}")
+        # Log the free credits transaction
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=10,
+            transaction_type='free',
+            description='Sign-up bonus'
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        print(f"✅ User registered successfully: ID={user.id}, username={user.username}, credits=10")
         
         # Set session
         session.permanent = True
@@ -1665,9 +2198,9 @@ def register():
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
+                'credits': user.credits,
                 'profile_picture': user.profile_picture,
                 'profile_picture_url': profile_pic_url,
-                'credits': user.credits or 0,
                 'created_at': user.created_at.isoformat() if user.created_at else None
             }
         }), 201
@@ -1702,14 +2235,6 @@ def login():
             print(f"⚠️ Invalid password for user '{username}'")
             return jsonify({'error': 'Invalid username or password'}), 401
         
-        # FIX: Ensure existing users have credits initialized
-        if user.credits is None:
-            print(f"⚠️ User {user.username} has NULL credits, initializing to 5")
-            user.credits = 5
-            user.credits_used = user.credits_used or 0
-            db.session.commit()
-            print(f"✅ Credits initialized for user: {user.username}")
-        
         session.permanent = True
         session['user_id'] = user.id
         session['username'] = user.username
@@ -1727,9 +2252,9 @@ def login():
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
+                'credits': user.credits,
                 'profile_picture': user.profile_picture,
                 'profile_picture_url': profile_pic_url,
-                'credits': user.credits or 0,
                 'created_at': user.created_at.isoformat() if user.created_at else None
             }
         }), 200
@@ -1752,18 +2277,10 @@ def check_auth():
     if 'user_id' in session:
         try:
             # Get full user object to check and fix credits if needed
-            user = User.query.get(session['user_id'])
+            user = db.session.get(User, session['user_id'])
             
             if not user:
                 return jsonify({'authenticated': False}), 200
-            
-            # FIX: Ensure user has credits initialized (fixes old accounts)
-            if user.credits is None:
-                print(f"⚠️ User {user.username} has NULL credits during check-auth, initializing to 5")
-                user.credits = 5
-                user.credits_used = user.credits_used or 0
-                db.session.commit()
-                print(f"✅ Credits initialized for user: {user.username}")
             
             profile_pic_url = None
             if user.profile_picture:
@@ -1775,9 +2292,9 @@ def check_auth():
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
+                    'credits': user.credits,
                     'profile_picture': user.profile_picture,
                     'profile_picture_url': profile_pic_url,
-                    'credits': user.credits or 0,
                     'created_at': user.created_at.isoformat() if user.created_at else None
                 }
             }), 200
@@ -1973,280 +2490,7 @@ def get_latest_reset_link():
 
 # Google OAuth removed - using local authentication only
 
-# ==================== CREDITS & PAYMENT ROUTES ====================
 
-@app.route('/api/credits/balance', methods=['GET', 'OPTIONS'])
-@login_required
-def get_credits_balance():
-    """Get user's credit balance"""
-    if request.method == 'OPTIONS':
-        return '', 204
-    
-    try:
-        user = User.query.get(session['user_id'])
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
-        return jsonify({
-            'credits': user.credits or 0,
-            'creditsUsed': user.credits_used or 0
-        }), 200
-    except Exception as e:
-        print(f"❌ Get credits error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': 'Internal server error'}), 500
-
-@app.route('/api/credits/transactions', methods=['GET', 'OPTIONS'])
-@login_required
-def get_credit_transactions():
-    """Get user's credit transaction history"""
-    if request.method == 'OPTIONS':
-        return '', 204
-    
-    try:
-        limit = request.args.get('limit', 50, type=int)
-        transactions = CreditsTransaction.query.filter_by(
-            user_id=session['user_id']
-        ).order_by(
-            CreditsTransaction.created_at.desc()
-        ).limit(limit).all()
-        
-        transactions_list = []
-        for trans in transactions:
-            transactions_list.append({
-                'id': trans.id,
-                'transaction_type': trans.transaction_type,
-                'credits_amount': trans.credits_amount,
-                'credits_before': trans.credits_before,
-                'credits_after': trans.credits_after,
-                'description': trans.description,
-                'payment_id': trans.payment_id,
-                'order_id': trans.order_id,
-                'amount_paid': float(trans.amount_paid) if trans.amount_paid else None,
-                'created_at': trans.created_at.isoformat() + 'Z'
-            })
-        
-        return jsonify({'transactions': transactions_list}), 200
-    except Exception as e:
-        print(f"❌ Get transactions error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': 'Internal server error'}), 500
-
-@app.route('/api/credits/packages', methods=['GET', 'OPTIONS'])
-def get_credit_packages():
-    """Get available credit packages"""
-    if request.method == 'OPTIONS':
-        return '', 204
-    
-    return jsonify({
-        'packages': [
-            {
-                'id': '20',
-                'name': 'Starter Pack',
-                'credits': 20,
-                'price': 50,
-                'currency': 'INR',
-                'description': '20 credits for ₹50'
-            },
-            {
-                'id': '100',
-                'name': 'Pro Pack',
-                'credits': 100,
-                'price': 100,
-                'currency': 'INR',
-                'description': '100 credits for ₹100',
-                'popular': True
-            }
-        ]
-    }), 200
-
-@app.route('/api/payment/create-order', methods=['POST', 'OPTIONS'])
-@login_required
-def create_payment_order():
-    """Create Razorpay order for credit purchase"""
-    if request.method == 'OPTIONS':
-        return '', 204
-    
-    try:
-        print(f"💳 Payment order request received from user {session.get('user_id')}")
-        
-        # Verify user exists in database
-        user = User.query.get(session['user_id'])
-        if not user:
-            print(f"❌ User {session['user_id']} not found in database")
-            db.session.rollback()  # Rollback any pending transactions
-            session.clear()  # Clear invalid session
-            return jsonify({'error': 'User session invalid. Please login again.'}), 401
-        
-        if not razorpay_client:
-            print("❌ Razorpay client not configured")
-            return jsonify({'error': 'Payment service not configured'}), 503
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Invalid request data'}), 400
-            
-        package_id = data.get('package_id')
-        print(f"📦 Package ID requested: {package_id}")
-        
-        if package_id not in CREDIT_PACKAGES:
-            return jsonify({'error': 'Invalid package selected'}), 400
-        
-        package = CREDIT_PACKAGES[package_id]
-        amount = package['price'] * 100  # Razorpay expects amount in paise
-        
-        # Get user details
-        user = User.query.get(session['user_id'])
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
-        print(f"👤 Creating order for user: {user.username} ({user.email})")
-        
-        # Create Razorpay order
-        order_data = {
-            'amount': amount,
-            'currency': 'INR',
-            'payment_capture': 1,
-            'notes': {
-                'user_id': user.id,
-                'credits': package['credits'],
-                'package_id': package_id,
-                'customer_name': user.username,
-                'customer_email': user.email
-            }
-        }
-        
-        try:
-            print(f"📱 Calling Razorpay API...")
-            razorpay_order = razorpay_client.order.create(data=order_data)
-            print(f"✅ Razorpay order created: {razorpay_order['id']}")
-        except requests.exceptions.ConnectionError as conn_err:
-            print(f"❌ Razorpay connection error: {conn_err}")
-            return jsonify({
-                'error': 'Payment service temporarily unavailable. Please try again later.',
-                'details': 'Connection timeout'
-            }), 503
-        except requests.exceptions.Timeout:
-            print(f"❌ Razorpay timeout error")
-            return jsonify({
-                'error': 'Payment service request timed out. Please try again.',
-                'details': 'Request timeout'
-            }), 503
-        except Exception as razorpay_err:
-            print(f"❌ Razorpay API error: {type(razorpay_err).__name__}: {str(razorpay_err)}")
-            return jsonify({
-                'error': 'Failed to create payment order',
-                'details': str(razorpay_err)
-            }), 500
-        
-        # Save order to database
-        payment_order = PaymentOrder(
-            user_id=user.id,
-            order_id=razorpay_order['id'],
-            amount=package['price'],
-            currency='INR',
-            credits_amount=package['credits'],
-            status='created'
-        )
-        db.session.add(payment_order)
-        db.session.commit()
-        
-        return jsonify({
-            'order_id': razorpay_order['id'],
-            'amount': amount,
-            'currency': 'INR',
-            'key_id': RAZORPAY_KEY_ID,
-            'credits': package['credits'],
-            'package_name': package['name'],
-            'customer_email': user.email,
-            'customer_name': user.username
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Create order error: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': f'Failed to create payment order: {str(e)}'}), 500
-
-@app.route('/api/payment/verify', methods=['POST', 'OPTIONS'])
-@login_required
-def verify_payment():
-    """Verify Razorpay payment and add credits"""
-    if request.method == 'OPTIONS':
-        return '', 204
-    
-    try:
-        if not razorpay_client:
-            return jsonify({'error': 'Payment service not configured'}), 503
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Invalid request data'}), 400
-            
-        razorpay_order_id = data.get('razorpay_order_id')
-        razorpay_payment_id = data.get('razorpay_payment_id')
-        razorpay_signature = data.get('razorpay_signature')
-        
-        if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
-            return jsonify({'error': 'Missing payment details'}), 400
-        
-        # Verify signature
-        try:
-            params_dict = {
-                'razorpay_order_id': razorpay_order_id,
-                'razorpay_payment_id': razorpay_payment_id,
-                'razorpay_signature': razorpay_signature
-            }
-            razorpay_client.utility.verify_payment_signature(params_dict)
-        except Exception as e:
-            print(f"❌ Payment verification failed: {e}")
-            return jsonify({'error': 'Payment verification failed'}), 400
-        
-        # Get order from database
-        order = PaymentOrder.query.filter_by(
-            order_id=razorpay_order_id,
-            user_id=session['user_id']
-        ).first()
-        
-        if not order:
-            return jsonify({'error': 'Order not found'}), 404
-        
-        if order.status == 'paid':
-            return jsonify({'error': 'Order already processed'}), 400
-        
-        # Update order status
-        order.status = 'paid'
-        order.payment_id = razorpay_payment_id
-        order.payment_signature = razorpay_signature
-        order.updated_at = datetime.utcnow()
-        db.session.commit()
-        
-        # Add credits to user account
-        success = add_credits(
-            session['user_id'],
-            order.credits_amount,
-            f"Purchased {order.credits_amount} credits",
-            payment_id=razorpay_payment_id,
-            order_id=razorpay_order_id,
-            amount_paid=float(order.amount)
-        )
-        
-        if not success:
-            return jsonify({'error': 'Failed to add credits'}), 500
-        
-        return jsonify({
-            'success': True,
-            'credits_added': order.credits_amount,
-            'message': f'{order.credits_amount} credits added successfully'
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Verify payment error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': 'Payment verification failed'}), 500
 
 # ==================== DIAGNOSIS ROUTES ====================
 
@@ -2259,18 +2503,10 @@ def diagnose():
     
     try:
         # Verify user exists in database
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if not user:
             session.clear()
             return jsonify({'error': 'User session invalid. Please login again.'}), 401
-        
-        # Check if user has enough credits
-        if not check_credits(session['user_id'], 1):
-            return jsonify({
-                'error': 'Insufficient credits',
-                'insufficient_credits': True
-            }), 402  # Payment Required
-        
         data = request.get_json()
         if not data:
             return jsonify({'error': 'Invalid request data'}), 400
@@ -2280,13 +2516,30 @@ def diagnose():
         if not symptoms:
             return jsonify({'error': 'Symptoms are required'}), 400
         
-        # Deduct 1 credit before analysis
-        success, error = deduct_credits(session['user_id'], 1, 'Symptom diagnosis')
-        if not success:
-            return jsonify({'error': error or 'Failed to deduct credits'}), 500
+        # Check credits
+        credit_cost = CREDIT_COSTS.get('symptoms', 1)
+        if user.credits < credit_cost:
+            return jsonify({
+                'error': f'Insufficient credits. You have {user.credits} credits but need {credit_cost} credit(s) for symptom analysis.',
+                'credits': user.credits,
+                'required': credit_cost
+            }), 402  # 402 Payment Required
+        
+        # Deduct credits
+        user.credits -= credit_cost
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=-credit_cost,
+            transaction_type='symptoms',
+            description='Symptom analysis'
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        language = data.get('language', 'en')
         
         # Analyze symptoms with AI
-        result = analyze_symptoms_with_ai(symptoms)
+        result = analyze_symptoms_with_ai(symptoms, language)
         
         # Save diagnosis to database
         diagnosis = Diagnosis(
@@ -2297,14 +2550,12 @@ def diagnose():
         db.session.add(diagnosis)
         db.session.commit()
         
-        # Get updated credits balance
-        user = User.query.get(session['user_id'])
-        
         return jsonify({
             'message': 'Diagnosis completed',
             'diagnosis_id': diagnosis.id,
             'result': result,
-            'credits_remaining': user.credits or 0
+            'credits_deducted': credit_cost,
+            'remaining_credits': user.credits
         }), 200
     
     except Exception as e:
@@ -2323,17 +2574,19 @@ def diagnose_image():
     
     try:
         # Verify user exists in database
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if not user:
             session.clear()
             return jsonify({'error': 'User session invalid. Please login again.'}), 401
         
-        # Check if user has enough credits
-        if not check_credits(session['user_id'], 1):
+        # Check credits
+        credit_cost = CREDIT_COSTS.get('image', 1)
+        if user.credits < credit_cost:
             return jsonify({
-                'error': 'Insufficient credits',
-                'insufficient_credits': True
-            }), 402  # Payment Required
+                'error': f'Insufficient credits. You have {user.credits} credits but need {credit_cost} credit(s) for image analysis.',
+                'credits': user.credits,
+                'required': credit_cost
+            }), 402  # 402 Payment Required
         
         if 'image' not in request.files:
             return jsonify({'error': 'No image provided'}), 400
@@ -2347,15 +2600,21 @@ def diagnose_image():
         if not allowed_file(file.filename):
             return jsonify({'error': 'Invalid file type'}), 400
         
-        # Deduct 1 credit before analysis
-        success, error = deduct_credits(session['user_id'], 1, 'Image diagnosis')
-        if not success:
-            return jsonify({'error': error or 'Failed to deduct credits'}), 500
-        
         # Save file
         filename = secure_filename(f"{session['user_id']}_{datetime.now().timestamp()}_{file.filename}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
+        
+        # Deduct credits after file is saved but before processing
+        user.credits -= credit_cost
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=-credit_cost,
+            transaction_type='image',
+            description='Medical image analysis'
+        )
+        db.session.add(transaction)
+        db.session.commit()
         
         # Analyze image with Vision API
         result = analyze_image_with_vision(filepath, symptoms)
@@ -2370,15 +2629,13 @@ def diagnose_image():
         db.session.add(diagnosis)
         db.session.commit()
         
-        # Get updated credits balance
-        user = User.query.get(session['user_id'])
-        
         return jsonify({
             'message': 'Image analysis completed',
             'diagnosis_id': diagnosis.id,
             'result': result,
-            'image_url': f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=filename)}",
-            'credits_remaining': user.credits or 0
+            'credits_deducted': credit_cost,
+            'remaining_credits': user.credits,
+            'image_url': f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=filename)}"
         }), 200
     
     except Exception as e:
@@ -2403,13 +2660,13 @@ def diagnosis_history():
             Diagnosis.diagnosis_result,
             Diagnosis.image_path,
             Diagnosis.created_at
-        ).filter_by(user_id=session['user_id'])\
+        ).filter_by(user_id=session['user_id'], is_deleted=False)\
         .order_by(Diagnosis.created_at.desc())\
         .limit(per_page).offset((page - 1) * per_page).all()
         
         # Get total count efficiently (cached result)
         from sqlalchemy import func
-        total = db.session.query(func.count(Diagnosis.id)).filter_by(user_id=session['user_id']).scalar()
+        total = db.session.query(func.count(Diagnosis.id)).filter_by(user_id=session['user_id'], is_deleted=False).scalar()
         
         # Optimized result building with list comprehension
         base_url = request.url_root.rstrip('/')
@@ -2451,6 +2708,66 @@ def diagnosis_history():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/deleted-diagnosis-history', methods=['GET'])
+@login_required
+def deleted_diagnosis_history():
+    """Get user's deleted diagnosis history"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        per_page = min(per_page, 100)
+        
+        diagnoses = db.session.query(
+            Diagnosis.id,
+            Diagnosis.symptoms,
+            Diagnosis.diagnosis_result,
+            Diagnosis.image_path,
+            Diagnosis.created_at
+        ).filter_by(user_id=session['user_id'], is_deleted=True)\
+        .order_by(Diagnosis.created_at.desc())\
+        .limit(per_page).offset((page - 1) * per_page).all()
+        
+        from sqlalchemy import func
+        total = db.session.query(func.count(Diagnosis.id)).filter_by(user_id=session['user_id'], is_deleted=True).scalar()
+        
+        base_url = request.url_root.rstrip('/')
+        results = []
+        for d in diagnoses:
+            result_dict = {}
+            if d.diagnosis_result:
+                try:
+                    result_dict = json.loads(d.diagnosis_result)
+                except:
+                    pass
+            
+            image_url = None
+            if d.image_path:
+                filename = os.path.basename(d.image_path) if '/' in str(d.image_path) else str(d.image_path)
+                image_url = f"{base_url}/static/uploads/{filename}"
+            
+            results.append({
+                'id': d.id,
+                'symptoms': d.symptoms,
+                'result': result_dict,
+                'image_url': image_url,
+                'created_at': d.created_at.isoformat()
+            })
+        
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+        
+        return jsonify({
+            'diagnoses': results,
+            'total': total,
+            'pages': total_pages,
+            'current_page': page
+        }), 200
+    
+    except Exception as e:
+        print(f"❌ Deleted history error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 # ==================== CHAT ASSISTANT ROUTES ====================
 
 @app.route('/api/chat', methods=['POST', 'OPTIONS'])
@@ -2462,18 +2779,10 @@ def chat():
     
     try:
         # Verify user exists in database
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if not user:
             session.clear()
             return jsonify({'error': 'User session invalid. Please login again.'}), 401
-        
-        # Check if user has enough credits
-        if not check_credits(session['user_id'], 1):
-            return jsonify({
-                'error': 'Insufficient credits',
-                'insufficient_credits': True
-            }), 402  # Payment Required
-        
         data = request.get_json()
         if not data:
             return jsonify({'error': 'Invalid request data'}), 400
@@ -2483,10 +2792,25 @@ def chat():
         if not message:
             return jsonify({'error': 'Message is required'}), 400
         
-        # Deduct 1 credit before chat
-        success, error = deduct_credits(session['user_id'], 1, 'AI Chat')
-        if not success:
-            return jsonify({'error': error or 'Failed to deduct credits'}), 500
+        # Check credits
+        credit_cost = CREDIT_COSTS.get('chat', 1)
+        if user.credits < credit_cost:
+            return jsonify({
+                'error': f'Insufficient credits. You have {user.credits} credits but need {credit_cost} credit(s) for chat.',
+                'credits': user.credits,
+                'required': credit_cost
+            }), 402  # 402 Payment Required
+        
+        # Deduct credits
+        user.credits -= credit_cost
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=-credit_cost,
+            transaction_type='chat',
+            description='AI chat message'
+        )
+        db.session.add(transaction)
+        db.session.commit()
         
         # Get recent chat history for context
         recent_chats = ChatHistory.query.filter_by(user_id=session['user_id'])\
@@ -2496,8 +2820,10 @@ def chat():
         
         chat_context = [{'message': c.message, 'response': c.response} for c in reversed(recent_chats)]
         
+        language = data.get('language', 'en')
+        
         # Get AI response
-        response = chat_with_assistant(message, chat_context)
+        response = chat_with_assistant(message, chat_context, language)
         
         # Save chat to database
         chat_entry = ChatHistory(
@@ -2508,14 +2834,12 @@ def chat():
         db.session.add(chat_entry)
         db.session.commit()
         
-        # Get updated credits balance
-        user = User.query.get(session['user_id'])
-        
         return jsonify({
             'message': message,
             'response': response,
-            'timestamp': chat_entry.created_at.isoformat(),
-            'credits_remaining': user.credits or 0
+            'credits_deducted': credit_cost,
+            'remaining_credits': user.credits,
+            'timestamp': chat_entry.created_at.isoformat()
         }), 200
     
     except Exception as e:
@@ -2536,13 +2860,13 @@ def chat_history():
         # Limit maximum items per page to prevent slow queries
         per_page = min(per_page, 100)  # Max 100 items per page
         
-        chats = ChatHistory.query.filter_by(user_id=session['user_id'])\
+        chats = ChatHistory.query.filter_by(user_id=session['user_id'], is_deleted=False)\
             .order_by(ChatHistory.created_at.desc())\
             .limit(per_page).offset((page - 1) * per_page).all()
         
         # Get total count efficiently using scalar
         from sqlalchemy import func
-        total = db.session.query(func.count(ChatHistory.id)).filter_by(user_id=session['user_id']).scalar()
+        total = db.session.query(func.count(ChatHistory.id)).filter_by(user_id=session['user_id'], is_deleted=False).scalar()
         
         # Optimized result building
         results = [{
@@ -2562,6 +2886,105 @@ def chat_history():
         }), 200
     
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/deleted-chat-history', methods=['GET'])
+@login_required
+def deleted_chat_history():
+    """Get deleted chat history"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        per_page = min(per_page, 100)
+        
+        chats = ChatHistory.query.filter_by(user_id=session['user_id'], is_deleted=True)\
+            .order_by(ChatHistory.created_at.desc())\
+            .limit(per_page).offset((page - 1) * per_page).all()
+        
+        from sqlalchemy import func
+        total = db.session.query(func.count(ChatHistory.id)).filter_by(user_id=session['user_id'], is_deleted=True).scalar()
+        
+        results = [{
+            'id': c.id,
+            'message': c.message,
+            'response': c.response,
+            'created_at': c.created_at.isoformat()
+        } for c in chats]
+        
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+        
+        return jsonify({
+            'chats': results,
+            'total': total,
+            'pages': total_pages,
+            'current_page': page
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/report-history', methods=['GET'])
+@login_required
+def report_history():
+    """Get report history"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        per_page = min(per_page, 100)
+        
+        reports = ReportHistory.query.filter_by(user_id=session['user_id'], is_deleted=False)\
+            .order_by(ReportHistory.created_at.desc())\
+            .limit(per_page).offset((page - 1) * per_page).all()
+        
+        from sqlalchemy import func
+        total = db.session.query(func.count(ReportHistory.id)).filter_by(user_id=session['user_id'], is_deleted=False).scalar()
+        
+        results = [{
+            'id': r.id,
+            'file_name': r.file_name,
+            'result': r.get_result_dict(),
+            'created_at': r.created_at.isoformat()
+        } for r in reports]
+        
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+        
+        return jsonify({
+            'reports': results,
+            'total': total,
+            'pages': total_pages,
+            'current_page': page
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/report-history/<int:id>', methods=['DELETE'])
+@login_required
+def delete_report_history_item(id):
+    try:
+        report = db.session.get(ReportHistory, id)
+        if not report or report.user_id != session['user_id']:
+            return jsonify({'error': 'Report not found or unauthorized'}), 404
+            
+        report.is_deleted = True
+        report.deleted_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({'message': 'Report removed successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/report-history/all', methods=['DELETE'])
+@login_required
+def delete_all_report_history():
+    try:
+        db.session.query(ReportHistory).filter_by(user_id=session['user_id'], is_deleted=False)\
+            .update({'is_deleted': True, 'deleted_at': datetime.utcnow()})
+        db.session.commit()
+        
+        return jsonify({'message': 'All report history cleared'}), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 # ==================== VOICE INPUT ROUTE ====================
@@ -2812,7 +3235,7 @@ def upload_profile_picture():
         db.session.commit()
         
         # Verify it was saved
-        user_after = User.query.get(session['user_id'])
+        user_after = db.session.get(User, session['user_id'])
         print(f"✅ Profile picture uploaded: {filename}")
         print(f"💾 Profile picture saved in DB: {user_after.profile_picture}")
         
@@ -2929,66 +3352,98 @@ def update_profile():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/settings/delete-chat-history', methods=['DELETE'])
+@app.route('/api/chat-history/<int:item_id>', methods=['DELETE'])
 @login_required
-def delete_chat_history():
-    """Delete all chat history for current user - optimized for speed"""
+def delete_single_chat(item_id):
+    """Delete a specific chat history entry"""
     try:
         user = db.session.get(User, session['user_id'])
         if not user:
             return jsonify({'error': 'User not found'}), 404
         
-        # Use raw SQL for faster bulk delete
-        from sqlalchemy import text
-        result = db.session.execute(
-            text("DELETE FROM chat_history WHERE user_id = :user_id"),
-            {'user_id': session['user_id']}
-        )
-        deleted_count = result.rowcount
+        chat = db.session.get(ChatHistory, item_id)
+        if not chat or chat.user_id != user.id:
+            return jsonify({'error': 'Chat not found or access denied'}), 404
+        
+        # Soft delete
+        chat.is_deleted = True
+        chat.deleted_at = datetime.utcnow()
         db.session.commit()
         
-        print(f"✅ Deleted {deleted_count} chat history entries for user: {user.username}")
-        
-        return jsonify({
-            'message': 'Chat history deleted successfully',
-            'deleted_count': deleted_count
-        }), 200
+        return jsonify({'message': 'Chat deleted successfully'}), 200
     
     except Exception as e:
         db.session.rollback()
-        print(f"❌ Delete chat history error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/settings/delete-diagnosis-history', methods=['DELETE'])
+@app.route('/api/chat-history/all', methods=['DELETE'])
 @login_required
-def delete_diagnosis_history():
-    """Delete all diagnosis history for current user - optimized for speed"""
+def delete_all_chat():
+    """Delete all chat history for user"""
     try:
         user = db.session.get(User, session['user_id'])
         if not user:
             return jsonify({'error': 'User not found'}), 404
         
-        # Use raw SQL for faster bulk delete
-        from sqlalchemy import text
-        result = db.session.execute(
-            text("DELETE FROM diagnosis WHERE user_id = :user_id"),
-            {'user_id': session['user_id']}
-        )
-        deleted_count = result.rowcount
+        chats = ChatHistory.query.filter_by(user_id=user.id, is_deleted=False).all()
+        for chat in chats:
+            chat.is_deleted = True
+            chat.deleted_at = datetime.utcnow()
         db.session.commit()
         
-        print(f"✅ Deleted {deleted_count} diagnosis history entries for user: {user.username}")
+        return jsonify({'message': 'All chat history deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/diagnosis-history/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_single_diagnosis(item_id):
+    """Delete a specific diagnosis history entry"""
+    try:
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
         
-        return jsonify({
-            'message': 'Diagnosis history deleted successfully',
-            'deleted_count': deleted_count
-        }), 200
+        diagnosis = db.session.get(Diagnosis, item_id)
+        if not diagnosis or diagnosis.user_id != user.id:
+            return jsonify({'error': 'Diagnosis not found or access denied'}), 404
+        
+        # Soft delete
+        diagnosis.is_deleted = True
+        diagnosis.deleted_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({'message': 'Diagnosis deleted successfully'}), 200
     
     except Exception as e:
         db.session.rollback()
-        print(f"❌ Delete diagnosis history error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/diagnosis-history/all', methods=['DELETE'])
+@login_required
+def delete_all_diagnosis():
+    """Delete all diagnosis history for user"""
+    try:
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        diagnoses = Diagnosis.query.filter_by(user_id=user.id, is_deleted=False).all()
+        for diagnosis in diagnoses:
+            diagnosis.is_deleted = True
+            diagnosis.deleted_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({'message': 'All diagnosis history deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -3105,60 +3560,6 @@ def confirm_account_deletion():
 
 # ==================== UTILITY ROUTES ====================
 
-@app.route('/api/admin/fix-user-credits', methods=['POST'])
-def fix_user_credits():
-    """Temporary admin endpoint to fix user credits and ensure tables exist"""
-    try:
-        data = request.get_json()
-        email = data.get('email')
-        admin_key = data.get('admin_key')
-        
-        # Simple security check
-        if admin_key != 'medmate_fix_credits_2026':
-            return jsonify({'error': 'Unauthorized'}), 401
-        
-        if not email:
-            return jsonify({'error': 'Email required'}), 400
-        
-        # First, ensure credits tables exist
-        print(f"🔧 Ensuring credits tables exist...")
-        ensure_credits_tables_exist()
-        
-        # Find user by email
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
-        old_credits = user.credits
-        old_credits_used = user.credits_used
-        
-        # Fix NULL credits
-        if user.credits is None:
-            user.credits = 5
-        if user.credits_used is None:
-            user.credits_used = 0
-        
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'User credits fixed',
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'old_credits': old_credits,
-                'old_credits_used': old_credits_used,
-                'new_credits': user.credits,
-                'new_credits_used': user.credits_used
-            },
-            'tables_ensured': True
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        print(f"❌ Fix credits error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -3175,6 +3576,278 @@ def health_check():
             'tts': 'available' if tts_engine else 'not available'
         }
     }), 200
+
+# ==================== CREDIT SYSTEM ROUTES ====================
+
+@app.route('/api/credits/packages', methods=['GET', 'OPTIONS'])
+def get_credit_packages():
+    """Get available credit packages"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        return jsonify({
+            'packages': CREDIT_PACKAGES,
+            'currency': 'INR'
+        }), 200
+    except Exception as e:
+        print(f"❌ Error getting credit packages: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/credits/balance', methods=['GET', 'OPTIONS'])
+@login_required
+def get_credits_balance():
+    """Get user's current credit balance"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        return jsonify({
+            'credits': user.credits,
+            'user_id': user.id
+        }), 200
+    except Exception as e:
+        print(f"❌ Error getting credit balance: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/credits/transactions', methods=['GET', 'OPTIONS'])
+@login_required
+def get_credit_transactions():
+    """Get user's credit transaction history"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        transactions = CreditsTransaction.query.filter_by(user_id=user.id).order_by(CreditsTransaction.created_at.desc()).limit(50).all()
+        
+        return jsonify({
+            'transactions': [{
+                'id': t.id,
+                'credits': t.credits,
+                'type': t.transaction_type,
+                'description': t.description,
+                'created_at': t.created_at.isoformat()
+            } for t in transactions]
+        }), 200
+    except Exception as e:
+        print(f"❌ Error getting transactions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/credits/transactions/<int:transaction_id>', methods=['DELETE', 'OPTIONS'])
+@login_required
+def delete_transaction(transaction_id):
+    """Delete a specific transaction (only the user's own transactions)"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Find transaction and verify it belongs to the user
+        transaction = CreditsTransaction.query.filter_by(
+            id=transaction_id,
+            user_id=user.id
+        ).first()
+        
+        if not transaction:
+            return jsonify({'error': 'Transaction not found'}), 404
+        
+        db.session.delete(transaction)
+        db.session.commit()
+        
+        print(f"✅ Transaction {transaction_id} deleted for user {user.id}")
+        return jsonify({'message': 'Transaction deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error deleting transaction: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/credits/transactions/clear/all', methods=['DELETE', 'OPTIONS'])
+@login_required
+def delete_all_transactions():
+    """Delete all transactions for the user"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Delete all transactions for this user
+        deleted_count = CreditsTransaction.query.filter_by(user_id=user.id).delete()
+        db.session.commit()
+        
+        print(f"✅ Deleted {deleted_count} transactions for user {user.id}")
+        return jsonify({
+            'message': f'All {deleted_count} transactions deleted successfully',
+            'deleted_count': deleted_count
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error deleting all transactions: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/payments/create-order', methods=['POST', 'OPTIONS'])
+@login_required
+def create_payment_order():
+    """Create a Razorpay payment order for credit purchase"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        import razorpay
+        
+        data = request.get_json()
+        package_id = data.get('package_id')
+        
+        # Find the package
+        package = next((p for p in CREDIT_PACKAGES if p['id'] == package_id), None)
+        if not package:
+            return jsonify({'error': 'Invalid package'}), 400
+        
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+            return jsonify({'error': 'Payment service not configured'}), 500
+        
+        # Create Razorpay client
+        client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        
+        # Amount in paise (1 rupee = 100 paise)
+        amount_paise = package['price'] * 100
+        
+        # Create order
+        razorpay_order = client.order.create({
+            'amount': amount_paise,
+            'currency': 'INR',
+            'receipt': f"order_{user.id}_{int(datetime.utcnow().timestamp())}",
+            'payment_capture': 1
+        })
+        
+        # Store payment order in database
+        payment_order = PaymentOrder(
+            user_id=user.id,
+            razorpay_order_id=razorpay_order['id'],
+            amount=amount_paise,
+            credits=package['credits'],
+            status='created'
+        )
+        db.session.add(payment_order)
+        db.session.commit()
+        
+        print(f"✅ Razorpay order created: {razorpay_order['id']} for user {user.id}")
+        
+        return jsonify({
+            'order_id': razorpay_order['id'],
+            'amount': amount_paise,
+            'currency': 'INR',
+            'key_id': RAZORPAY_KEY_ID,
+            'package': package
+        }), 200
+    
+    except ImportError:
+        return jsonify({'error': 'razorpay library not installed. Install with: pip install razorpay'}), 500
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error creating payment order: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/payments/verify', methods=['POST', 'OPTIONS'])
+@login_required
+def verify_payment():
+    """Verify Razorpay payment and credit user's account"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        import razorpay
+        import hmac
+        import hashlib
+        
+        data = request.get_json()
+        razorpay_order_id = data.get('razorpay_order_id')
+        razorpay_payment_id = data.get('razorpay_payment_id')
+        razorpay_signature = data.get('razorpay_signature')
+        
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+            return jsonify({'error': 'Payment service not configured'}), 500
+        
+        # Find payment order
+        payment_order = PaymentOrder.query.filter_by(
+            razorpay_order_id=razorpay_order_id,
+            user_id=user.id
+        ).first()
+        
+        if not payment_order:
+            return jsonify({'error': 'Payment order not found'}), 404
+        
+        # Verify signature
+        verify_string = f"{razorpay_order_id}|{razorpay_payment_id}"
+        expected_signature = hmac.new(
+            RAZORPAY_KEY_SECRET.encode(),
+            verify_string.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        if expected_signature != razorpay_signature:
+            print(f"❌ Payment signature verification failed for order {razorpay_order_id}")
+            payment_order.status = 'failed'
+            db.session.commit()
+            return jsonify({'error': 'Payment verification failed'}), 400
+        
+        # Update payment order
+        payment_order.razorpay_payment_id = razorpay_payment_id
+        payment_order.status = 'completed'
+        payment_order.completed_at = datetime.utcnow()
+        
+        # Add credits to user
+        user.credits += payment_order.credits
+        
+        # Create transaction record
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=payment_order.credits,
+            transaction_type='purchase',
+            description=f'Razorpay payment {razorpay_payment_id}'
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        print(f"✅ Payment verified and {payment_order.credits} credits added to user {user.id}")
+        
+        return jsonify({
+            'message': 'Payment verified successfully',
+            'credits': user.credits,
+            'credits_added': payment_order.credits
+        }), 200
+    
+    except ImportError:
+        return jsonify({'error': 'razorpay library not installed'}), 500
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error verifying payment: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 # ==================== ERROR HANDLERS ====================
 

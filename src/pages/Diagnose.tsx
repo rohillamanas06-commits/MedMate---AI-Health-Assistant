@@ -21,10 +21,13 @@ import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { BuyCreditsModal } from '@/components/BuyCreditsModal';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Diagnose() {
   const { user, updateCredits, checkAuth } = useAuth();
+  const { t } = useTranslation();
+  const { currentLanguage } = useLanguage();
   const [symptoms, setSymptoms] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -43,17 +46,17 @@ export default function Diagnose() {
     setResult(null);
 
     try {
-      const response: any = await api.diagnose(symptoms);
+      const response: any = await api.diagnose(symptoms, currentLanguage);
       setResult(response.result);
       toast.success('Analysis complete!');
-      
+
       // Update credits if returned
-      if (response.credits_remaining !== undefined) {
-        updateCredits(response.credits_remaining);
+      if (response.remaining_credits !== undefined) {
+        updateCredits(response.remaining_credits);
       }
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Diagnosis failed';
-      
+
       // Check if it's insufficient credits error
       if (errorMessage.includes('Insufficient credits') || errorMessage.includes('insufficient_credits')) {
         toast.error('Insufficient credits! Please purchase more credits to continue.');
@@ -84,14 +87,14 @@ export default function Diagnose() {
       const response: any = await api.diagnoseImage(selectedImages[0], symptoms);
       setResult(response.result);
       toast.success(`Image analysis complete! (${selectedImages.length} image${selectedImages.length > 1 ? 's' : ''} uploaded)`);
-      
+
       // Update credits if returned
-      if (response.credits_remaining !== undefined) {
-        updateCredits(response.credits_remaining);
+      if (response.remaining_credits !== undefined) {
+        updateCredits(response.remaining_credits);
       }
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Image analysis failed';
-      
+
       // Check if it's insufficient credits error
       if (errorMessage.includes('Insufficient credits') || errorMessage.includes('insufficient_credits')) {
         toast.error('Insufficient credits! Please purchase more credits to continue.');
@@ -119,21 +122,21 @@ export default function Diagnose() {
       // Calculate how many more images we can add
       const remainingSlots = 5 - selectedImages.length;
       const filesToAdd = files.slice(0, remainingSlots);
-      
+
       if (filesToAdd.length === 0) {
         toast.error('Maximum 5 images already selected');
         e.target.value = ''; // Reset input
         return;
       }
-      
+
       // Add new files to existing ones
       const newImages = [...selectedImages, ...filesToAdd];
       setSelectedImages(newImages);
-      
+
       // Generate previews for new images
       const newPreviews: string[] = [];
       let loadedCount = 0;
-      
+
       filesToAdd.forEach((file) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -145,13 +148,13 @@ export default function Diagnose() {
         };
         reader.readAsDataURL(file);
       });
-      
+
       if (files.length > remainingSlots) {
         toast.info(`Added ${filesToAdd.length} image(s). Maximum 5 images allowed.`);
       } else {
         toast.success(`Added ${filesToAdd.length} image(s)`);
       }
-      
+
       // Reset input so same file can be selected again
       e.target.value = '';
     }
@@ -166,30 +169,30 @@ export default function Diagnose() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
-      
+
       recognition.continuous = false;
       recognition.interimResults = false;
-      
+
       recognition.onstart = () => {
         setIsListening(true);
         toast.info('Listening... Speak now');
       };
-      
+
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setSymptoms(prev => prev + ' ' + transcript);
         toast.success('Voice input captured');
       };
-      
+
       recognition.onerror = () => {
         toast.error('Voice recognition failed');
         setIsListening(false);
       };
-      
+
       recognition.onend = () => {
         setIsListening(false);
       };
-      
+
       recognition.start();
     } else {
       toast.error('Voice recognition not supported');
@@ -200,7 +203,7 @@ export default function Diagnose() {
     if ('speechSynthesis' in window) {
       // Stop any ongoing speech
       window.speechSynthesis.cancel();
-      
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9;
       utterance.pitch = 1;
@@ -228,11 +231,14 @@ export default function Diagnose() {
       <div className="container max-w-6xl">
         <div className="mb-8 px-4 text-center animate-slide-up">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent leading-tight">
-            AI Medical Diagnosis
+            {t('diagnose.title')}
           </h1>
           <p className="text-muted-foreground text-lg px-2">
-            Describe your symptoms or upload an image for instant AI analysis
+            {t('diagnose.subtitle')}
           </p>
+          <div className="mt-3 inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
+            <p className="text-sm text-primary font-medium">💳 Each analysis uses 1 credit</p>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -243,20 +249,20 @@ export default function Diagnose() {
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="text">
                     <Brain className="h-4 w-4 mr-2" />
-                    Text Input
+                    {t('diagnose.text_input')}
                   </TabsTrigger>
                   <TabsTrigger value="image">
                     <ImageIcon className="h-4 w-4 mr-2" />
-                    Image Analysis
+                    {t('diagnose.image_analysis')}
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="text" className="space-y-4">
                   <div>
-                    <Label htmlFor="symptoms">Describe Your Symptoms</Label>
+                    <Label htmlFor="symptoms">{t('diagnose.describe_symptoms')}</Label>
                     <Textarea
                       id="symptoms"
-                      placeholder="e.g., I have a headache, fever, and sore throat for 2 days..."
+                      placeholder={t('diagnose.symptoms_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
                       className="min-h-[200px] mt-2"
@@ -267,12 +273,12 @@ export default function Diagnose() {
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing...
+                          {t('diagnose.analyzing')}
                         </>
                       ) : (
                         <>
                           <Brain className="mr-2 h-4 w-4" />
-                          Analyze Symptoms
+                          {t('diagnose.analyze_symptoms')}
                         </>
                       )}
                     </Button>
@@ -291,9 +297,8 @@ export default function Diagnose() {
                   <div>
                     <Label>Upload Medical Images (Max 5)</Label>
                     <div
-                      className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors ${
-                        imagePreviews.length > 0 ? 'border-primary' : 'border-border'
-                      }`}
+                      className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors ${imagePreviews.length > 0 ? 'border-primary' : 'border-border'
+                        }`}
                       onClick={() => document.getElementById('image-upload')?.click()}
                     >
                       {imagePreviews.length > 0 ? (
@@ -308,7 +313,7 @@ export default function Diagnose() {
                               <Button
                                 variant="destructive"
                                 size="icon"
-                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1 right-1 h-6 w-6 shadow-md hover:scale-105 transition-transform"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   removeImage(index);
@@ -325,7 +330,7 @@ export default function Diagnose() {
                             <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg">
                               <div className="text-center">
                                 <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-1" />
-                                <p className="text-xs text-muted-foreground">Add more</p>
+                                <p className="text-xs text-muted-foreground">{t('diagnose.add_more')}</p>
                               </div>
                             </div>
                           )}
@@ -334,7 +339,7 @@ export default function Diagnose() {
                         <div className="space-y-2">
                           <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
                           <p className="text-sm text-muted-foreground">
-                            Click to upload or drag and drop
+                            {t('diagnose.click_upload')}
                           </p>
                           <p className="text-xs text-muted-foreground">PNG, JPG up to 16MB • Max 5 images</p>
                         </div>
@@ -350,10 +355,10 @@ export default function Diagnose() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="image-symptoms">Additional Symptoms (Optional)</Label>
+                    <Label htmlFor="image-symptoms">{t('diagnose.additional_symptoms')}</Label>
                     <Textarea
                       id="image-symptoms"
-                      placeholder="Any additional context about the image..."
+                      placeholder={t('diagnose.additional_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
                       className="mt-2"
@@ -363,12 +368,12 @@ export default function Diagnose() {
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing Image...
+                        {t('diagnose.analyzing_image')}
                       </>
                     ) : (
                       <>
                         <ImageIcon className="mr-2 h-4 w-4" />
-                        Analyze Image
+                        {t('diagnose.analyze_image')}
                       </>
                     )}
                   </Button>
@@ -379,10 +384,10 @@ export default function Diagnose() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Medical Disclaimer:</strong> This AI diagnosis is for informational purposes
-                only. Always consult with a healthcare professional for medical advice.
-                <br />
-                <strong>Note:</strong> AI analysis is processing. Please be patient during analysis.
+                <div className="space-y-2">
+                  <p>{t('diagnose.disclaimer')}</p>
+                  <p className="font-medium text-sm text-muted-foreground">{t('diagnose.note')}</p>
+                </div>
               </AlertDescription>
             </Alert>
           </div>
@@ -393,12 +398,12 @@ export default function Diagnose() {
               <div className="space-y-4 animate-scale-in">
                 <Card className="p-6 glass">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold">Diagnosis Results</h2>
+                    <h2 className="text-2xl font-bold">{t('diagnose.results', 'Diagnosis Results')}</h2>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const textToSpeak = result.diseases?.map((d: any) => 
+                        const textToSpeak = result.diseases?.map((d: any) =>
                           `${d.name} with ${d.confidence}% confidence. ${d.explanation}`
                         ).join('. ') + '. ' + (result.general_advice || '');
                         speakText(textToSpeak);
@@ -408,23 +413,23 @@ export default function Diagnose() {
                       Read Aloud
                     </Button>
                   </div>
-                  
+
                   {/* Image Analysis Results */}
                   {result.observation && (
                     <Card className="p-4 mb-4 bg-blue-500/10 border-blue-500/20">
-                      <h3 className="font-semibold text-lg mb-2">Image Observation</h3>
+                      <h3 className="font-semibold text-lg mb-2">{t('diagnose.image_observation', 'Image Observation')}</h3>
                       <p className="text-sm text-muted-foreground">{result.observation}</p>
                     </Card>
                   )}
 
                   {result.conditions && (
                     <div className="space-y-4 mb-4">
-                      <h3 className="font-semibold text-lg">Detected Conditions</h3>
+                      <h3 className="font-semibold text-lg">{t('diagnose.detected_conditions', 'Detected Conditions')}</h3>
                       {result.conditions.map((condition: any, index: number) => (
                         <Card key={index} className="p-4 bg-muted/50">
                           <div className="flex items-start justify-between mb-2">
                             <h4 className="font-semibold">{condition.name}</h4>
-                            <span className="text-xl font-bold text-primary">
+                            <span className="text-xl font-bold text-destructive">
                               {condition.confidence}%
                             </span>
                           </div>
@@ -439,7 +444,7 @@ export default function Diagnose() {
                     <Alert className="mb-4">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>Recommendation:</strong> {result.recommendation}
+                        <strong>{t('diagnose.recommendation', 'Recommendation')}:</strong> {result.recommendation}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -448,7 +453,7 @@ export default function Diagnose() {
                     <Alert className="mb-4" variant={result.professional_evaluation === 'Required' ? 'destructive' : 'default'}>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>Professional Evaluation:</strong> {result.professional_evaluation}
+                        <strong>{t('diagnose.professional_eval', 'Professional Evaluation')}:</strong> {result.professional_evaluation}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -458,13 +463,13 @@ export default function Diagnose() {
                     <Card key={index} className="p-4 mb-4 bg-muted/50">
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="font-semibold text-lg">{disease.name}</h3>
-                        <span className="text-2xl font-bold text-primary">
+                        <span className="text-2xl font-bold text-destructive">
                           {disease.confidence}%
                         </span>
                       </div>
                       <Progress value={disease.confidence} className="mb-3" />
                       <p className="text-sm text-muted-foreground mb-3">{disease.explanation}</p>
-                      
+
                       {disease.solutions && (
                         <div className="space-y-2">
                           <p className="font-medium text-sm">Recommended Solutions:</p>
@@ -478,10 +483,10 @@ export default function Diagnose() {
                           </ul>
                         </div>
                       )}
-                      
+
                       {disease.urgency && (
                         <div className="mt-3 pt-3 border-t">
-                          <span className="text-sm font-medium">Urgency Level: </span>
+                          <span className="text-sm font-medium">{t('diagnose.urgency_level', 'Urgency Level:')} </span>
                           <span className={`text-sm font-bold ${getUrgencyColor(disease.urgency)}`}>
                             {disease.urgency}
                           </span>
@@ -494,7 +499,7 @@ export default function Diagnose() {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        <strong>General Advice:</strong> {result.general_advice}
+                        <strong>{t('diagnose.general_advice', 'General Advice:')}</strong> {result.general_advice}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -511,25 +516,14 @@ export default function Diagnose() {
                 <p className="text-muted-foreground">
                   Enter your symptoms or upload an image to get started
                 </p>
-                <div className="flex items-center justify-center gap-2 mt-4 text-emerald-600">
-                  <Coins className="h-5 w-5" />
-                  <span className="text-sm font-medium">
-                    1 credit per diagnosis
-                  </span>
-                </div>
+
               </Card>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Buy Credits Modal */}
-      <BuyCreditsModal
-        isOpen={showBuyCredits}
-        onClose={() => setShowBuyCredits(false)}
-        onSuccess={handleCreditsSuccess}
-        currentCredits={user?.credits || 0}
-      />
+
+
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, Star, Clock, Loader2, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Hospital {
   name: string;
@@ -17,7 +18,8 @@ interface Hospital {
 }
 
 export default function Hospitals() {
-  const { theme } = useTheme();
+  const { t } = useTranslation();
+  const { currentLanguage } = useLanguage();
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -56,116 +58,85 @@ export default function Hospitals() {
 
   const calculateDistance = (lat: number, lng: number) => {
     if (!userLocation) return null;
-
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = ((lat - userLocation.lat) * Math.PI) / 180;
     const dLng = ((lng - userLocation.lng) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((userLocation.lat * Math.PI) / 180) *
-        Math.cos((lat * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((userLocation.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return distance.toFixed(1);
+    return (R * c).toFixed(1);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-6xl">
         <div className="mb-8 text-center animate-slide-up">
-          <h1 className="text-4xl font-bold mb-2 gradient-text">Find Nearby Hospitals</h1>
-          <p className="text-muted-foreground text-lg">
-            Locate medical facilities near you using your current location
-          </p>
+          <h1 className="text-4xl font-bold mb-2 gradient-text">{t('hospitals.title', 'Find Nearby Hospitals')}</h1>
+          <p className="text-muted-foreground text-lg">{t('hospitals.subtitle', 'Locate medical facilities near you using your current location')}</p>
         </div>
-
 
         {loading ? (
           <Card className="p-12 text-center glass">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Searching for hospitals...</p>
+            <p className="text-muted-foreground">{t('hospitals.searching', 'Searching for hospitals...')}</p>
           </Card>
         ) : hospitals.length > 0 ? (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCurrentLocation}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Refresh
+              <Button variant="outline" size="sm" onClick={handleCurrentLocation} disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                {t('hospitals.refresh', 'Refresh')}
               </Button>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-            {hospitals.map((hospital, index) => (
-              <Card
-                key={index}
-                className="p-6 hover-lift glass animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2">{hospital.name}</h3>
-                    <p className="text-sm text-muted-foreground flex items-start gap-2">
-                      <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      {hospital.address}
-                    </p>
+              {hospitals.map((hospital, index) => (
+                <Card key={index} className="p-6 hover-lift glass animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold mb-2">{hospital.name}</h3>
+                      <p className="text-sm text-muted-foreground flex items-start gap-2">
+                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        {hospital.address}
+                      </p>
+                    </div>
+                    {hospital.rating > 0 && (
+                      <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
+                        <Star className="h-4 w-4 fill-primary text-primary" />
+                        <span className="text-sm font-semibold">{hospital.rating}</span>
+                      </div>
+                    )}
                   </div>
-                  {hospital.rating > 0 && (
-                    <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
-                      <Star className="h-4 w-4 fill-primary text-primary" />
-                      <span className="text-sm font-semibold">{hospital.rating}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  {userLocation && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Navigation className="h-4 w-4" />
-                      <span>
-                        {calculateDistance(hospital.latitude, hospital.longitude)} km away
-                      </span>
-                    </div>
-                  )}
-                  {hospital.open_now !== undefined && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4" />
-                      <span
-                        className={hospital.open_now ? (theme === 'med' ? 'text-green-500' : 'text-secondary') : 'text-destructive'}
-                      >
-                        {hospital.open_now ? 'Open Now' : 'Closed'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <Button onClick={() => getDirections(hospital)} className="w-full">
-                  <Navigation className="h-4 w-4 mr-2" />
-                  Get Directions
-                </Button>
-              </Card>
-            ))}
+                  <div className="space-y-2 mb-4">
+                    {userLocation && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Navigation className="h-4 w-4" />
+                        <span>{calculateDistance(hospital.latitude, hospital.longitude)} {t('hospitals.km_away', 'km away')}</span>
+                      </div>
+                    )}
+                    {hospital.open_now !== undefined && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4" />
+                        <span className={hospital.open_now ? 'text-secondary' : 'text-destructive'}>
+                          {hospital.open_now ? t('hospitals.open_now', 'Open Now') : t('hospitals.closed', 'Closed')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <Button onClick={() => getDirections(hospital)} className="w-full">
+                    <Navigation className="h-4 w-4 mr-2" />
+                    {t('hospitals.get_directions', 'Get Directions')}
+                  </Button>
+                </Card>
+              ))}
             </div>
           </div>
         ) : (
           <Card className="p-12 text-center glass">
             <MapPin className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30 animate-float" />
-            <h3 className="text-xl font-semibold mb-2">No Hospitals Found</h3>
-            <p className="text-muted-foreground mb-6">
-              Use your current location to find nearby hospitals
-            </p>
+            <h3 className="text-xl font-semibold mb-2">{t('hospitals.no_hospitals', 'No Hospitals Found')}</h3>
+            <p className="text-muted-foreground mb-6">{t('hospitals.no_hospitals_desc', 'Use your current location to find nearby hospitals')}</p>
             <Button onClick={handleCurrentLocation}>
               <Navigation className="h-4 w-4 mr-2" />
-              Use Current Location
+              {t('hospitals.use_location', 'Use Current Location')}
             </Button>
           </Card>
         )}
