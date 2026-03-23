@@ -249,11 +249,6 @@ export default function Chat() {
               </div>
               <div className="flex items-center justify-center gap-4 mt-2">
                 <p className="text-xs text-muted-foreground">{t('chat.enter_to_send', 'Press Enter to send • Shift+Enter for new line')}</p>
-                {hasCredits && (
-                  <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-primary/5 border-primary/20 text-primary/80`}>
-                    <span>💳 1 credit / msg</span>
-                  </div>
-                )}
               </div>
 
             </div>

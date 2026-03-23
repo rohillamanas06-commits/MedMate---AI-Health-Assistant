@@ -295,13 +295,6 @@ export default function Diagnose() {
                       <Mic className={`h-4 w-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
                     </Button>
                   </div>
-                  {hasCredits && (
-                    <div className="flex justify-center mt-1">
-                      <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-primary/5 border-primary/20 text-primary/80`}>
-                        <span>💳 1 credit / analysis</span>
-                      </div>
-                    </div>
-                  )}
                 </TabsContent>
 
                 <TabsContent value="image" className="space-y-4">
@@ -393,13 +386,6 @@ export default function Diagnose() {
                       </>
                     )}
                   </Button>
-                  {hasCredits && (
-                    <div className="flex justify-center mt-2">
-                      <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-primary/5 border-primary/20 text-primary/80`}>
-                        <span>💳 1 credit / analysis</span>
-                      </div>
-                    </div>
-                  )}
                 </TabsContent>
               </Tabs>
             </Card>

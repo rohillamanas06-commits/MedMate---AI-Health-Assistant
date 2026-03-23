@@ -257,13 +257,6 @@ export default function ReportExplainer() {
                     </>
                   )}
                 </Button>
-                {hasCredits && (
-                  <div className="flex justify-center mt-2">
-                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-primary/5 border-primary/20 text-primary/80`}>
-                      <span>💳 1 credit / analysis</span>
-                    </div>
-                  </div>
-                )}
               </div>
             </Card>
 
