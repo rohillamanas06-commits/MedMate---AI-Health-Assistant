@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Activity, LogOut, User, Menu, Moon, Sun, Info, Languages } from 'lucide-react';
+import { Activity, LogOut, User, Menu, Info, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,7 +14,6 @@ import {
   DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { CreditsBadge } from '@/components/CreditsBadge';
@@ -23,7 +22,6 @@ import { useState } from 'react';
 
 export const Navbar = () => {
   const { user, logout, checkAuth, updateCredits } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { currentLanguage: language, setLanguage } = useLanguage();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -52,17 +50,6 @@ export const Navbar = () => {
   const handleNavigation = (path: string) => {
     navigate(path);
     setIsSheetOpen(false);
-  };
-
-
-  const getThemeIcon = () => {
-    if (theme === 'light') return <Moon className="h-4 w-4 mr-2" />;
-    return <Sun className="h-4 w-4 mr-2" />;
-  };
-
-  const getThemeLabel = () => {
-    if (theme === 'light') return "Dark Mode";
-    return "Light Mode";
   };
 
   const NavLinks = ({ isMobile = false }: { isMobile?: boolean }) => {

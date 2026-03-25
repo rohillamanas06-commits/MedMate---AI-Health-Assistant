@@ -9,7 +9,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -51,7 +50,6 @@ const App = () => (
                 <main className="w-full min-h-screen bg-background">
                   <div className="p-4 flex items-center justify-between">
                     <SidebarTrigger />
-                    <ThemeToggle />
                   </div>
                   <Routes>
                     <Route path="/" element={<Home />} />

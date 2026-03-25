@@ -29,13 +29,16 @@ import {
   Settings,
   Languages,
   Clock,
-  ChevronLeft
+  ChevronLeft,
+  Moon,
+  Sun
 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTranslation } from "react-i18next"
 import { useLocation, Link, useNavigate } from "react-router-dom"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { useTheme } from "@/contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -55,6 +58,7 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLanguage: language, setLanguage } = useLanguage()
+  const { theme, toggleTheme } = useTheme()
   const { state, setOpen, setOpenMobile, isMobile } = useSidebar()
   const [showMobileLanguages, setShowMobileLanguages] = useState(false)
 
@@ -78,6 +82,16 @@ export function AppSidebar() {
     await logout();
     navigate('/');
     closeOnMobile();
+  };
+
+  const getThemeIcon = () => {
+    if (theme === 'light') return <Moon className="h-4 w-4 mr-2" />;
+    return <Sun className="h-4 w-4 mr-2" />;
+  };
+
+  const getThemeLabel = () => {
+    if (theme === 'light') return t('navbar.dark_mode') || "Dark Mode";
+    return t('navbar.light_mode') || "Light Mode";
   };
 
   const isActive = (path: string) => location.pathname === path
@@ -162,8 +176,8 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            {user ? (
+          {user ? (
+            <SidebarMenuItem>
               <DropdownMenu onOpenChange={(open) => {
                 if (!open) {
                   setTimeout(() => setShowMobileLanguages(false), 200);
@@ -226,6 +240,10 @@ export function AppSidebar() {
                         <User className="mr-2 h-4 w-4" />
                         {t('navbar.profile')}
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={toggleTheme}>
+                        {getThemeIcon()}
+                        {getThemeLabel()}
+                      </DropdownMenuItem>
 
                       {isMobile ? (
                         <DropdownMenuItem
@@ -273,17 +291,17 @@ export function AppSidebar() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <SidebarMenuItem onClick={closeOnMobile}>
-                <SidebarMenuButton asChild>
-                  <Link to="/auth" onClick={closeOnMobile}>
-                    <User className="h-4 w-4" />
-                    <span>{t('navbar.login')}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-          </SidebarMenuItem>
+            </SidebarMenuItem>
+          ) : (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild onClick={closeOnMobile}>
+                <Link to="/auth">
+                  <User className="h-4 w-4" />
+                  <span>{t('navbar.login')}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
