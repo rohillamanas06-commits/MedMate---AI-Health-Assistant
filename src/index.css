@@ -225,3 +225,38 @@ All colors MUST be HSL.
     display: none;
   }
 }
+
+/* Scrollable content with visible scrollbar */
+.scrollable-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(209 213 219) transparent;
+  -ms-overflow-style: auto;
+}
+
+.scrollable-content::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+  background-color: rgb(209 213 219);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(156 163 175);
+}
+
+.dark .scrollable-content::-webkit-scrollbar-thumb {
+  background-color: rgb(75 85 99);
+}
+
+.dark .scrollable-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(107 114 128);
+}

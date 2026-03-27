@@ -402,7 +402,7 @@ export default function Diagnose() {
           </div>
 
           {/* Results Section */}
-          <div className="space-y-6">
+          <div className="space-y-6 overflow-y-auto max-h-[70vh] pr-2 scrollable-content">
             {result ? (
               <div className="space-y-4 animate-scale-in">
                 <Card className="p-6 glass">

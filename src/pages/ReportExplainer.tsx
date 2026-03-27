@@ -270,7 +270,7 @@ export default function ReportExplainer() {
           </div>
 
           {/* Results Section */}
-          <div className="space-y-4 sm:space-y-6 overflow-hidden w-full min-w-0">
+          <div className="space-y-4 sm:space-y-6 overflow-y-auto max-h-[70vh] w-full min-w-0 pr-2 scrollable-content">
             {result ? (
               <div className="space-y-3 sm:space-y-4 animate-scale-in w-full">
                 <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
