@@ -206,6 +206,13 @@ def init_db():
                     conn.commit()
                 print("✅ profile_picture column added successfully")
             
+            if 'credits' not in columns:
+                print("⚠️ Adding credits column to user table...")
+                with db.engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE \"user\" ADD COLUMN credits INTEGER DEFAULT 10"))
+                    conn.commit()
+                print("✅ credits column added successfully")
+            
             if 'diagnosis' in inspector.get_table_names():
                 diag_columns = [col['name'] for col in inspector.get_columns('diagnosis')]
                 if 'is_deleted' not in diag_columns:
