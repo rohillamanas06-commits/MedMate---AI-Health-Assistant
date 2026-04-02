@@ -475,7 +475,7 @@ export default function History() {
                             <span className="text-xs font-medium text-secondary">{t('history.ai_assistant', 'AI Assistant')}</span>
                           </div>
                           <p className="text-sm bg-primary/5 rounded-lg p-3 whitespace-pre-wrap">
-                            {chat.response.length > 200 ? chat.response.substring(0, 200) + '...' : chat.response}
+                            {chat.response}
                           </p>
                         </div>
                       </div>
