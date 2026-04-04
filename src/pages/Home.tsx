@@ -75,11 +75,6 @@ export default function Home() {
         <div className="container relative z-10 py-8 sm:py-16 lg:py-24">
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
             <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-slide-up">
-              <div className="inline-block">
-                <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                  {t('home.badge')}
-                </span>
-              </div>
               <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
                 {t('home.title_start')} <br className="hidden lg:block" />
                 <span className="text-primary">{t('home.title_highlight')}</span> {t('home.title_end')}
