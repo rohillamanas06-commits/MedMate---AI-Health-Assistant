@@ -64,7 +64,7 @@ export default function FAQ() {
             <div className="space-y-10">
               {filtered.map((section) => (
                 <div key={section.category}>
-                  <h2 className="text-lg font-semibold text-primary mb-4 uppercase tracking-wider">
+                  <h2 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wider">
                     {section.category}
                   </h2>
                   <Accordion type="single" collapsible className="space-y-2">
