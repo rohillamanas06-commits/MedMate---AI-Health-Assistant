@@ -54,29 +54,6 @@ export default function FAQ() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
-        <div className="container text-center space-y-6 animate-slide-up">
-          <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            {t('faq.badge', 'Help Center')}
-          </span>
-          <h1 className="text-4xl lg:text-6xl font-bold">
-            {t('faq.title', 'Frequently Asked')} <span className="gradient-text">{t('faq.title_q', 'Questions')}</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('faq.subtitle', "Find answers to common questions about MedMate's features, privacy, and more.")}
-          </p>
-          <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('faq.search_placeholder', 'Search questions...')}
-              className="pl-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-      </section>
-
       <section className="py-16 lg:py-24 flex-1">
         <div className="container max-w-3xl">
           {filtered.length === 0 ? (

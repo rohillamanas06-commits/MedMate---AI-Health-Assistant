@@ -21,19 +21,6 @@ export default function Terms() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <section className="py-16 lg:py-20 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
-        <div className="container text-center space-y-4 animate-slide-up">
-          <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            {t('terms.badge', 'Legal')}
-          </span>
-          <h1 className="text-4xl lg:text-6xl font-bold">
-            {t('terms.title', 'Terms &')} <span className="gradient-text">{t('terms.title_cond', 'Conditions')}</span>
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{t('terms.updated', 'Last updated: March 22, 2026')}</p>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{t('terms.read_carefully', 'Please read these terms carefully before using MedMate.')}</p>
-        </div>
-      </section>
-
       <section className="py-16 lg:py-24 flex-1">
         <div className="container max-w-3xl">
           <div className="space-y-10">

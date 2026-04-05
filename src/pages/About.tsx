@@ -9,20 +9,6 @@ export default function About() {
 
   return (
     <div className="min-h-screen">
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
-        <div className="container max-w-3xl text-center space-y-4 animate-slide-up">
-          <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            {t('about.badge', 'Our Story')}
-          </span>
-          <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-            {t('about.title', 'About')} <span className="gradient-text">MedMate</span>
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            {t('about.subtitle', "The story behind why we built MedMate and where we're headed.")}
-          </p>
-        </div>
-      </section>
-
       <section className="py-16 lg:py-24">
         <div className="container max-w-3xl space-y-10 text-lg leading-relaxed text-muted-foreground">
           <div className="space-y-5">

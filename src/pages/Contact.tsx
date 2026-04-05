@@ -40,20 +40,6 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-primary/10 via-accent/5 to-background">
-        <div className="container text-center space-y-4 animate-slide-up">
-          <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            {t('contact.badge', 'Get In Touch')}
-          </span>
-          <h1 className="text-4xl lg:text-6xl font-bold">
-            {t('contact.title', 'Contact')} <span className="gradient-text">{t('contact.title_us', 'Us')}</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('contact.subtitle', "Have a question, feedback, or just want to say hello? We'd love to hear from you.")}
-          </p>
-        </div>
-      </section>
-
       <section className="py-16 lg:py-24 flex-1">
         <div className="container">
           <div className="grid lg:grid-cols-5 gap-12 items-start">
