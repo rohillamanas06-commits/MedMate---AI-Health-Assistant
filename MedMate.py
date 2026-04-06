@@ -187,7 +187,8 @@ CREDIT_COSTS = {
     'chat': 1,
     'report': 1,
     'image': 1,
-    'symptoms': 1
+    'symptoms': 1,
+    'handwriting': 1
 }
 
 # Database initialization function for serverless
@@ -2601,6 +2602,146 @@ def diagnose():
         traceback.print_exc()
         return jsonify({'error': f'Diagnosis failed: {str(e)}'}), 500
 
+def analyze_handwriting_with_vision(image_path):
+    """
+    Analyze handwritten medical notes using AI Vision (Gemini or OpenAI)
+    Returns: Extracted text, medical terms, interpretation, and recommendations
+    """
+    try:
+        # Optimize image before analysis
+        from PIL import Image
+        img = Image.open(image_path)
+        
+        # Resize large images to improve performance
+        max_size = (1024, 1024)
+        if img.size[0] > max_size[0] or img.size[1] > max_size[1]:
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+            print(f"📐 Image resized to: {img.size}")
+        
+        # Convert to RGB if needed
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        prompt = """You are an expert medical document analyzer. Analyze this handwritten medical note image and extract ALL text that is written.
+
+Return a JSON response with exactly this structure:
+{
+    "extracted_text": "Complete transcription of all handwritten text",
+    "medical_terms": ["list", "of", "medical", "terms", "found"],
+    "explanation": "Simple explanation of what the handwritten note contains in medical terms",
+    "confidence_score": 0.85,
+    "recommendations": ["Recommendation 1", "Recommendation 2"],
+    "interpretation": "Brief interpretation of the medical content"
+}
+
+Rules:
+- Extract ALL text exactly as written (including spelling variations)
+- Identify medical terms using NLP
+- Provide confidence score (0-1) for reading accuracy
+- Always return valid JSON
+- If text is unclear, indicate uncertainty in explanation"""
+
+        # Try Gemini Vision first with timeout
+        if gemini_model:
+            try:
+                print(f"🔄 Calling Gemini Vision API for handwriting: {os.path.basename(image_path)}")
+                
+                # Use threading to implement timeout
+                import threading
+                
+                result_container = {'data': None, 'error': None}
+                
+                def call_gemini():
+                    try:
+                        response = gemini_model.generate_content([prompt, img])
+                        result_text = response.text
+                        
+                        # Clean up markdown code blocks if present
+                        if '```json' in result_text:
+                            result_text = result_text.split('```json')[1].split('```')[0].strip()
+                        elif '```' in result_text:
+                            result_text = result_text.split('```')[1].split('```')[0].strip()
+                        
+                        result = json.loads(result_text)
+                        result_container['data'] = result
+                    except Exception as e:
+                        result_container['error'] = e
+                
+                # Start the API call in a separate thread
+                thread = threading.Thread(target=call_gemini)
+                thread.daemon = True
+                thread.start()
+                
+                # Wait for result with timeout (120 seconds for handwriting analysis)
+                thread.join(timeout=120)
+                
+                if thread.is_alive():
+                    print("⏰ Gemini API call timed out after 120s")
+                    return {
+                        'error': 'Analysis timeout',
+                        'extracted_text': 'Unable to process image - request timeout',
+                        'medical_terms': [],
+                        'explanation': 'The image took too long to process. Please try again with a clearer image.',
+                        'confidence_score': 0,
+                        'recommendations': ['Try uploading a clearer image', 'Ensure good lighting']
+                    }
+                
+                if result_container['error']:
+                    raise result_container['error']
+                
+                result = result_container['data']
+                if not result:
+                    raise Exception("No response from API")
+                
+                # Extract medical terms using NLP if not provided by API
+                if 'extracted_text' in result and result.get('medical_terms') is None:
+                    nlp_terms = extract_medical_terms_nlp(result['extracted_text'])
+                    result['medical_terms'] = [term.get('text', '') for term in nlp_terms]
+                
+                print(f"✅ Gemini handwriting analysis successful")
+                return result
+                
+            except json.JSONDecodeError as e:
+                print(f"⚠️ JSON parsing error: {e}")
+                return {
+                    'error': 'Failed to parse response',
+                    'extracted_text': 'Unable to parse analysis results',
+                    'medical_terms': [],
+                    'explanation': 'Failed to process the analysis response.',
+                    'confidence_score': 0,
+                    'recommendations': ['Try another image']
+                }
+            except Exception as e:
+                print(f"⚠️ Gemini error: {e}")
+                return {
+                    'error': str(e),
+                    'extracted_text': '',
+                    'medical_terms': [],
+                    'explanation': f'Analysis failed: {str(e)}',
+                    'confidence_score': 0,
+                    'recommendations': []
+                }
+        else:
+            return {
+                'error': 'Vision API not available',
+                'extracted_text': '',
+                'medical_terms': [],
+                'explanation': 'Vision API is not configured',
+                'confidence_score': 0,
+                'recommendations': []
+            }
+    
+    except Exception as e:
+        print(f"❌ Handwriting analysis error: {e}")
+        return {
+            'error': str(e),
+            'extracted_text': '',
+            'medical_terms': [],
+            'explanation': f'Failed to analyze handwriting: {str(e)}',
+            'confidence_score': 0,
+            'recommendations': []
+        }
+
 @app.route('/api/diagnose-image', methods=['POST', 'OPTIONS'])
 @login_required
 def diagnose_image():
@@ -2668,6 +2809,82 @@ def diagnose_image():
         return jsonify({
             'message': 'Image analysis completed',
             'diagnosis_id': diagnosis.id,
+            'result': result,
+            'credits_deducted': credit_cost,
+            'remaining_credits': user.credits,
+            'image_url': f"{request.url_root.rstrip('/')}{url_for('uploaded_file', filename=filename)}"
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analyze-handwriting', methods=['POST', 'OPTIONS'])
+@login_required
+def analyze_handwriting():
+    """Analyze handwritten medical notes with vision API"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        # Verify user exists in database
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            session.clear()
+            return jsonify({'error': 'User session invalid. Please login again.'}), 401
+        
+        # Check credits
+        credit_cost = CREDIT_COSTS.get('handwriting', 1)
+        if user.credits < credit_cost:
+            return jsonify({
+                'error': f'Insufficient credits. You have {user.credits} credits but need {credit_cost} credit(s) for Prescription Decoder.',
+                'credits': user.credits,
+                'required': credit_cost
+            }), 402  # 402 Payment Required
+        
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        file = request.files['image']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Invalid file type'}), 400
+        
+        # Save file
+        filename = secure_filename(f"{session['user_id']}_{datetime.now().timestamp()}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Deduct credits after file is saved but before processing
+        user.credits -= credit_cost
+        transaction = CreditsTransaction(
+            user_id=user.id,
+            credits=-credit_cost,
+            transaction_type='prescription',
+            description='Prescription Decoder'
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        
+        # Analyze handwriting with Vision API
+        result = analyze_handwriting_with_vision(filepath)
+        
+        # Save analysis to database as diagnosis for consistency
+        analysis = Diagnosis(
+            user_id=session['user_id'],
+            symptoms='Prescription Decoder',
+            diagnosis_result=json.dumps(result),
+            image_path=filename
+        )
+        db.session.add(analysis)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Prescription analysis completed',
+            'analysis_id': analysis.id,
             'result': result,
             'credits_deducted': credit_cost,
             'remaining_credits': user.credits,

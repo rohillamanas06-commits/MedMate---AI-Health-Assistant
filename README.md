@@ -46,7 +46,15 @@ MedMate is an advanced AI-powered medical assistant platform that provides insta
 - **Jargon-Free Explanations** - AI translates complex medical terms into 3-4 simple sentences
 - Structured data extraction for all major biomarkers
 
-#### 💬 24/7 AI Chat Assistant
+#### � Prescription Decoder
+- **Handwriting Recognition** - Advanced OCR technology to read handwritten prescriptions and medical notes
+- **Medical Term Extraction** - Automatically identifies and extracts medications, dosages, and instructions
+- **AI-Powered Analysis** - Natural Language Processing to understand complex medical notations
+- **Detailed Explanations** - Clear breakdown of medications and their purposes
+- **Confidence Scoring** - Transparency into the accuracy of decoded prescriptions
+- **Easy Upload** - Snap a photo of your prescription for instant analysis
+
+#### �💬 24/7 AI Chat Assistant
 - Interactive conversation with medical AI
 - Context-aware responses
 - Chat history tracking

@@ -28,6 +28,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ReportExplainer from "./pages/ReportExplainer";
+import HandwritingAnalyzer from "./pages/HandwritingAnalyzer";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -77,6 +78,14 @@ const App = () => (
                       element={
                         <ProtectedRoute>
                           <Diagnose />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/handwriting"
+                      element={
+                        <ProtectedRoute>
+                          <HandwritingAnalyzer />
                         </ProtectedRoute>
                       }
                     />

@@ -263,8 +263,7 @@ export default function ReportExplainer() {
             <Alert className="w-full">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>{t('explainer.disclaimer_title')}</strong>{' '}
-                {t('explainer.disclaimer_text')}
+                <p>{t('explainer.disclaimer_full')}</p>
               </AlertDescription>
             </Alert>
           </div>

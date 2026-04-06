@@ -393,10 +393,7 @@ export default function Diagnose() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <div className="space-y-2">
-                  <p>{t('diagnose.disclaimer')}</p>
-                  <p className="font-medium text-sm text-muted-foreground">{t('diagnose.note')}</p>
-                </div>
+                <p>{t('diagnose.disclaimer')}</p>
               </AlertDescription>
             </Alert>
           </div>

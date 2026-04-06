@@ -195,6 +195,41 @@ class ApiClient {
     }
   }
 
+  async analyzeHandwriting(image: File) {
+    const formData = new FormData();
+    formData.append('image', image);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout for handwriting analysis
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/analyze-handwriting`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Handwriting analysis failed');
+      }
+
+      return data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Analysis timeout - please try again');
+        }
+        throw error;
+      }
+      throw new Error('Network error occurred');
+    }
+  }
+
   async getDiagnosisHistory(page = 1, perPage = 10) {
     return this.requestWithTimeout(`/api/diagnosis-history?page=${page}&per_page=${perPage}`, {}, 30000); // 30 second timeout
   }

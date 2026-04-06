@@ -11,6 +11,8 @@ export function Footer() {
     { labelKey: 'footer.symptom_checker', label: 'Symptom Checker', href: '/diagnose' },
     { labelKey: 'footer.ai_chat', label: 'AI Chat Assistant', href: '/chat' },
     { labelKey: 'footer.hospital_finder', label: 'Hospital Finder', href: '/hospitals' },
+    { labelKey: 'footer.report_explainer', label: 'Lab Report Analyzer', href: '/explain' },
+    { labelKey: 'footer.prescription_decoder', label: 'Prescription Decoder', href: '/handwriting' },
   ];
 
   const companyLinks = [

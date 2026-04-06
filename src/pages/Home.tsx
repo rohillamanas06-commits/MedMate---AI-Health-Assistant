@@ -10,6 +10,7 @@ import {
   Shield,
   ArrowRight,
   FileText,
+  FileImage,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Footer } from '@/components/Footer';
@@ -47,23 +48,28 @@ export default function Home() {
   const features = [
     {
       icon: <Brain className="h-12 w-12 text-primary" />,
-      title: t('home.feature_diagnosis_title'),
-      description: t('home.feature_diagnosis_desc'),
+      title: 'AI Diagnosis',
+      description: 'AI analyzes your symptoms and provides accurate medical insights instantly.',
     },
     {
       icon: <MessageSquare className="h-12 w-12 text-primary" />,
-      title: t('home.feature_chat_title'),
-      description: t('home.feature_chat_desc'),
+      title: 'AI Chat',
+      description: 'Chat with our intelligent medical AI assistant anytime, anywhere.',
     },
     {
       icon: <MapPin className="h-12 w-12 text-primary" />,
-      title: t('home.feature_hospitals_title'),
-      description: t('home.feature_hospitals_desc'),
+      title: 'Hospital Finder',
+      description: 'Locate nearby hospitals and medical facilities with real-time information.',
     },
     {
       icon: <FileText className="h-12 w-12 text-primary" />,
-      title: t('home.feature_report_title'),
-      description: t('home.feature_report_desc'),
+      title: 'Report Analyzer',
+      description: 'Upload complex medical reports for simple, AI-driven explanations.',
+    },
+    {
+      icon: <FileImage className="h-12 w-12 text-primary" />,
+      title: 'Prescription Decoder',
+      description: 'Analyze handwritten prescriptions and medical notes with AI.',
     },
   ];
 
@@ -128,7 +134,7 @@ export default function Home() {
               {t('home.features_sub')}
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
             {features.map((feature, index) => (
               <Card
                 key={index}
@@ -136,8 +142,8 @@ export default function Home() {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
               </Card>
             ))}
           </div>

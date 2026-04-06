@@ -31,7 +31,8 @@ import {
   Clock,
   ChevronLeft,
   Moon,
-  Sun
+  Sun,
+  FileImage
 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
@@ -113,6 +114,12 @@ export function AppSidebar() {
       title: t('navbar.diagnose'),
       url: "/diagnose",
       icon: Brain,
+      public: false,
+    },
+    {
+      title: t('navbar.prescription_decoder') || 'Prescription Decoder',
+      url: "/handwriting",
+      icon: FileImage,
       public: false,
     },
     {

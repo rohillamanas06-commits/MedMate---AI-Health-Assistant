@@ -13,6 +13,7 @@ import {
   Clock,
   FileText,
   Coins,
+  FileImage,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
@@ -145,18 +146,18 @@ export default function Dashboard() {
       action: () => navigate('/explain'),
     },
     {
+      icon: <FileImage className="h-6 w-6" />,
+      title: t('navbar.prescription_decoder') || 'Prescription Decoder',
+      description: 'Analyze handwritten prescriptions',
+      color: 'from-orange-500 to-red-500',
+      action: () => navigate('/handwriting'),
+    },
+    {
       icon: <MapPin className="h-6 w-6" />,
       title: t('dashboard.find_hospitals'),
       description: t('dashboard.hosp_desc'),
       color: 'from-green-500 to-teal-500',
       action: () => navigate('/hospitals'),
-    },
-    {
-      icon: <Coins className="h-6 w-6" />,
-      title: 'Buy Credits',
-      description: 'Purchase more credits for your account',
-      color: 'from-yellow-500 to-amber-500',
-      action: () => setShowBuyCredits(true),
     },
   ];
 

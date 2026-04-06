@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, MessageSquare, Calendar, Clock, Trash2, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Brain, MessageSquare, Calendar, Clock, Trash2, FileText, ChevronDown, ChevronUp, FileImage } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
@@ -57,11 +57,13 @@ export default function History() {
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
   const [diagnoses, setDiagnoses] = useState<any[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [chats, setChats] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedReport, setExpandedReport] = useState<number | null>(null);
   const [expandedDiagnosis, setExpandedDiagnosis] = useState<number | null>(null);
+  const [expandedPrescription, setExpandedPrescription] = useState<number | null>(null);
 
   useEffect(() => {
     loadHistory();
@@ -74,7 +76,14 @@ export default function History() {
         api.getChatHistory(1, 20),
         api.getReportHistory(1, 20)
       ]);
-      setDiagnoses(diagnosisRes.diagnoses || []);
+      
+      const allDiagnoses = diagnosisRes.diagnoses || [];
+      // Separate prescriptions from regular diagnoses
+      const regularDiagnoses = allDiagnoses.filter((d: any) => d.symptoms !== 'Prescription Decoder');
+      const prescriptionItems = allDiagnoses.filter((d: any) => d.symptoms === 'Prescription Decoder');
+      
+      setDiagnoses(regularDiagnoses);
+      setPrescriptions(prescriptionItems);
       setChats(chatRes.chats || []);
       setReports(reportRes.reports || []);
     } catch (error) {
@@ -94,14 +103,39 @@ export default function History() {
     }
   };
 
+  const handleDeletePrescription = async (id: number) => {
+    try {
+      await api.deleteDiagnosisHistoryItem(id);
+      setPrescriptions(prev => prev.filter(p => p.id !== id));
+      toast.success(t('history.removed', 'Prescription removed'));
+    } catch {
+      toast.error(t('history.failed_remove', 'Failed to remove prescription'));
+    }
+  };
+
   const handleClearAllDiagnoses = async () => {
-    if (!confirm('Are you sure you want to clear all diagnoses?')) return;
+    if (!confirm(t('history.confirm_clear_diagnoses', 'Are you sure you want to clear all diagnoses?'))) return;
     try {
       await api.deleteAllDiagnosisHistory();
       setDiagnoses([]);
-      toast.success('All diagnoses cleared');
+      setPrescriptions([]);
+      toast.success(t('history.cleared_all', 'All diagnoses cleared'));
     } catch {
-      toast.error('Failed to clear diagnoses');
+      toast.error(t('history.failed_clear', 'Failed to clear diagnoses'));
+    }
+  };
+
+  const handleClearAllPrescriptions = async () => {
+    if (!confirm(t('history.confirm_clear_prescriptions', 'Are you sure you want to clear all prescriptions?'))) return;
+    try {
+      // Delete each prescription individually
+      for (const prescription of prescriptions) {
+        await api.deleteDiagnosisHistoryItem(prescription.id);
+      }
+      setPrescriptions([]);
+      toast.success(t('history.cleared_all_prescriptions', 'All prescriptions cleared'));
+    } catch {
+      toast.error(t('history.failed_clear_prescriptions', 'Failed to clear prescriptions'));
     }
   };
 
@@ -159,10 +193,14 @@ export default function History() {
 
         <Card className="glass animate-fade-in">
           <Tabs defaultValue="diagnoses" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="diagnoses">
                 <Brain className="h-4 w-4 mr-2" />
                 <span className="truncate">{t('history.diagnoses_tab', 'Diagnoses')} ({diagnoses.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="prescriptions">
+                <FileImage className="h-4 w-4 mr-2" />
+                <span className="truncate">{t('history.prescriptions_tab', 'Prescriptions')} ({prescriptions.length})</span>
               </TabsTrigger>
               <TabsTrigger value="chats">
                 <MessageSquare className="h-4 w-4 mr-2" />
@@ -400,6 +438,201 @@ export default function History() {
                             <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                               <h4 className="font-semibold text-yellow-700 dark:text-yellow-400 text-sm mb-1">⚠️ Recommendation</h4>
                               <p className="text-sm text-yellow-600 dark:text-yellow-300">{diagnosis.result.recommendation}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="prescriptions" className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold hidden md:block">{t('history.prescription_history', 'Prescriptions')}</h2>
+                {prescriptions.length > 0 && !loading && (
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={handleClearAllPrescriptions} 
+                    className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
+                    title="Remove All"
+                  >
+                    <Trash2 className="h-4.5 w-4.5" />
+                  </Button>
+                )}
+              </div>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="p-6 animate-pulse">
+                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                    </Card>
+                  ))}
+                </div>
+              ) : prescriptions.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileImage className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
+                  <h3 className="text-xl font-semibold mb-2">{t('history.no_prescriptions', 'No Prescriptions Yet')}</h3>
+                  <p className="text-muted-foreground">
+                    {t('history.no_prescriptions_desc', 'Your analyzed prescriptions will appear here')}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {prescriptions.map((prescription, index) => (
+                    <Card
+                      key={prescription.id}
+                      className="p-6 hover-lift animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      {/* Header row */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base mb-1 truncate pr-2">
+                            Prescription Decoder
+                          </h3>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {parseUTCDate(prescription.created_at).toLocaleDateString()}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {parseUTCDate(prescription.created_at).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2 flex-shrink min-w-0">
+                          {prescription.image_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-8 hidden xs:flex whitespace-nowrap"
+                              onClick={() => setExpandedPrescription(expandedPrescription === prescription.id ? null : prescription.id)}
+                            >
+                              {expandedPrescription === prescription.id ? (
+                                <><ChevronUp className="h-3.5 w-3.5 mr-1" /> Hide Results</>
+                              ) : (
+                                <><ChevronDown className="h-3.5 w-3.5 mr-1" /> View Results</>
+                              )}
+                            </Button>
+                          )}
+                          {prescription.image_url && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 xs:hidden"
+                              onClick={() => setExpandedPrescription(expandedPrescription === prescription.id ? null : prescription.id)}
+                            >
+                              {expandedPrescription === prescription.id ? (
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline" 
+                            size="icon"
+                            className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent flex-shrink-0"
+                            onClick={() => handleDeletePrescription(prescription.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Expanded Results Panel - Image and Results */}
+                      {expandedPrescription === prescription.id && (
+                        <div className="mt-4 space-y-4 border-t border-border/50 pt-4 animate-fade-in">
+
+                          {/* Image */}
+                          {prescription.image_url && (
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2">🖼️ Analyzed Image</h4>
+                              <img
+                                src={prescription.image_url}
+                                alt="Prescription"
+                                className="rounded-xl max-h-64 object-cover border border-border/50 shadow-sm"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) parent.innerHTML = '<div class="flex items-center justify-center h-32 bg-muted/50 rounded-lg"><span class="text-muted-foreground text-sm">Image not available</span></div>';
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Extracted Text */}
+                          {prescription.result?.extracted_text && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm">📝 Extracted Text</h4>
+                              <div className="bg-muted/50 p-4 rounded-lg border border-border/50 max-h-[300px] overflow-y-auto">
+                                <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
+                                  {prescription.result.extracted_text}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Medical Terms */}
+                          {prescription.result?.medical_terms && prescription.result.medical_terms.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm">🏥 Medical Terms Detected</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {prescription.result.medical_terms.map((term: string, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium"
+                                  >
+                                    {term}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* AI Explanation */}
+                          {prescription.result?.explanation && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm">💡 AI Explanation</h4>
+                              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                                <p className="text-sm text-foreground/80 leading-relaxed">
+                                  {prescription.result.explanation}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Confidence Score */}
+                          {prescription.result?.confidence_score !== undefined && (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <h4 className="font-semibold text-sm">📊 Analysis Confidence</h4>
+                                <span className="text-sm text-muted-foreground">
+                                  {(prescription.result.confidence_score * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <Progress value={prescription.result.confidence_score * 100} className="h-2" />
+                            </div>
+                          )}
+
+                          {/* Recommendations */}
+                          {prescription.result?.recommendations && prescription.result.recommendations.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm">✓ Recommendations</h4>
+                              <ul className="space-y-2 text-sm">
+                                {prescription.result.recommendations.map((rec: string, idx: number) => (
+                                  <li key={idx} className="flex gap-2 text-foreground/80">
+                                    <span className="text-green-600 dark:text-green-400 font-bold">•</span>
+                                    <span>{rec}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           )}
                         </div>
