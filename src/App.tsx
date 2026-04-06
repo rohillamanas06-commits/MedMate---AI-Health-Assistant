@@ -36,6 +36,101 @@ function ScrollToTop() {
   return null;
 }
 
+function ConditionalLayout() {
+  const { pathname } = useLocation();
+  const isAuthPage = pathname === '/auth' || pathname === '/forgot-password' || pathname === '/reset-password';
+
+  return (
+    <>
+      {!isAuthPage && <AppSidebar />}
+      <main className="w-full min-h-screen bg-background">
+        {!isAuthPage && (
+          <div className="p-4 flex items-center justify-between">
+            <SidebarTrigger />
+          </div>
+        )}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/explain"
+            element={
+              <ProtectedRoute>
+                <ReportExplainer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diagnose"
+            element={
+              <ProtectedRoute>
+                <Diagnose />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/handwriting"
+            element={
+              <ProtectedRoute>
+                <HandwritingAnalyzer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hospitals"
+            element={
+              <ProtectedRoute>
+                <Hospitals />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+    </>
+  );
+}
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -47,89 +142,7 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <SidebarProvider>
-                <AppSidebar />
-                <main className="w-full min-h-screen bg-background">
-                  <div className="p-4 flex items-center justify-between">
-                    <SidebarTrigger />
-                  </div>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/explain"
-                      element={
-                        <ProtectedRoute>
-                          <ReportExplainer />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/diagnose"
-                      element={
-                        <ProtectedRoute>
-                          <Diagnose />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/handwriting"
-                      element={
-                        <ProtectedRoute>
-                          <HandwritingAnalyzer />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/chat"
-                      element={
-                        <ProtectedRoute>
-                          <Chat />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/hospitals"
-                      element={
-                        <ProtectedRoute>
-                          <Hospitals />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/history"
-                      element={
-                        <ProtectedRoute>
-                          <History />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
+                <ConditionalLayout />
               </SidebarProvider>
             </BrowserRouter>
             <Toaster />
