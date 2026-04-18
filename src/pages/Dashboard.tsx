@@ -123,43 +123,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('error', handleError);
   }, []);
 
-  const quickActions = [
-    {
-      icon: <Brain className="h-6 w-6" />,
-      title: t('dashboard.symptom_checker'),
-      description: t('dashboard.symptom_desc'),
-      color: 'from-blue-500 to-cyan-500',
-      action: () => navigate('/diagnose'),
-    },
-    {
-      icon: <MessageSquare className="h-6 w-6" />,
-      title: t('dashboard.ai_chat'),
-      description: t('dashboard.chat_desc'),
-      color: 'from-purple-500 to-pink-500',
-      action: () => navigate('/chat'),
-    },
-    {
-      icon: <FileText className="h-6 w-6" />,
-      title: t('home.feature_report_title'),
-      description: t('home.feature_report_desc'),
-      color: 'from-indigo-500 to-violet-500',
-      action: () => navigate('/explain'),
-    },
-    {
-      icon: <FileImage className="h-6 w-6" />,
-      title: t('navbar.prescription_decoder') || 'Prescription Decoder',
-      description: 'Analyze handwritten prescriptions',
-      color: 'from-orange-500 to-red-500',
-      action: () => navigate('/handwriting'),
-    },
-    {
-      icon: <MapPin className="h-6 w-6" />,
-      title: t('dashboard.find_hospitals'),
-      description: t('dashboard.hosp_desc'),
-      color: 'from-green-500 to-teal-500',
-      action: () => navigate('/hospitals'),
-    },
-  ];
+
 
   return (
     <ErrorBoundary>
@@ -180,45 +144,7 @@ export default function Dashboard() {
         </div>
 
 
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">{t('dashboard.quick_actions')}</h2>
-            <button
-              onClick={() => setShowBuyCredits(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:border-yellow-500/60 hover:bg-gradient-to-r hover:from-yellow-500/30 hover:to-amber-500/30 transition-all cursor-pointer"
-              title="Buy Credits"
-            >
-              <Coins className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              <span className="font-semibold text-yellow-700 dark:text-yellow-300">{user?.credits ?? 0}</span>
-            </button>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {quickActions.map((action, index) => (
-              <div
-                key={index}
-                onClick={action.action}
-                className="group cursor-pointer rounded-lg border border-border overflow-hidden animate-fade-in transition-all hover:shadow-lg hover:border-primary/50 hover:-translate-y-1"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="p-4 h-full flex flex-col relative bg-card hover:bg-card/80 transition-colors">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none`}></div>
-                  <div className="relative z-10">
-                    <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${action.color} text-white mb-3`}>
-                      {action.icon}
-                    </div>
-                    <h3 className="text-base font-semibold mb-1 line-clamp-1">{action.title}</h3>
-                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2 flex-1">{action.description}</p>
-                    <div className="flex items-center text-primary text-xs font-medium group-hover:gap-1 transition-all">
-                      Get Started
-                      <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+
 
         {/* Recent Activity */}
         <div>
