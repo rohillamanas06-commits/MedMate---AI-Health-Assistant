@@ -231,7 +231,7 @@ export default function Diagnose() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-6xl">
-        <div className="mb-8 px-4 text-center animate-slide-up">
+        <div className="mb-8 px-4 text-center">
           <h1 className="text-4xl font-bold mb-3 gradient-text leading-tight">
             {t('diagnose.title')}
           </h1>
@@ -243,7 +243,7 @@ export default function Diagnose() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Input Section */}
           <div className="space-y-6">
-            <Card className="p-6 glass animate-fade-in">
+            <Card className="p-6 glass">
               <Tabs defaultValue="text">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="text">
@@ -292,7 +292,7 @@ export default function Diagnose() {
                       onClick={startVoiceRecognition}
                       disabled={isListening}
                     >
-                      <Mic className={`h-4 w-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
+                      <Mic className={`h-4 w-4 ${isListening ? 'text-destructive' : ''}`} />
                     </Button>
                   </div>
                 </TabsContent>
@@ -401,7 +401,7 @@ export default function Diagnose() {
           {/* Results Section */}
           <div className="space-y-6 overflow-y-auto max-h-[70vh] pr-2 scrollable-content">
             {result ? (
-              <div className="space-y-4 animate-scale-in">
+              <div className="space-y-4">
                 <Card className="p-6 glass">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-2xl font-bold">{t('diagnose.results', 'Diagnosis Results')}</h2>
@@ -517,7 +517,7 @@ export default function Diagnose() {
               </div>
             ) : (
               <Card className="p-12 text-center glass">
-                <Brain className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30 animate-float" />
+                <Brain className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30" />
                 <h3 className="text-xl font-semibold mb-2">Ready for Analysis</h3>
                 <p className="text-muted-foreground">
                   Enter your symptoms or upload an image to get started

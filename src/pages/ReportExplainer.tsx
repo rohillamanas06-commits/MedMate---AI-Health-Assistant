@@ -192,7 +192,7 @@ export default function ReportExplainer() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-6 sm:py-8 px-4 sm:px-0">
       <div className="container max-w-6xl mx-auto">
-        <div className="mb-8 px-4 text-center animate-slide-up">
+        <div className="mb-8 px-4 text-center">
           <h1 className="text-4xl font-bold mb-3 gradient-text leading-tight">
             {t('explainer.title')}
           </h1>
@@ -204,7 +204,7 @@ export default function ReportExplainer() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Input Section */}
           <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-            <Card className="p-4 sm:p-6 glass animate-fade-in w-full">
+            <Card className="p-4 sm:p-6 glass w-full">
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <Label className="text-base">{t('explainer.upload_label')}</Label>
@@ -271,7 +271,7 @@ export default function ReportExplainer() {
           {/* Results Section */}
           <div className="space-y-4 sm:space-y-6 overflow-y-auto max-h-[70vh] w-full min-w-0 pr-2 scrollable-content">
             {result ? (
-              <div className="space-y-3 sm:space-y-4 animate-scale-in w-full">
+              <div className="space-y-3 sm:space-y-4 w-full">
                 <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
                   <h2 className="text-2xl font-bold mb-3 sm:mb-4 break-words">{t('explainer.summary_title')}</h2>
                   
@@ -397,7 +397,7 @@ export default function ReportExplainer() {
               </div>
             ) : (
              <Card className="p-6 sm:p-12 text-center glass w-full">
-               <FileText className="h-16 sm:h-24 w-16 sm:w-24 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-30 animate-float" />
+               <FileText className="h-16 sm:h-24 w-16 sm:w-24 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-30" />
                <h3 className="text-lg sm:text-xl font-semibold mb-2 break-words">{t('explainer.ready_title')}</h3>
                <p className="text-xs sm:text-sm text-muted-foreground break-words">
                  {t('explainer.ready_desc')}

@@ -69,7 +69,7 @@ export default function Hospitals() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-6xl">
-        <div className="mb-8 text-center animate-slide-up">
+        <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2 gradient-text">{t('hospitals.title', 'Find Nearby Hospitals')}</h1>
           <p className="text-muted-foreground text-lg">{t('hospitals.subtitle', 'Locate medical facilities near you using your current location')}</p>
         </div>
@@ -89,7 +89,7 @@ export default function Hospitals() {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {hospitals.map((hospital, index) => (
-                <Card key={index} className="p-6 hover-lift glass animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <Card key={index} className="p-6 hover-lift glass">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-xl font-semibold mb-2">{hospital.name}</h3>
@@ -131,7 +131,7 @@ export default function Hospitals() {
           </div>
         ) : (
           <Card className="p-12 text-center glass">
-            <MapPin className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30 animate-float" />
+            <MapPin className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30" />
             <h3 className="text-xl font-semibold mb-2">{t('hospitals.no_hospitals', 'No Hospitals Found')}</h3>
             <p className="text-muted-foreground mb-6">{t('hospitals.no_hospitals_desc', 'Use your current location to find nearby hospitals')}</p>
             <Button onClick={handleCurrentLocation}>
