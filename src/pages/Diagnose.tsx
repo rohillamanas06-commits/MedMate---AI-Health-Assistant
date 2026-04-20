@@ -264,7 +264,7 @@ export default function Diagnose() {
                       placeholder={t('diagnose.symptoms_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="min-h-[200px] mt-2"
+                      className="min-h-[200px] mt-2 resize-none"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -365,7 +365,7 @@ export default function Diagnose() {
                       placeholder={t('diagnose.additional_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="mt-2"
+                      className="mt-2 resize-none"
                     />
                   </div>
                   <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis} disabled={loading || (selectedImages.length === 0 && hasCredits)} className={`w-full ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
@@ -389,13 +389,6 @@ export default function Diagnose() {
                 </TabsContent>
               </Tabs>
             </Card>
-
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <p>{t('diagnose.disclaimer')}</p>
-              </AlertDescription>
-            </Alert>
           </div>
 
           {/* Results Section */}

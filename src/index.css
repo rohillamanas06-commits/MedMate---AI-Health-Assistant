@@ -69,13 +69,13 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 220 30% 2%;
+    --background: 220 30% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 220 30% 4%;
+    --card: 220 30% 6%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 220 30% 5%;
+    --popover: 220 30% 7%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217 91% 60%;
@@ -85,27 +85,28 @@ All colors MUST be HSL.
     --secondary: 158 64% 52%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 30% 8%;
-    --muted-foreground: 215 20% 65%;
-
-    /* Sidebar Variables */
-    --sidebar-background: 220 30% 2%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 30% 6%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 30% 12%;
-    --sidebar-ring: 217 91% 60%;
+    --muted: 220 30% 10%;
+    --muted-foreground: 215 20% 70%;
 
     --accent: 173 80% 40%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    /* Medical alert red - reduced brightness */
+    --destructive: 0 84% 35%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 30% 12%;
-    --input: 220 30% 12%;
+    /* Sidebar Variables */
+    --sidebar-background: 220 30% 4%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 30% 8%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 30% 12%;
+    --sidebar-ring: 217 91% 60%;
+
+    --border: 220 30% 8%;
+    --input: 220 30% 8%;
     --ring: 217 91% 60%;
 
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(173 80% 40%));

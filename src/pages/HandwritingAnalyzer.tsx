@@ -192,13 +192,6 @@ export default function HandwritingAnalyzer() {
                 </Button>
               </div>
             </Card>
-
-            <Alert className="w-full">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <p>{t('features.prescription_disclaimer')}</p>
-              </AlertDescription>
-            </Alert>
           </div>
 
           {/* Results Section */}

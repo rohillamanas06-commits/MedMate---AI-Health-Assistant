@@ -259,13 +259,6 @@ export default function ReportExplainer() {
                 </Button>
               </div>
             </Card>
-
-            <Alert className="w-full">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <p>{t('explainer.disclaimer_full')}</p>
-              </AlertDescription>
-            </Alert>
           </div>
 
           {/* Results Section */}
