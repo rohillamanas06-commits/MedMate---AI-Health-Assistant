@@ -115,9 +115,9 @@ export default function HandwritingAnalyzer() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          {/* Input Section */}
-          <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl space-y-4 sm:space-y-6">
+            {/* Input Section */}
             <Card className="p-4 sm:p-6 glass w-full">
               <div className="space-y-3 sm:space-y-4">
                 {/* File Upload */}
@@ -192,15 +192,10 @@ export default function HandwritingAnalyzer() {
                 </Button>
               </div>
             </Card>
-          </div>
 
-          {/* Results Section */}
-          <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-            {/* Scrollable Results Area */}
-            <div className="overflow-y-auto max-h-[70vh] pr-2 scrollable-content space-y-4 sm:space-y-6">
-              {/* Detailed Results - Replaces image preview when available */}
-              {result && (
-                <Card className="p-4 sm:p-6 glass">
+            {/* Results Section */}
+            {result && (
+                <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
                   <div className="flex items-center gap-2 mb-4">
                     <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
                     <h2 className="text-xl font-bold">{t('common.analysis_results') || 'Analysis Results'}</h2>
@@ -288,20 +283,7 @@ export default function HandwritingAnalyzer() {
                     )}
                   </div>
                 </Card>
-              )}
-
-              {!result && (
-                <Card className="p-6 sm:p-12 text-center glass w-full hidden md:block">
-                  <FileImage className="h-16 sm:h-24 w-16 sm:w-24 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-30" />
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2 break-words">{t('explainer.ready_title')}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                    {t('features.prescription_ready_desc')}
-                  </p>
-                </Card>
-              )}
-            </div>
-
-
+            )}
           </div>
         </div>
       </div>

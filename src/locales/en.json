@@ -21,7 +21,7 @@
   },
   "explainer": {
     "title": "Medical Report Explainer",
-    "subtitle": "Understand complex medical reports in simple terms",
+    "subtitle": "Transform complex medical jargon into clear, understandable insights. Upload your lab reports, test results, or medical documents and let our AI break down the numbers",
     "upload_label": "Upload Report (PDF/DOCX/Image/Text)",
     "upload_click": "Click to upload",
     "upload_desc": "Images or Text files",

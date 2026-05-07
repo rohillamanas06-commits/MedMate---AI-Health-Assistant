@@ -201,9 +201,9 @@ export default function ReportExplainer() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          {/* Input Section */}
-          <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl space-y-4 sm:space-y-6">
+            {/* Input Section */}
             <Card className="p-4 sm:p-6 glass w-full">
               <div className="space-y-3 sm:space-y-4">
                 <div>
@@ -259,11 +259,9 @@ export default function ReportExplainer() {
                 </Button>
               </div>
             </Card>
-          </div>
 
-          {/* Results Section */}
-          <div className="space-y-4 sm:space-y-6 overflow-y-auto max-h-[70vh] w-full min-w-0 pr-2 scrollable-content">
-            {result ? (
+            {/* Results Section */}
+            {result && (
               <div className="space-y-3 sm:space-y-4 w-full">
                 <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
                   <h2 className="text-2xl font-bold mb-3 sm:mb-4 break-words">{t('explainer.summary_title')}</h2>
@@ -388,14 +386,6 @@ export default function ReportExplainer() {
                   )}
                 </Card>
               </div>
-            ) : (
-             <Card className="p-6 sm:p-12 text-center glass w-full hidden md:block">
-               <FileText className="h-16 sm:h-24 w-16 sm:w-24 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-30" />
-               <h3 className="text-lg sm:text-xl font-semibold mb-2 break-words">{t('explainer.ready_title')}</h3>
-               <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                 {t('explainer.ready_desc')}
-               </p>
-             </Card>
             )}
           </div>
         </div>

@@ -240,9 +240,10 @@ export default function Diagnose() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Input Section */}
-          <div className="space-y-6">
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl space-y-6">
+            {/* Input Section */}
+            <div className="space-y-6">
             <Card className="p-6 glass">
               <Tabs defaultValue="text">
                 <TabsList className="grid w-full grid-cols-2">
@@ -392,8 +393,7 @@ export default function Diagnose() {
           </div>
 
           {/* Results Section */}
-          <div className="space-y-6 overflow-y-auto max-h-[70vh] pr-2 scrollable-content">
-            {result ? (
+          {result ? (
               <div className="space-y-4">
                 <Card className="p-6 glass">
                   <div className="flex items-center justify-between mb-4">
@@ -508,16 +508,7 @@ export default function Diagnose() {
                   )}
                 </Card>
               </div>
-            ) : (
-              <Card className="p-12 text-center glass hidden md:block">
-                <Brain className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30" />
-                <h3 className="text-xl font-semibold mb-2">Ready for Analysis</h3>
-                <p className="text-muted-foreground">
-                  Enter your symptoms or upload an image to get started
-                </p>
-
-              </Card>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
