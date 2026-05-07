@@ -509,7 +509,7 @@ export default function Diagnose() {
                 </Card>
               </div>
             ) : (
-              <Card className="p-12 text-center glass">
+              <Card className="p-12 text-center glass hidden md:block">
                 <Brain className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30" />
                 <h3 className="text-xl font-semibold mb-2">Ready for Analysis</h3>
                 <p className="text-muted-foreground">

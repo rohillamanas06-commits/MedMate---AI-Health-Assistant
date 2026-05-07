@@ -389,7 +389,7 @@ export default function ReportExplainer() {
                 </Card>
               </div>
             ) : (
-             <Card className="p-6 sm:p-12 text-center glass w-full">
+             <Card className="p-6 sm:p-12 text-center glass w-full hidden md:block">
                <FileText className="h-16 sm:h-24 w-16 sm:w-24 mx-auto mb-3 sm:mb-4 text-muted-foreground opacity-30" />
                <h3 className="text-lg sm:text-xl font-semibold mb-2 break-words">{t('explainer.ready_title')}</h3>
                <p className="text-xs sm:text-sm text-muted-foreground break-words">
