@@ -196,7 +196,7 @@ export default function ReportExplainer() {
           <h1 className="text-4xl font-bold mb-3 gradient-text leading-tight">
             {t('explainer.title')}
           </h1>
-          <p className="text-muted-foreground text-lg px-2">
+          <p className="text-muted-foreground text-sm sm:text-lg px-2">
             {t('explainer.subtitle')}
           </p>
         </div>
