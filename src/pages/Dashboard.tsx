@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { BuyCreditsModal } from '@/components/BuyCreditsModal';
 import { CreditsHistory } from '@/components/CreditsHistory';
+import { CreditsBadge } from '@/components/CreditsBadge';
 
 export default function Dashboard() {
   const { user, checkAuth } = useAuth();
@@ -139,6 +140,12 @@ export default function Dashboard() {
               <p className="text-muted-foreground text-lg">
                 {t('dashboard.subtitle')}
               </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <CreditsBadge 
+                credits={user?.credits ?? 0}
+                onClick={() => setShowBuyCredits(true)}
+              />
             </div>
           </div>
         </div>

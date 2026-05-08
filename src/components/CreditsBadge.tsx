@@ -26,7 +26,7 @@ export function CreditsBadge({ credits, onClick, className = '' }: CreditsBadgeP
   return (
     <Badge
       variant="outline"
-      className={`flex items-center gap-1 cursor-pointer hover:bg-yellow-50 transition-colors ${className} ${
+      className={`flex items-center gap-1 cursor-pointer ${className} ${
         animate ? 'animate-pulse' : ''
       }`}
       onClick={onClick}
