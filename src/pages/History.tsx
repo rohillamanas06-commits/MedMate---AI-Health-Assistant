@@ -185,7 +185,7 @@ export default function History() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-6xl">
         <div className="mb-8 text-center animate-slide-up">
-          <h1 className="text-4xl font-bold mb-2 gradient-text">{t('history.title', 'Medical History')}</h1>
+          <h1 className="text-4xl font-bold mb-2 theme-title">{t('history.title', 'Medical History')}</h1>
           <p className="text-muted-foreground text-lg">
             {t('history.subtitle', 'View your past diagnoses, conversations, and reports')}
           </p>

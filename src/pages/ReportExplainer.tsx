@@ -193,7 +193,7 @@ export default function ReportExplainer() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 sm:py-8">
       <div className="container max-w-6xl mx-auto">
         <div className="mb-4 sm:mb-8 px-4 text-center">
-          <h1 className="text-4xl font-bold mb-2 gradient-text leading-tight">
+          <h1 className="text-4xl font-bold mb-2 theme-title leading-tight">
             {t('explainer.title')}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-lg">

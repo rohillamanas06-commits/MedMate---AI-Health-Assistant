@@ -70,7 +70,7 @@ export default function Hospitals() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
       <div className="container max-w-6xl">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold mb-2 gradient-text">{t('hospitals.title', 'Find Nearby Hospitals')}</h1>
+          <h1 className="text-4xl font-bold mb-2 theme-title">{t('hospitals.title', 'Find Nearby Hospitals')}</h1>
           <p className="text-muted-foreground text-lg">{t('hospitals.subtitle', 'Locate medical facilities near you using your current location')}</p>
         </div>
 

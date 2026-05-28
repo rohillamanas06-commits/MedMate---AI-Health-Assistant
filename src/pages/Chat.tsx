@@ -161,7 +161,7 @@ export default function Chat() {
       <div className="container max-w-5xl">
         <div className="mb-6 animate-slide-up">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2 gradient-text">{t('chat.title', 'AI Medical Assistant')}</h1>
+            <h1 className="text-4xl font-bold mb-2 theme-title">{t('chat.title', 'AI Medical Assistant')}</h1>
             <p className="text-muted-foreground">{t('chat.subtitle', 'Ask me anything about your health concerns')}</p>
           </div>
         </div>

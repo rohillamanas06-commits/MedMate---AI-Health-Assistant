@@ -106,7 +106,7 @@ export default function HandwritingAnalyzer() {
       <div className="container max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="mb-8 px-4 text-center">
-          <h1 className="text-4xl font-bold mb-3 gradient-text leading-tight">
+          <h1 className="text-4xl font-bold mb-3 theme-title leading-tight">
             {t('navbar.prescription_decoder') || 'Prescription Decoder'}
           </h1>
           <p className="text-muted-foreground text-lg px-2">
