@@ -11,6 +11,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { MobileBlocker } from "@/components/MobileBlocker";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -141,9 +142,11 @@ const App = () => (
           <LanguageProvider>
             <BrowserRouter>
               <ScrollToTop />
-              <SidebarProvider>
-                <ConditionalLayout />
-              </SidebarProvider>
+              <MobileBlocker>
+                <SidebarProvider>
+                  <ConditionalLayout />
+                </SidebarProvider>
+              </MobileBlocker>
             </BrowserRouter>
             <Toaster />
             <Sonner />
