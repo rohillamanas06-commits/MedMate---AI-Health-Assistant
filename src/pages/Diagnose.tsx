@@ -516,7 +516,7 @@ export default function Diagnose() {
                 </div>
               </Card>
             ) : (
-              <div className="w-full h-[420px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
+              <div className="hidden lg:flex w-full h-[420px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
                 <img 
                   src="/clay-banks-cEzMOp5FtV4-unsplash.jpg" 
                   alt="Medical Analysis" 

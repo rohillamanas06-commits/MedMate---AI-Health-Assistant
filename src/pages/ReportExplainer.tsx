@@ -210,7 +210,7 @@ export default function ReportExplainer() {
                 <div>
                   <Label className="text-xs lg:text-sm">{t('explainer.upload_label')}</Label>
                   <div
-                    className="mt-2 border-2 border-dashed border-border rounded-lg p-6 lg:p-10 text-center cursor-pointer hover:border-primary transition-colors min-h-[200px] lg:min-h-[260px] flex items-center justify-center"
+                    className="mt-2 border-2 border-dashed border-border rounded-lg p-3 lg:p-6 text-center cursor-pointer hover:border-primary transition-colors min-h-[100px] lg:min-h-[180px] flex items-center justify-center"
                     onClick={() => document.getElementById('report-upload')?.click()}
                   >
                     {selectedFile ? (
@@ -393,7 +393,7 @@ export default function ReportExplainer() {
                 </Card>
               </div>
             ) : (
-              <div className="w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
+              <div className="hidden lg:flex w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
                 <img 
                   src="/irwan-rbDE93-0hHs-unsplash.jpg" 
                   alt="Report Analysis" 

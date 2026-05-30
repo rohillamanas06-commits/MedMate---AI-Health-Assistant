@@ -122,7 +122,7 @@ export default function HandwritingAnalyzer() {
                 <div>
                   <Label className="text-xs lg:text-sm">{t('common.select_image') || 'Select Image'}</Label>
                   <div
-                    className={`mt-2 border-2 border-dashed border-border rounded-lg p-6 lg:p-10 text-center cursor-pointer hover:border-primary transition-colors min-h-[200px] lg:min-h-[260px] flex items-center justify-center ${selectedImage && imagePreview ? 'border-primary' : 'border-border'}`}
+                    className={`mt-2 border-2 border-dashed border-border rounded-lg p-3 lg:p-6 text-center cursor-pointer hover:border-primary transition-colors min-h-[100px] lg:min-h-[180px] flex items-center justify-center ${selectedImage && imagePreview ? 'border-primary' : 'border-border'}`}
                     onClick={() => document.getElementById('handwriting-upload')?.click()}
                   >
                     {selectedImage && imagePreview ? (
@@ -255,7 +255,7 @@ export default function HandwritingAnalyzer() {
                 </Card>
               </div>
             ) : (
-              <div className="w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
+              <div className="hidden lg:flex w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
                 <img 
                   src="/cesar-badilla-miranda-0Fv4M2hSZJU-unsplash.jpg" 
                   alt="Prescription Decoder" 
