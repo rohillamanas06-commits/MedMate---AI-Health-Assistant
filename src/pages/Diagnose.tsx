@@ -309,7 +309,7 @@ export default function Diagnose() {
                   <div>
                     <Label className="text-xs lg:text-sm">Upload Medical Images (Max 5)</Label>
                     <div
-                      className={`mt-2 border-2 border-dashed rounded-lg p-2 lg:p-3 text-center cursor-pointer hover:border-primary transition-colors min-h-[100px] lg:min-h-[115px] flex items-center justify-center ${
+                      className={`mt-2 border-2 border-dashed rounded-lg p-4 lg:p-6 text-center cursor-pointer hover:border-primary transition-colors min-h-[160px] lg:min-h-[200px] flex items-center justify-center ${
                         imagePreviews.length > 0 ? 'border-primary' : 'border-border'
                       }`}
                       onClick={() => document.getElementById('image-upload')?.click()}
