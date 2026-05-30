@@ -3,7 +3,7 @@ import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/ap
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Navigation, Star, Clock, Loader2, RefreshCw, Phone, AlertCircle, MapIcon } from 'lucide-react';
+import { MapPin, Navigation, Star, Clock, Loader2, RefreshCw, Phone, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -26,12 +26,6 @@ const mapContainerStyle = {
   borderRadius: '12px',
 };
 
-const mobileMapContainerStyle = {
-  width: '100%',
-  height: '400px',
-  borderRadius: '12px',
-};
-
 export default function Hospitals() {
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
@@ -43,7 +37,6 @@ export default function Hospitals() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapCenter, setMapCenter] = useState({ lat: 28.7041, lng: 77.1025 }); // Default to Delhi
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
-  const [showMobileMap, setShowMobileMap] = useState(false);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
@@ -164,18 +157,6 @@ export default function Hospitals() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="mb-3"
               />
-
-              {hospitals.length > 0 && (
-                <Button
-                  onClick={() => setShowMobileMap(!showMobileMap)}
-                  variant="outline"
-                  className="w-full lg:hidden"
-                  size="sm"
-                >
-                  <MapIcon className="h-4 w-4 mr-2" />
-                  {showMobileMap ? t('hospitals.hide_map', 'Hide Map') : t('hospitals.show_map', 'Show Map')}
-                </Button>
-              )}
             </Card>
 
             {/* Hospital List */}
@@ -273,119 +254,6 @@ export default function Hospitals() {
               )}
             </div>
           </div>
-
-          {/* Mobile Map View */}
-          {showMobileMap && (
-            <div className="lg:hidden col-span-1 flex flex-col gap-4">
-              <div className="relative rounded-lg overflow-hidden">
-                {apiKey ? (
-                  <LoadScript googleMapsApiKey={apiKey}>
-                    <GoogleMap
-                      mapContainerStyle={mobileMapContainerStyle}
-                      center={mapCenter}
-                      zoom={12}
-                      options={{
-                        styles: [
-                          {
-                            featureType: 'poi',
-                            elementType: 'labels',
-                            stylers: [{ visibility: 'off' }],
-                          },
-                        ],
-                      }}
-                    >
-                      {userLocation && (
-                        <Marker
-                          position={{
-                            lat: userLocation.lat,
-                            lng: userLocation.lng,
-                          }}
-                          title="Your Location"
-                          icon="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                        />
-                      )}
-                      {filteredHospitals.map((hospital, index) => (
-                        <Marker
-                          key={index}
-                          position={{
-                            lat: hospital.latitude,
-                            lng: hospital.longitude,
-                          }}
-                          title={hospital.name}
-                          onClick={() => {
-                            setSelectedHospital(hospital);
-                            setActiveMarker(hospital.name);
-                          }}
-                          icon={{
-                            path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
-                            fillColor: selectedHospital?.name === hospital.name ? '#ef4444' : '#3b82f6',
-                            fillOpacity: 1,
-                            strokeColor: '#fff',
-                            strokeWeight: 2,
-                            scale: 2,
-                          }}
-                        />
-                      ))}
-                      {selectedHospital && activeMarker === selectedHospital.name && (
-                        <InfoWindow
-                          position={{
-                            lat: selectedHospital.latitude,
-                            lng: selectedHospital.longitude,
-                          }}
-                          onCloseClick={() => {
-                            setSelectedHospital(null);
-                            setActiveMarker(null);
-                          }}
-                        >
-                          <div className="text-sm w-56 p-2">
-                            <h3 className="font-bold text-base mb-2">{selectedHospital.name}</h3>
-                            <p className="text-xs text-gray-600 mb-2 flex items-start gap-1">
-                              <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                              {selectedHospital.address}
-                            </p>
-                            {userLocation && (
-                              <p className="text-xs font-semibold mb-2 text-blue-600">
-                                {calculateDistance(selectedHospital.latitude, selectedHospital.longitude)} km away
-                              </p>
-                            )}
-                            {selectedHospital.rating > 0 && (
-                              <div className="flex items-center gap-1 mb-2">
-                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs font-semibold">{selectedHospital.rating}</span>
-                              </div>
-                            )}
-                            {selectedHospital.open_now !== undefined && (
-                              <p
-                                className={`text-xs font-semibold mb-2 ${
-                                  selectedHospital.open_now ? 'text-green-600' : 'text-red-600'
-                                }`}
-                              >
-                                {selectedHospital.open_now ? 'Open Now' : 'Closed'}
-                              </p>
-                            )}
-                            <Button
-                              size="sm"
-                              className="w-full text-xs"
-                              onClick={() => getDirections(selectedHospital)}
-                            >
-                              Get Directions
-                            </Button>
-                          </div>
-                        </InfoWindow>
-                      )}
-                    </GoogleMap>
-                  </LoadScript>
-                ) : (
-                  <Card className="h-full flex items-center justify-center glass">
-                    <div className="text-center">
-                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
-                      <p className="text-muted-foreground">Google Maps API Key not configured</p>
-                    </div>
-                  </Card>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Right Side - Map */}
           <div className="hidden lg:flex lg:col-span-3 h-full">
