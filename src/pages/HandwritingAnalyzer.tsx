@@ -106,7 +106,7 @@ export default function HandwritingAnalyzer() {
       <div className="container max-w-7xl mx-auto">
         <div className="mb-6 lg:mb-8 px-3 lg:px-4">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
-            {t('navbar.prescription_decoder') || 'AI Prescription Decoder'}
+            {t('navbar.prescription_decoder') || 'Prescription Decoder'}
           </h1>
           <p className="text-muted-foreground text-sm lg:text-lg">
             {t('features.prescription_description') || 'Upload an image of handwritten prescriptions and medical notes.'}
@@ -258,7 +258,7 @@ export default function HandwritingAnalyzer() {
               <div className="hidden lg:flex w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
                 <img 
                   src="/cesar-badilla-miranda-0Fv4M2hSZJU-unsplash.jpg" 
-                  alt="AI Prescription Decoder" 
+                  alt="Prescription Decoder" 
                   className="w-full h-full object-cover"
                 />
               </div>
