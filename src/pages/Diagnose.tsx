@@ -15,7 +15,6 @@ import {
   Mic,
   X,
   Volume2,
-  Coins,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -229,96 +228,105 @@ export default function Diagnose() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
-      <div className="container max-w-6xl">
-        <div className="mb-8 px-4 text-center">
-          <h1 className="text-4xl font-bold mb-3 theme-title leading-tight">
-            {t('diagnose.title')}
-          </h1>
-          <p className="text-muted-foreground text-lg px-2">
-            {t('diagnose.subtitle')}
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 lg:py-6 px-3 lg:px-4">
+      <div className="container max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">{t('diagnose.title')}</h1>
+          <p className="text-muted-foreground text-sm lg:text-lg">{t('diagnose.subtitle')}</p>
         </div>
 
-        <div className="flex justify-center">
-          <div className="w-full max-w-4xl space-y-6">
-            {/* Input Section */}
-            <div className="space-y-6">
-            <Card className="p-6 glass">
-              <Tabs defaultValue="text">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="text">
-                    <Brain className="h-4 w-4 mr-2" />
-                    {t('diagnose.text_input')}
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
+          {/* Left Sidebar - Input Section */}
+          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
+            <Card className="p-4 glass">
+              <Tabs defaultValue="text" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="text" className="text-xs lg:text-sm">
+                    <Brain className="h-4 w-4 mr-1 lg:mr-2" />
+                    <span className="hidden sm:inline">{t('diagnose.text_input')}</span>
+                    <span className="sm:hidden">Text</span>
                   </TabsTrigger>
-                  <TabsTrigger value="image">
-                    <ImageIcon className="h-4 w-4 mr-2" />
-                    {t('diagnose.image_analysis')}
+                  <TabsTrigger value="image" className="text-xs lg:text-sm">
+                    <ImageIcon className="h-4 w-4 mr-1 lg:mr-2" />
+                    <span className="hidden sm:inline">{t('diagnose.image_analysis')}</span>
+                    <span className="sm:hidden">Image</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="text" className="space-y-4">
+                <TabsContent value="text" className="space-y-3">
                   <div>
-                    <Label htmlFor="symptoms">{t('diagnose.describe_symptoms')}</Label>
+                    <Label htmlFor="symptoms" className="text-xs lg:text-sm">{t('diagnose.describe_symptoms')}</Label>
                     <Textarea
                       id="symptoms"
                       placeholder={t('diagnose.symptoms_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="min-h-[200px] mt-2 resize-none"
+                      className="min-h-[180px] lg:min-h-[220px] mt-2 resize-none text-xs lg:text-sm"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleTextDiagnosis} disabled={loading || (!symptoms.trim() && hasCredits)} className={`flex-1 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
+                    <Button 
+                      onClick={!hasCredits ? () => setShowBuyCredits(true) : handleTextDiagnosis} 
+                      disabled={loading || (!symptoms.trim() && hasCredits)} 
+                      className={`flex-1 text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
+                      size="sm"
+                    >
                       {loading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t('diagnose.analyzing')}
+                          <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
+                          <span className="hidden sm:inline">{t('diagnose.analyzing')}</span>
+                          <span className="sm:hidden">Analyzing</span>
                         </>
                       ) : !hasCredits ? (
                         <>
-                          <AlertCircle className="mr-2 h-4 w-4" />
-                          No Credits Available
+                          <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                          <span className="hidden sm:inline">No Credits</span>
+                          <span className="sm:hidden">Credits</span>
                         </>
                       ) : (
                         <>
-                          <Brain className="mr-2 h-4 w-4" />
-                          {t('diagnose.analyze_symptoms')}
+                          <Brain className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                          <span className="hidden sm:inline">{t('diagnose.analyze_symptoms')}</span>
+                          <span className="sm:hidden">Analyze</span>
                         </>
                       )}
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="sm"
                       onClick={startVoiceRecognition}
                       disabled={isListening}
+                      className="h-9 lg:h-10 w-9 lg:w-10 p-0"
                     >
                       <Mic className={`h-4 w-4 ${isListening ? 'text-destructive' : ''}`} />
                     </Button>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="image" className="space-y-4">
+                <TabsContent value="image" className="space-y-3">
                   <div>
-                    <Label>Upload Medical Images (Max 5)</Label>
+                    <Label className="text-xs lg:text-sm">Upload Medical Images (Max 5)</Label>
                     <div
-                      className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors ${imagePreviews.length > 0 ? 'border-primary' : 'border-border'
-                        }`}
+                      className={`mt-2 border-2 border-dashed rounded-lg p-2 lg:p-3 text-center cursor-pointer hover:border-primary transition-colors min-h-[100px] lg:min-h-[115px] flex items-center justify-center ${
+                        imagePreviews.length > 0 ? 'border-primary' : 'border-border'
+                      }`}
                       onClick={() => document.getElementById('image-upload')?.click()}
                     >
                       {imagePreviews.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-4">
                           {imagePreviews.map((preview, index) => (
                             <div key={index} className="relative group">
                               <img
                                 src={preview}
                                 alt={`Preview ${index + 1}`}
-                                className="w-full h-32 object-cover rounded-lg"
+                                className="w-full h-24 lg:h-32 object-cover rounded-lg"
                               />
                               <Button
                                 variant="destructive"
                                 size="icon"
-                                className="absolute top-1 right-1 h-6 w-6 shadow-md hover:scale-105 transition-transform"
+                                className="absolute top-1 right-1 h-5 w-5 lg:h-6 lg:w-6 shadow-md"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   removeImage(index);
@@ -326,24 +334,24 @@ export default function Diagnose() {
                               >
                                 <X className="h-3 w-3" />
                               </Button>
-                              <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
                                 {index + 1}/{imagePreviews.length}
                               </div>
                             </div>
                           ))}
                           {imagePreviews.length < 5 && (
-                            <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg">
+                            <div className="flex items-center justify-center h-24 lg:h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg">
                               <div className="text-center">
-                                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-1" />
+                                <Upload className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-muted-foreground mb-1" />
                                 <p className="text-xs text-muted-foreground">{t('diagnose.add_more')}</p>
                               </div>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="space-y-2">
-                          <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
+                        <div className="space-y-2 py-4 lg:py-8">
+                          <Upload className="h-10 w-10 lg:h-12 lg:w-12 mx-auto text-muted-foreground" />
+                          <p className="text-xs lg:text-sm text-muted-foreground">
                             {t('diagnose.click_upload')}
                           </p>
                           <p className="text-xs text-muted-foreground">PNG, JPG up to 16MB • Max 5 images</p>
@@ -360,30 +368,38 @@ export default function Diagnose() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="image-symptoms">{t('diagnose.additional_symptoms')}</Label>
+                    <Label htmlFor="image-symptoms" className="text-xs lg:text-sm">{t('diagnose.additional_symptoms')}</Label>
                     <Textarea
                       id="image-symptoms"
                       placeholder={t('diagnose.additional_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="mt-2 resize-none"
+                      className="mt-2 min-h-[80px] lg:min-h-[100px] resize-none text-xs lg:text-sm"
                     />
                   </div>
-                  <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis} disabled={loading || (selectedImages.length === 0 && hasCredits)} className={`w-full ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
+                  <Button 
+                    onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis} 
+                    disabled={loading || (selectedImages.length === 0 && hasCredits)} 
+                    className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
+                    size="sm"
+                  >
                     {loading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t('diagnose.analyzing_image')}
+                        <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
+                        <span className="hidden sm:inline">{t('diagnose.analyzing_image')}</span>
+                        <span className="sm:hidden">Analyzing</span>
                       </>
                     ) : !hasCredits ? (
                       <>
-                        <AlertCircle className="mr-2 h-4 w-4" />
-                        No Credits Available
+                        <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                        <span className="hidden sm:inline">No Credits</span>
+                        <span className="sm:hidden">Credits</span>
                       </>
                     ) : (
                       <>
-                        <ImageIcon className="mr-2 h-4 w-4" />
-                        {t('diagnose.analyze_image')}
+                        <ImageIcon className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                        <span className="hidden sm:inline">{t('diagnose.analyze_image')}</span>
+                        <span className="sm:hidden">Analyze</span>
                       </>
                     )}
                   </Button>
@@ -392,90 +408,81 @@ export default function Diagnose() {
             </Card>
           </div>
 
-          {/* Results Section */}
-          {result ? (
-              <div className="space-y-4">
-                <Card className="p-6 glass">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold">{t('diagnose.results', 'Diagnosis Results')}</h2>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const textToSpeak = result.diseases?.map((d: any) =>
-                          `${d.name} with ${d.confidence}% confidence. ${d.explanation}`
-                        ).join('. ') + '. ' + (result.general_advice || '');
-                        speakText(textToSpeak);
-                      }}
-                    >
-                      <Volume2 className="h-4 w-4 mr-2" />
-                      Read Aloud
-                    </Button>
-                  </div>
+          {/* Right Sidebar - Results Section */}
+          <div className="lg:col-span-3 overflow-y-auto pr-2">
+            {result ? (
+              <Card className="p-4 glass overflow-hidden">
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  <h2 className="text-lg lg:text-2xl font-bold">{t('diagnose.results', 'Results')}</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const textToSpeak = result.diseases?.map((d: any) =>
+                        `${d.name} with ${d.confidence}% confidence. ${d.explanation}`
+                      ).join('. ') + '. ' + (result.general_advice || '');
+                      speakText(textToSpeak);
+                    }}
+                    className="text-xs lg:text-sm h-8 lg:h-9"
+                  >
+                    <Volume2 className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
+                    <span className="hidden sm:inline">Read</span>
+                  </Button>
+                </div>
 
-                  {/* Image Analysis Results */}
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
                   {result.observation && (
-                    <Card className="p-4 mb-4 bg-blue-500/10 border-blue-500/20">
-                      <h3 className="font-semibold text-lg mb-2">{t('diagnose.image_observation', 'Image Observation')}</h3>
-                      <p className="text-sm text-muted-foreground">{result.observation}</p>
+                    <Card className="p-3 bg-blue-500/10 border-blue-500/20">
+                      <h3 className="font-semibold text-sm lg:text-base mb-2">{t('diagnose.image_observation', 'Observation')}</h3>
+                      <p className="text-xs lg:text-sm text-muted-foreground">{result.observation}</p>
                     </Card>
                   )}
 
                   {result.conditions && (
-                    <div className="space-y-4 mb-4">
-                      <h3 className="font-semibold text-lg">{t('diagnose.detected_conditions', 'Detected Conditions')}</h3>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-sm lg:text-base">{t('diagnose.detected_conditions', 'Conditions')}</h3>
                       {result.conditions.map((condition: any, index: number) => (
-                        <Card key={index} className="p-4 bg-muted/50">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-semibold">{condition.name}</h4>
-                            <span className="text-xl font-bold text-destructive">
+                        <Card key={index} className="p-3 bg-muted/50">
+                          <div className="flex items-start justify-between mb-2 gap-2">
+                            <h4 className="font-semibold text-xs lg:text-sm">{condition.name}</h4>
+                            <span className="text-base lg:text-lg font-bold text-destructive flex-shrink-0">
                               {condition.confidence}%
                             </span>
                           </div>
-                          <Progress value={condition.confidence} className="mb-2" />
-                          <p className="text-sm text-muted-foreground">{condition.note}</p>
+                          <Progress value={condition.confidence} className="mb-2 h-1.5" />
+                          <p className="text-xs text-muted-foreground">{condition.note}</p>
                         </Card>
                       ))}
                     </div>
                   )}
 
                   {result.recommendation && (
-                    <Alert className="mb-4">
-                      <AlertCircle className="h-4 w-4" />
+                    <Alert className="text-xs lg:text-sm">
+                      <AlertCircle className="h-3 w-3 lg:h-4 lg:w-4" />
                       <AlertDescription>
                         <strong>{t('diagnose.recommendation', 'Recommendation')}:</strong> {result.recommendation}
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  {result.professional_evaluation && (
-                    <Alert className="mb-4" variant={result.professional_evaluation === 'Required' ? 'destructive' : 'default'}>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>{t('diagnose.professional_eval', 'Professional Evaluation')}:</strong> {result.professional_evaluation}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Text Diagnosis Results */}
                   {result.diseases?.map((disease: any, index: number) => (
-                    <Card key={index} className="p-4 mb-4 bg-muted/50">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-lg">{disease.name}</h3>
-                        <span className="text-2xl font-bold text-destructive">
+                    <Card key={index} className="p-3 bg-muted/50">
+                      <div className="flex items-start justify-between mb-2 gap-2">
+                        <h3 className="font-semibold text-sm lg:text-base">{disease.name}</h3>
+                        <span className="text-lg lg:text-xl font-bold text-destructive flex-shrink-0">
                           {disease.confidence}%
                         </span>
                       </div>
-                      <Progress value={disease.confidence} className="mb-3" />
-                      <p className="text-sm text-muted-foreground mb-3">{disease.explanation}</p>
+                      <Progress value={disease.confidence} className="mb-2 h-1.5" />
+                      <p className="text-xs lg:text-sm text-muted-foreground mb-2">{disease.explanation}</p>
 
                       {disease.solutions && (
-                        <div className="space-y-2">
-                          <p className="font-medium text-sm">Recommended Solutions:</p>
-                          <ul className="space-y-1">
+                        <div className="space-y-1 mb-2">
+                          <p className="font-medium text-xs lg:text-sm">Solutions:</p>
+                          <ul className="space-y-0.5">
                             {disease.solutions.map((solution: string, i: number) => (
-                              <li key={i} className="text-sm flex items-start gap-2">
-                                <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
+                              <li key={i} className="text-xs flex items-start gap-1.5">
+                                <CheckCircle2 className="h-3 w-3 text-secondary mt-0.5 flex-shrink-0" />
                                 <span>{solution}</span>
                               </li>
                             ))}
@@ -484,9 +491,9 @@ export default function Diagnose() {
                       )}
 
                       {disease.urgency && (
-                        <div className="mt-3 pt-3 border-t">
-                          <span className="text-sm font-medium">{t('diagnose.urgency_level', 'Urgency Level:')} </span>
-                          <span className={`text-sm font-bold ${getUrgencyColor(disease.urgency)}`}>
+                        <div className="mt-2 pt-2 border-t">
+                          <span className="text-xs font-medium">{t('diagnose.urgency_level', 'Urgency')}: </span>
+                          <span className={`text-xs font-bold ${getUrgencyColor(disease.urgency)}`}>
                             {disease.urgency}
                           </span>
                         </div>
@@ -495,20 +502,28 @@ export default function Diagnose() {
                   ))}
 
                   {result.general_advice && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
+                    <Alert className="text-xs lg:text-sm">
+                      <AlertCircle className="h-3 w-3 lg:h-4 lg:w-4" />
                       <AlertDescription>
-                        <strong>{t('diagnose.general_advice', 'General Advice:')}</strong> {result.general_advice}
+                        <strong>{t('diagnose.general_advice', 'Advice:')}</strong> {result.general_advice}
                       </AlertDescription>
                     </Alert>
                   )}
 
                   {result.disclaimer && (
-                    <p className="text-xs text-muted-foreground mt-4">{result.disclaimer}</p>
+                    <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
                   )}
-                </Card>
+                </div>
+              </Card>
+            ) : (
+              <div className="w-full h-[420px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
+                <img 
+                  src="/clay-banks-cEzMOp5FtV4-unsplash.jpg" 
+                  alt="Medical Analysis" 
+                  className="w-full h-full object-cover"
+                />
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       </div>

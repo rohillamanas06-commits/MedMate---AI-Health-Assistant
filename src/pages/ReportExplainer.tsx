@@ -191,39 +191,40 @@ export default function ReportExplainer() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 sm:py-8">
-      <div className="container max-w-6xl mx-auto">
-        <div className="mb-4 sm:mb-8 px-4 text-center">
-          <h1 className="text-4xl font-bold mb-2 theme-title leading-tight">
+      <div className="container max-w-7xl mx-auto">
+        <div className="mb-6 lg:mb-8 px-3 lg:px-4">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
             {t('explainer.title')}
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-lg">
+          <p className="text-muted-foreground text-sm lg:text-lg">
             {t('explainer.subtitle')}
           </p>
         </div>
 
-        <div className="flex justify-center">
-          <div className="w-full max-w-4xl space-y-4 sm:space-y-6">
-            {/* Input Section */}
-            <Card className="p-4 sm:p-6 glass w-full">
-              <div className="space-y-3 sm:space-y-4">
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 px-3 lg:px-4">
+          {/* Left Sidebar - Input Section */}
+          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
+            <Card className="p-4 glass w-full">
+              <div className="space-y-3 lg:space-y-4">
                 <div>
-                  <Label className="text-base">{t('explainer.upload_label')}</Label>
+                  <Label className="text-xs lg:text-sm">{t('explainer.upload_label')}</Label>
                   <div
-                    className="mt-2 border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-primary transition-colors"
+                    className="mt-2 border-2 border-dashed border-border rounded-lg p-6 lg:p-10 text-center cursor-pointer hover:border-primary transition-colors min-h-[200px] lg:min-h-[260px] flex items-center justify-center"
                     onClick={() => document.getElementById('report-upload')?.click()}
                   >
                     {selectedFile ? (
                       <div className="space-y-2">
-                        <FileText className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-primary" />
-                        <p className="text-base font-medium truncate">{selectedFile.name}</p>
+                        <FileText className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-primary" />
+                        <p className="text-xs lg:text-sm font-medium truncate">{selectedFile.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {t('explainer.change_click')}
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Upload className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-muted-foreground" />
-                        <p className="text-base text-muted-foreground">
+                        <Upload className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-muted-foreground" />
+                        <p className="text-xs lg:text-sm text-muted-foreground">
                           {t('explainer.upload_click')}
                         </p>
                         <p className="text-xs text-muted-foreground">{t('explainer.upload_desc')}</p>
@@ -239,44 +240,49 @@ export default function ReportExplainer() {
                   />
                 </div>
                 
-                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}>
+                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} size="sm">
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('explainer.analyzing')}
+                      <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
+                      <span className="hidden sm:inline">{t('explainer.analyzing')}</span>
+                      <span className="sm:hidden">Analyzing</span>
                     </>
                   ) : !hasCredits ? (
                     <>
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      No Credits Available
+                      <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                      <span className="hidden sm:inline">No Credits</span>
+                      <span className="sm:hidden">Credits</span>
                     </>
                   ) : (
                     <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      {t('explainer.analyze_btn')}
+                      <FileText className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                      <span className="hidden sm:inline">{t('explainer.analyze_btn')}</span>
+                      <span className="sm:hidden">Analyze</span>
                     </>
                   )}
                 </Button>
               </div>
             </Card>
+          </div>
 
-            {/* Results Section */}
-            {result && (
-              <div className="space-y-3 sm:space-y-4 w-full">
-                <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
-                  <h2 className="text-2xl font-bold mb-3 sm:mb-4 break-words">{t('explainer.summary_title')}</h2>
+          {/* Right Sidebar - Results Section */}
+          <div className="lg:col-span-3 overflow-y-auto pr-2">
+            {result ? (
+              <div className="space-y-3 lg:space-y-4 w-full">
+                <Card className="p-4 lg:p-4 glass overflow-hidden w-full">
+                  <h2 className="text-lg lg:text-xl font-bold mb-3 lg:mb-4 break-words">{t('explainer.summary_title')}</h2>
                   
                   {/* Handle new text/PDF explanation format (english/hindi) */}
                   {result.explanation && (result.explanation.english || result.explanation.hindi) && !result.explanation.summary && (
-                    <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
-                      <p className="leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
+                    <Card className="p-3 lg:p-4 mb-3 lg:mb-4 bg-primary/10 border-primary/20 overflow-hidden">
+                      <p className="text-xs lg:text-sm leading-relaxed break-words">{currentLanguage === 'hi' ? result.explanation.hindi : result.explanation.english}</p>
                     </Card>
                   )}
 
                   {/* Handle legacy or image fallback explanation format */}
                   {(result.explanation?.summary || result.summary) && (
-                    <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-primary/10 border-primary/20 overflow-hidden">
-                      <p className="leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
+                    <Card className="p-3 lg:p-4 mb-3 lg:mb-4 bg-primary/10 border-primary/20 overflow-hidden">
+                      <p className="text-xs lg:text-sm leading-relaxed break-words">{result.explanation?.summary || result.summary}</p>
                     </Card>
                   )}
 
@@ -382,9 +388,17 @@ export default function ReportExplainer() {
                   )}
 
                   {(result.explanation?.disclaimer || result.disclaimer) && (
-                    <p className="text-xs text-muted-foreground mt-3 sm:mt-4 text-center pb-1 sm:pb-2 break-words">{result.explanation?.disclaimer || result.disclaimer}</p>
+                    <p className="text-xs text-muted-foreground mt-3 lg:mt-4 text-center pb-1 lg:pb-2 break-words">{result.explanation?.disclaimer || result.disclaimer}</p>
                   )}
                 </Card>
+              </div>
+            ) : (
+              <div className="w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
+                <img 
+                  src="/irwan-rbDE93-0hHs-unsplash.jpg" 
+                  alt="Report Analysis" 
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
           </div>

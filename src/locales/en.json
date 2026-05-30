@@ -21,7 +21,7 @@
   },
   "explainer": {
     "title": "Medical Report Explainer",
-    "subtitle": "Transform complex medical jargon into clear, understandable insights. Upload your lab reports, test results, or medical documents and let our AI break down the numbers",
+    "subtitle": "Transform complex medical jargon into clear, understandable insights.",
     "upload_label": "Upload Report (PDF/DOCX/Image/Text)",
     "upload_click": "Click to upload",
     "upload_desc": "Images or Text files",
@@ -157,7 +157,7 @@
     "general_advice": "General Advice:"
   },
   "features": {
-    "prescription_description": "Upload an image of handwritten prescriptions and medical notes. Our AI will analyze, extract, and explain the content using advanced OCR and NLP.",
+    "prescription_description": "Upload an image of handwritten prescriptions and medical notes.",
     "prescription_analyzing": "Analyzing prescription...",
     "prescription_analyze_btn": "Analyze Image",
     "prescription_no_credits": "No Credits Available",

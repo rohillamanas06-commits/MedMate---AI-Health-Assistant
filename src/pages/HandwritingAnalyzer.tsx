@@ -102,29 +102,27 @@ export default function HandwritingAnalyzer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-6 sm:py-8 px-4 sm:px-0">
-      <div className="container max-w-6xl mx-auto">
-        {/* Header Section */}
-        <div className="mb-8 px-4 text-center">
-          <h1 className="text-4xl font-bold mb-3 theme-title leading-tight">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 sm:py-8">
+      <div className="container max-w-7xl mx-auto">
+        <div className="mb-6 lg:mb-8 px-3 lg:px-4">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
             {t('navbar.prescription_decoder') || 'Prescription Decoder'}
           </h1>
-          <p className="text-muted-foreground text-lg px-2">
-            {t('features.prescription_description') || 'Upload an image of handwritten prescriptions and medical notes. Our AI will analyze, extract, and explain the content using advanced OCR and NLP.'}
+          <p className="text-muted-foreground text-sm lg:text-lg">
+            {t('features.prescription_description') || 'Upload an image of handwritten prescriptions and medical notes.'}
           </p>
         </div>
 
-        {/* Main Grid */}
-        <div className="flex justify-center">
-          <div className="w-full max-w-4xl space-y-4 sm:space-y-6">
-            {/* Input Section */}
-            <Card className="p-4 sm:p-6 glass w-full">
-              <div className="space-y-3 sm:space-y-4">
-                {/* File Upload */}
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 px-3 lg:px-4">
+          {/* Left Sidebar - Input Section */}
+          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
+            <Card className="p-4 glass w-full">
+              <div className="space-y-3 lg:space-y-4">
                 <div>
-                  <Label className="text-base">{t('common.select_image') || 'Select Image'}</Label>
+                  <Label className="text-xs lg:text-sm">{t('common.select_image') || 'Select Image'}</Label>
                   <div
-                    className={`mt-2 border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-primary transition-colors ${selectedImage && imagePreview ? 'border-primary' : 'border-border'}`}
+                    className={`mt-2 border-2 border-dashed border-border rounded-lg p-6 lg:p-10 text-center cursor-pointer hover:border-primary transition-colors min-h-[200px] lg:min-h-[260px] flex items-center justify-center ${selectedImage && imagePreview ? 'border-primary' : 'border-border'}`}
                     onClick={() => document.getElementById('handwriting-upload')?.click()}
                   >
                     {selectedImage && imagePreview ? (
@@ -148,12 +146,11 @@ export default function HandwritingAnalyzer() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Upload className="h-8 sm:h-12 w-8 sm:w-12 mx-auto text-muted-foreground" />
-                        <p className="text-base text-muted-foreground">
+                        <Upload className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-muted-foreground" />
+                        <p className="text-xs lg:text-sm text-muted-foreground">
                           {t('common.select_image') || 'Select Image'}
                         </p>
                         <p className="text-xs text-muted-foreground">{t('common.jpg_png_webp') || 'JPG, PNG, WebP, BMP, GIF'}</p>
-                        <p className="text-xs text-muted-foreground">{t('common.max_10mb') || 'Max 10MB'}</p>
                       </div>
                     )}
                   </div>
@@ -166,51 +163,44 @@ export default function HandwritingAnalyzer() {
                   />
                 </div>
 
-                {/* Action Button */}
-                <Button
-                  onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalyzeHandwriting}
-                  disabled={loading || (!selectedImage && hasCredits)}
-                  className={`w-full ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
-                  size="lg"
-                >
+                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalyzeHandwriting} disabled={loading || (!selectedImage && hasCredits)} className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} size="sm">
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t('features.prescription_analyzing') || 'Analyzing...'}
+                      <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
+                      <span className="hidden sm:inline">{t('features.prescription_analyzing') || 'Analyzing...'}</span>
+                      <span className="sm:hidden">Analyzing</span>
                     </>
                   ) : !hasCredits ? (
                     <>
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      {t('features.prescription_no_credits') || 'No Credits Available'}
+                      <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                      <span className="hidden sm:inline">{t('features.prescription_no_credits') || 'No Credits'}</span>
+                      <span className="sm:hidden">Credits</span>
                     </>
                   ) : (
                     <>
-                      <FileImage className="h-4 w-4 mr-2" />
-                      {t('features.prescription_analyze_btn') || 'Analyze Image'}
+                      <FileImage className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                      <span className="hidden sm:inline">{t('features.prescription_analyze_btn') || 'Analyze Image'}</span>
+                      <span className="sm:hidden">Analyze</span>
                     </>
                   )}
                 </Button>
               </div>
             </Card>
+          </div>
 
-            {/* Results Section */}
-            {result && (
-                <Card className="p-4 sm:p-6 glass overflow-hidden w-full">
-                  <div className="flex items-center gap-2 mb-4">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
-                    <h2 className="text-xl font-bold">{t('common.analysis_results') || 'Analysis Results'}</h2>
-                  </div>
-
-                  <div className="space-y-4">
+          {/* Right Sidebar - Results Section */}
+          <div className="lg:col-span-3 overflow-y-auto pr-2">
+            {result ? (
+              <div className="space-y-3 lg:space-y-4 w-full">
+                <Card className="p-4 lg:p-4 glass overflow-hidden w-full">
+                  <h2 className="text-lg lg:text-xl font-bold mb-3 lg:mb-4 break-words">{t('common.analysis_results') || 'Analysis Results'}</h2>
+                  <div className="space-y-3 lg:space-y-4">
                     {/* Extracted Text */}
                     {result.extracted_text && (
                       <div className="space-y-2">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <FileImage className="h-4 w-4" />
-                          {t('features.extracted_text') || 'Extracted Text'}
-                        </h3>
-                        <div className="bg-muted/50 p-3 sm:p-4 rounded-lg border border-border/50 max-h-[200px] overflow-y-auto">
-                          <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
+                        <h3 className="font-semibold text-sm lg:text-base">{t('features.extracted_text') || 'Extracted Text'}</h3>
+                        <div className="bg-muted/50 p-3 lg:p-4 rounded-lg border border-border/50 max-h-[200px] overflow-y-auto">
+                          <p className="text-xs lg:text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
                             {result.extracted_text}
                           </p>
                         </div>
@@ -220,17 +210,10 @@ export default function HandwritingAnalyzer() {
                     {/* Medical Terms */}
                     {result.medical_terms && result.medical_terms.length > 0 && (
                       <div className="space-y-2">
-                        <h3 className="font-semibold">
-                          {t('features.medical_terms') || 'Medical Terms Detected'}
-                        </h3>
+                        <h3 className="font-semibold text-sm lg:text-base">{t('features.medical_terms') || 'Medical Terms'}</h3>
                         <div className="flex flex-wrap gap-2">
                           {result.medical_terms.map((term: string, idx: number) => (
-                            <span
-                              key={idx}
-                              className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium"
-                            >
-                              {term}
-                            </span>
+                            <span key={idx} className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2.5 py-1 rounded-full text-xs lg:text-sm font-medium">{term}</span>
                           ))}
                         </div>
                       </div>
@@ -239,13 +222,9 @@ export default function HandwritingAnalyzer() {
                     {/* AI Explanation */}
                     {result.explanation && (
                       <div className="space-y-2">
-                        <h3 className="font-semibold">
-                          {t('features.ai_explanation') || 'AI Explanation'}
-                        </h3>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 sm:p-4 rounded-lg">
-                          <p className="text-sm text-foreground/80 leading-relaxed">
-                            {result.explanation}
-                          </p>
+                        <h3 className="font-semibold text-sm lg:text-base">{t('features.ai_explanation') || 'AI Explanation'}</h3>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 lg:p-4 rounded-lg">
+                          <p className="text-xs lg:text-sm text-foreground/80 leading-relaxed">{result.explanation}</p>
                         </div>
                       </div>
                     )}
@@ -254,12 +233,8 @@ export default function HandwritingAnalyzer() {
                     {result.confidence_score !== undefined && (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <h3 className="font-semibold">
-                            {t('features.confidence') || 'Analysis Confidence'}
-                          </h3>
-                          <span className="text-sm text-muted-foreground">
-                            {(result.confidence_score * 100).toFixed(1)}%
-                          </span>
+                          <h3 className="font-semibold text-sm lg:text-base">{t('features.confidence') || 'Confidence'}</h3>
+                          <span className="text-xs lg:text-sm text-muted-foreground">{(result.confidence_score * 100).toFixed(1)}%</span>
                         </div>
                         <Progress value={result.confidence_score * 100} className="h-2" />
                       </div>
@@ -268,21 +243,25 @@ export default function HandwritingAnalyzer() {
                     {/* Recommendations */}
                     {result.recommendations && result.recommendations.length > 0 && (
                       <div className="space-y-2">
-                        <h3 className="font-semibold">
-                          {t('features.recommendations') || 'Recommendations'}
-                        </h3>
-                        <ul className="space-y-2 text-sm">
+                        <h3 className="font-semibold text-sm lg:text-base">{t('features.recommendations') || 'Recommendations'}</h3>
+                        <ul className="space-y-2 text-xs lg:text-sm">
                           {result.recommendations.map((rec: string, idx: number) => (
-                            <li key={idx} className="flex gap-2 text-foreground/80">
-                              <span className="text-green-600 dark:text-green-400 font-bold">•</span>
-                              <span>{rec}</span>
-                            </li>
+                            <li key={idx} className="flex gap-2 text-foreground/80"><span className="text-green-600 dark:text-green-400 font-bold">•</span><span>{rec}</span></li>
                           ))}
                         </ul>
                       </div>
                     )}
                   </div>
                 </Card>
+              </div>
+            ) : (
+              <div className="w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
+                <img 
+                  src="/cesar-badilla-miranda-0Fv4M2hSZJU-unsplash.jpg" 
+                  alt="Prescription Decoder" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
             )}
           </div>
         </div>
