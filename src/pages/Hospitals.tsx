@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, Star, Clock, Loader2, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { MapPin, Navigation, Star, Clock, Loader2, RefreshCw, Phone, AlertCircle, MapIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -15,27 +17,48 @@ interface Hospital {
   rating: number;
   open_now?: boolean;
   place_id?: string;
+  phone?: string;
 }
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '480px',
+  borderRadius: '12px',
+};
 
 export default function Hospitals() {
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mapCenter, setMapCenter] = useState({ lat: 28.7041, lng: 77.1025 }); // Default to Delhi
+  const [activeMarker, setActiveMarker] = useState<string | null>(null);
+  const [distanceFilter, setDistanceFilter] = useState(50);
 
-  const handleCurrentLocation = () => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
+
+  const handleCurrentLocation = useCallback(async () => {
     if ('geolocation' in navigator) {
       setLoading(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
-            const response: any = await api.findNearbyHospitals(latitude, longitude);
-            setHospitals(response.hospitals || []);
+            setMapCenter({ lat: latitude, lng: longitude });
             setUserLocation({ lat: latitude, lng: longitude });
-            toast.success(`Found ${response.hospitals?.length || 0} nearby hospitals`);
+            
+            const response: any = await api.findNearbyHospitals(latitude, longitude);
+            const hospitalList = response.hospitals || [];
+            setHospitals(hospitalList);
+            setFilteredHospitals(hospitalList);
+            
+            toast.success(`Found ${hospitalList.length} nearby hospitals`);
           } catch (error) {
+            console.error('Error finding hospitals:', error);
             toast.error('Failed to find hospitals');
           } finally {
             setLoading(false);
@@ -49,6 +72,52 @@ export default function Hospitals() {
     } else {
       toast.error('Geolocation not supported');
     }
+  }, []);
+
+  // Filter hospitals based on search query and distance
+  useEffect(() => {
+    let filtered = hospitals;
+
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (h) =>
+          h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          h.address.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (userLocation) {
+      filtered = filtered.filter((h) => {
+        const distance = calculateDistance(h.latitude, h.longitude);
+        return distance !== null && parseFloat(distance) <= distanceFilter;
+      });
+    }
+
+    // Sort by distance if user location available
+    if (userLocation) {
+      filtered.sort((a, b) => {
+        const distA = parseFloat(calculateDistance(a.latitude, a.longitude) || '999');
+        const distB = parseFloat(calculateDistance(b.latitude, b.longitude) || '999');
+        return distA - distB;
+      });
+    }
+
+    setFilteredHospitals(filtered);
+  }, [searchQuery, distanceFilter, hospitals, userLocation]);
+
+  const calculateDistance = (lat: number, lng: number): string | null => {
+    if (!userLocation) return null;
+    const R = 6371;
+    const dLat = ((lat - userLocation.lat) * Math.PI) / 180;
+    const dLng = ((lng - userLocation.lng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((userLocation.lat * Math.PI) / 180) *
+        Math.cos((lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return (R * c).toFixed(1);
   };
 
   const getDirections = (hospital: Hospital) => {
@@ -56,90 +125,275 @@ export default function Hospitals() {
     window.open(url, '_blank');
   };
 
-  const calculateDistance = (lat: number, lng: number) => {
-    if (!userLocation) return null;
-    const R = 6371;
-    const dLat = ((lat - userLocation.lat) * Math.PI) / 180;
-    const dLng = ((lng - userLocation.lng) * Math.PI) / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((userLocation.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c).toFixed(1);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
-      <div className="container max-w-6xl">
-        <div className="mb-8 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-6 px-4">
+      <div className="container max-w-7xl">
+        {/* Header */}
+        <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 theme-title">{t('hospitals.title', 'Find Nearby Hospitals')}</h1>
-          <p className="text-muted-foreground text-lg">{t('hospitals.subtitle', 'Locate medical facilities near you using your current location')}</p>
+          <p className="text-muted-foreground text-lg">{t('hospitals.subtitle', 'Locate medical facilities near you instantly')}</p>
         </div>
 
-        {loading ? (
-          <Card className="p-12 text-center glass">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">{t('hospitals.searching', 'Searching for hospitals...')}</p>
-          </Card>
-        ) : hospitals.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={handleCurrentLocation} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                {t('hospitals.refresh', 'Refresh')}
-              </Button>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {hospitals.map((hospital, index) => (
-                <Card key={index} className="p-6 hover-lift glass">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{hospital.name}</h3>
-                      <p className="text-sm text-muted-foreground flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        {hospital.address}
-                      </p>
-                    </div>
-                    {hospital.rating > 0 && (
-                      <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
-                        <Star className="h-4 w-4 fill-primary text-primary" />
-                        <span className="text-sm font-semibold">{hospital.rating}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    {userLocation && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Navigation className="h-4 w-4" />
-                        <span>{calculateDistance(hospital.latitude, hospital.longitude)} {t('hospitals.km_away', 'km away')}</span>
-                      </div>
-                    )}
-                    {hospital.open_now !== undefined && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4" />
-                        <span className={hospital.open_now ? 'text-secondary' : 'text-destructive'}>
-                          {hospital.open_now ? t('hospitals.open_now', 'Open Now') : t('hospitals.closed', 'Closed')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <Button onClick={() => getDirections(hospital)} className="w-full">
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[520px]">
+          {/* Left Sidebar - Hospital List */}
+          <div className="lg:col-span-2 flex flex-col gap-4 overflow-hidden">
+            {/* Search and Filters */}
+            <Card className="p-4 glass">
+              <Button
+                onClick={handleCurrentLocation}
+                disabled={loading}
+                className="w-full mb-4"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t('hospitals.searching', 'Searching...')}
+                  </>
+                ) : (
+                  <>
                     <Navigation className="h-4 w-4 mr-2" />
-                    {t('hospitals.get_directions', 'Get Directions')}
-                  </Button>
+                    {t('hospitals.use_location', 'Use My Location')}
+                  </>
+                )}
+              </Button>
+
+              <Input
+                placeholder={t('hospitals.search_placeholder', 'Search hospitals...')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="mb-4"
+              />
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    {t('hospitals.radius', 'Search Radius')}
+                  </label>
+                  <span className="text-sm font-semibold text-primary">{distanceFilter} km</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={distanceFilter}
+                  onChange={(e) => setDistanceFilter(parseInt(e.target.value))}
+                  className="w-full accent-primary"
+                />
+              </div>
+            </Card>
+
+            {/* Hospital List */}
+            <div className="flex-1 overflow-y-auto pr-2">
+              {hospitals.length === 0 ? (
+                <Card className="p-8 text-center glass">
+                  <MapPin className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
+                  <h3 className="text-lg font-semibold mb-2">{t('hospitals.no_hospitals', 'No Hospitals Found')}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t('hospitals.no_hospitals_desc', 'Use your current location to find nearby hospitals')}
+                  </p>
                 </Card>
-              ))}
+              ) : filteredHospitals.length === 0 ? (
+                <Card className="p-8 text-center glass">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-600" />
+                  <h3 className="text-lg font-semibold mb-2">{t('hospitals.no_match', 'No matches found')}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Try adjusting your search or increasing the search radius
+                  </p>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground px-2 font-semibold">
+                    {t('hospitals.showing', 'Showing')} {filteredHospitals.length} {t('hospitals.hospitals', 'hospitals')}
+                  </p>
+                  {filteredHospitals.map((hospital, index) => (
+                    <Card
+                      key={index}
+                      className={`p-4 cursor-pointer transition-all hover:shadow-lg glass ${
+                        selectedHospital?.name === hospital.name
+                          ? 'border-primary border-2 bg-primary/5'
+                          : 'hover:border-primary/50'
+                      }`}
+                      onClick={() => {
+                        setSelectedHospital(hospital);
+                        setActiveMarker(hospital.name);
+                        setMapCenter({
+                          lat: hospital.latitude,
+                          lng: hospital.longitude,
+                        });
+                      }}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-sm leading-tight line-clamp-2">{hospital.name}</h3>
+                          </div>
+                          {hospital.rating > 0 && (
+                            <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded text-xs flex-shrink-0">
+                              <Star className="h-3 w-3 fill-primary text-primary" />
+                              <span className="font-semibold">{hospital.rating}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-muted-foreground flex items-start gap-1">
+                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-2">{hospital.address}</span>
+                        </p>
+
+                        <div className="flex flex-col gap-1 pt-1">
+                          {userLocation && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Navigation className="h-3 w-3" />
+                              <span className="font-medium">{calculateDistance(hospital.latitude, hospital.longitude)} km away</span>
+                            </div>
+                          )}
+                          {hospital.open_now !== undefined && (
+                            <div className="flex items-center gap-1 text-xs">
+                              <Clock className="h-3 w-3" />
+                              <span
+                                className={hospital.open_now ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}
+                              >
+                                {hospital.open_now ? t('hospitals.open_now', 'Open Now') : t('hospitals.closed', 'Closed')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            getDirections(hospital);
+                          }}
+                          size="sm"
+                          className="w-full text-xs h-8 mt-2"
+                        >
+                          <Navigation className="h-3 w-3 mr-1" />
+                          {t('hospitals.get_directions', 'Directions')}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <Card className="p-12 text-center glass">
-            <MapPin className="h-24 w-24 mx-auto mb-4 text-muted-foreground opacity-30" />
-            <h3 className="text-xl font-semibold mb-2">{t('hospitals.no_hospitals', 'No Hospitals Found')}</h3>
-            <p className="text-muted-foreground mb-6">{t('hospitals.no_hospitals_desc', 'Use your current location to find nearby hospitals')}</p>
-            <Button onClick={handleCurrentLocation}>
-              <Navigation className="h-4 w-4 mr-2" />
-              {t('hospitals.use_location', 'Use Current Location')}
-            </Button>
-          </Card>
-        )}
+
+          {/* Right Side - Map */}
+          <div className="lg:col-span-3 h-full">
+            {apiKey ? (
+              <LoadScript googleMapsApiKey={apiKey}>
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={mapCenter}
+                  zoom={12}
+                  options={{
+                    styles: [
+                      {
+                        featureType: 'poi',
+                        elementType: 'labels',
+                        stylers: [{ visibility: 'off' }],
+                      },
+                    ],
+                  }}
+                >
+                  {/* User Location Marker */}
+                  {userLocation && (
+                    <Marker
+                      position={{
+                        lat: userLocation.lat,
+                        lng: userLocation.lng,
+                      }}
+                      title="Your Location"
+                      icon="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    />
+                  )}
+
+                  {/* Hospital Markers */}
+                  {filteredHospitals.map((hospital, index) => (
+                    <Marker
+                      key={index}
+                      position={{
+                        lat: hospital.latitude,
+                        lng: hospital.longitude,
+                      }}
+                      title={hospital.name}
+                      onClick={() => {
+                        setSelectedHospital(hospital);
+                        setActiveMarker(hospital.name);
+                      }}
+                      icon={{
+                        path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
+                        fillColor: selectedHospital?.name === hospital.name ? '#ef4444' : '#3b82f6',
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 2,
+                        scale: 2,
+                      }}
+                    />
+                  ))}
+
+                  {/* Info Window for selected hospital */}
+                  {selectedHospital && activeMarker === selectedHospital.name && (
+                    <InfoWindow
+                      position={{
+                        lat: selectedHospital.latitude,
+                        lng: selectedHospital.longitude,
+                      }}
+                      onCloseClick={() => {
+                        setSelectedHospital(null);
+                        setActiveMarker(null);
+                      }}
+                    >
+                      <div className="text-sm w-64 p-2">
+                        <h3 className="font-bold text-base mb-2">{selectedHospital.name}</h3>
+                        <p className="text-xs text-gray-600 mb-2 flex items-start gap-1">
+                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          {selectedHospital.address}
+                        </p>
+                        {userLocation && (
+                          <p className="text-xs font-semibold mb-2 text-blue-600">
+                            {calculateDistance(selectedHospital.latitude, selectedHospital.longitude)} km away
+                          </p>
+                        )}
+                        {selectedHospital.rating > 0 && (
+                          <div className="flex items-center gap-1 mb-2">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-xs font-semibold">{selectedHospital.rating}</span>
+                          </div>
+                        )}
+                        {selectedHospital.open_now !== undefined && (
+                          <p
+                            className={`text-xs font-semibold mb-2 ${
+                              selectedHospital.open_now ? 'text-green-600' : 'text-red-600'
+                            }`}
+                          >
+                            {selectedHospital.open_now ? 'Open Now' : 'Closed'}
+                          </p>
+                        )}
+                        <Button
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() => getDirections(selectedHospital)}
+                        >
+                          Get Directions
+                        </Button>
+                      </div>
+                    </InfoWindow>
+                  )}
+                </GoogleMap>
+              </LoadScript>
+            ) : (
+              <Card className="h-full flex items-center justify-center glass">
+                <div className="text-center">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+                  <p className="text-muted-foreground">Google Maps API Key not configured</p>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
