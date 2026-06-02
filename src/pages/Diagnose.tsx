@@ -228,16 +228,16 @@ export default function Diagnose() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 lg:py-6 px-3 lg:px-4">
-      <div className="container max-w-7xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 lg:py-6">
+      <div className="container max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6 lg:mb-8">
+        <div className="mb-6 lg:mb-8 px-3 lg:px-4">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">{t('diagnose.title')}</h1>
           <p className="text-muted-foreground text-sm lg:text-lg">{t('diagnose.subtitle')}</p>
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 px-3 lg:px-4">
           {/* Left Sidebar - Input Section */}
           <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
             <Card className="p-4 glass">
@@ -263,7 +263,7 @@ export default function Diagnose() {
                       placeholder={t('diagnose.symptoms_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="min-h-[180px] lg:min-h-[220px] mt-2 resize-none text-xs lg:text-sm"
+                      className="min-h-[200px] lg:min-h-[240px] mt-2 resize-none text-xs lg:text-sm"
                     />
                   </div>
                   <div className="flex gap-2">
