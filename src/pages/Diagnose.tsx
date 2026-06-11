@@ -120,41 +120,15 @@ export default function Diagnose() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      // Calculate how many more images we can add
-      const remainingSlots = 5 - selectedImages.length;
-      const filesToAdd = files.slice(0, remainingSlots);
+      const file = files[0];
+      setSelectedImages([file]);
 
-      if (filesToAdd.length === 0) {
-        toast.error('Maximum 5 images already selected');
-        e.target.value = ''; // Reset input
-        return;
-      }
-
-      // Add new files to existing ones
-      const newImages = [...selectedImages, ...filesToAdd];
-      setSelectedImages(newImages);
-
-      // Generate previews for new images
-      const newPreviews: string[] = [];
-      let loadedCount = 0;
-
-      filesToAdd.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          newPreviews.push(reader.result as string);
-          loadedCount++;
-          if (loadedCount === filesToAdd.length) {
-            setImagePreviews(prev => [...prev, ...newPreviews]);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-
-      if (files.length > remainingSlots) {
-        toast.info(`Added ${filesToAdd.length} image(s). Maximum 5 images allowed.`);
-      } else {
-        toast.success(`Added ${filesToAdd.length} image(s)`);
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews([reader.result as string]);
+        toast.success(`Image selected`);
+      };
+      reader.readAsDataURL(file);
 
       // Reset input so same file can be selected again
       e.target.value = '';
@@ -228,19 +202,19 @@ export default function Diagnose() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 lg:py-6">
-      <div className="container max-w-7xl mx-auto">
+    <div className="min-h-screen bg-transparent py-4 sm:py-8">
+      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
         {/* Header */}
-        <div className="mb-6 lg:mb-8 px-3 lg:px-4">
+        <div className="mb-6 lg:mb-8">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">{t('diagnose.title')}</h1>
           <p className="text-muted-foreground text-sm lg:text-lg">{t('diagnose.subtitle')}</p>
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 px-3 lg:px-4">
-          {/* Left Sidebar - Input Section */}
-          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
-            <Card className="p-4 glass">
+        <div className="flex flex-col gap-6">
+          {/* Input Section */}
+          <div className="w-full flex flex-col gap-3 lg:gap-4">
+            <Card className="p-4 glass w-full">
               <Tabs defaultValue="text" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="text" className="text-xs lg:text-sm">
@@ -263,13 +237,13 @@ export default function Diagnose() {
                       placeholder={t('diagnose.symptoms_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="min-h-[200px] lg:min-h-[240px] mt-2 resize-none text-xs lg:text-sm"
+                      className="mt-2 resize-none text-xs lg:text-sm min-h-[200px] lg:min-h-[308px]"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      onClick={!hasCredits ? () => setShowBuyCredits(true) : handleTextDiagnosis} 
-                      disabled={loading || (!symptoms.trim() && hasCredits)} 
+                    <Button
+                      onClick={!hasCredits ? () => setShowBuyCredits(true) : handleTextDiagnosis}
+                      disabled={loading || (!symptoms.trim() && hasCredits)}
                       className={`flex-1 text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
                       size="sm"
                     >
@@ -281,13 +255,11 @@ export default function Diagnose() {
                         </>
                       ) : !hasCredits ? (
                         <>
-                          <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                           <span className="hidden sm:inline">No Credits</span>
                           <span className="sm:hidden">Credits</span>
                         </>
                       ) : (
                         <>
-                          <Brain className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                           <span className="hidden sm:inline">{t('diagnose.analyze_symptoms')}</span>
                           <span className="sm:hidden">Analyze</span>
                         </>
@@ -307,54 +279,34 @@ export default function Diagnose() {
 
                 <TabsContent value="image" className="space-y-3">
                   <div>
-                    <Label className="text-xs lg:text-sm">Upload Medical Images (Max 5)</Label>
+                    <Label className="text-xs lg:text-sm">Upload Medical Image</Label>
                     <div
-                      className={`mt-2 border-2 border-dashed rounded-lg p-4 lg:p-6 text-center cursor-pointer hover:border-primary transition-colors min-h-[160px] lg:min-h-[200px] flex items-center justify-center ${
-                        imagePreviews.length > 0 ? 'border-primary' : 'border-border'
-                      }`}
+                      className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center h-[100px] lg:h-[184px] overflow-hidden relative ${imagePreviews.length === 1 ? 'border-primary p-0' : imagePreviews.length > 1 ? 'border-primary p-4 lg:p-6' : 'border-border p-4 lg:p-6'
+                        }`}
                       onClick={() => document.getElementById('image-upload')?.click()}
                     >
                       {imagePreviews.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-4">
+                        <div className={`w-full ${imagePreviews.length === 1 ? 'absolute inset-0' : 'grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-4'}`}>
                           {imagePreviews.map((preview, index) => (
-                            <div key={index} className="relative group">
+                            <div key={index} className={`relative group ${imagePreviews.length === 1 ? 'w-full h-full' : ''}`}>
                               <img
                                 src={preview}
                                 alt={`Preview ${index + 1}`}
-                                className="w-full h-24 lg:h-32 object-cover rounded-lg"
+                                className="w-full h-full object-cover"
                               />
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 h-5 w-5 lg:h-6 lg:w-6 shadow-md"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeImage(index);
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                              <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
-                                {index + 1}/{imagePreviews.length}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+                                <p className="text-white text-sm lg:text-base font-medium">Click to change image</p>
                               </div>
                             </div>
                           ))}
-                          {imagePreviews.length < 5 && (
-                            <div className="flex items-center justify-center h-24 lg:h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg">
-                              <div className="text-center">
-                                <Upload className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-muted-foreground mb-1" />
-                                <p className="text-xs text-muted-foreground">{t('diagnose.add_more')}</p>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       ) : (
-                        <div className="space-y-2 py-4 lg:py-8">
-                          <Upload className="h-10 w-10 lg:h-12 lg:w-12 mx-auto text-muted-foreground" />
+                        <div className="space-y-2">
+                          <Upload className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-muted-foreground" />
                           <p className="text-xs lg:text-sm text-muted-foreground">
                             {t('diagnose.click_upload')}
                           </p>
-                          <p className="text-xs text-muted-foreground">PNG, JPG up to 16MB • Max 5 images</p>
+                          <p className="text-xs text-muted-foreground">PNG, JPG up to 16MB • Max 1 image</p>
                         </div>
                       )}
                     </div>
@@ -362,7 +314,6 @@ export default function Diagnose() {
                       id="image-upload"
                       type="file"
                       accept="image/*"
-                      multiple
                       onChange={handleImageSelect}
                       className="hidden"
                     />
@@ -374,12 +325,12 @@ export default function Diagnose() {
                       placeholder={t('diagnose.additional_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="mt-2 min-h-[80px] lg:min-h-[100px] resize-none text-xs lg:text-sm"
+                      className="mt-2 resize-none text-xs lg:text-sm min-h-[60px] lg:min-h-[80px]"
                     />
                   </div>
-                  <Button 
-                    onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis} 
-                    disabled={loading || (selectedImages.length === 0 && hasCredits)} 
+                  <Button
+                    onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis}
+                    disabled={loading || (selectedImages.length === 0 && hasCredits)}
                     className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
                     size="sm"
                   >
@@ -391,13 +342,11 @@ export default function Diagnose() {
                       </>
                     ) : !hasCredits ? (
                       <>
-                        <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                         <span className="hidden sm:inline">No Credits</span>
                         <span className="sm:hidden">Credits</span>
                       </>
                     ) : (
                       <>
-                        <ImageIcon className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                         <span className="hidden sm:inline">{t('diagnose.analyze_image')}</span>
                         <span className="sm:hidden">Analyze</span>
                       </>
@@ -408,12 +357,11 @@ export default function Diagnose() {
             </Card>
           </div>
 
-          {/* Right Sidebar - Results Section */}
-          <div className="lg:col-span-3 overflow-y-auto pr-2">
-            {result ? (
+          {/* Results Section */}
+          {result && (
+            <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Card className="p-4 glass overflow-hidden">
-                <div className="flex items-center justify-between mb-4 gap-2">
-                  <h2 className="text-lg lg:text-2xl font-bold">{t('diagnose.results', 'Results')}</h2>
+                <div className="flex items-center justify-end mb-4 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -430,26 +378,26 @@ export default function Diagnose() {
                   </Button>
                 </div>
 
-                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                <div className="space-y-4 lg:space-y-6 w-full">
                   {result.observation && (
-                    <Card className="p-3 bg-blue-500/10 border-blue-500/20">
+                    <Card className="p-4 bg-blue-500/10 border-blue-500/20">
                       <h3 className="font-semibold text-sm lg:text-base mb-2">{t('diagnose.image_observation', 'Observation')}</h3>
-                      <p className="text-xs lg:text-sm text-muted-foreground">{result.observation}</p>
+                      <p className="text-xs lg:text-sm text-muted-foreground leading-relaxed">{result.observation}</p>
                     </Card>
                   )}
 
                   {result.conditions && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <h3 className="font-semibold text-sm lg:text-base">{t('diagnose.detected_conditions', 'Conditions')}</h3>
                       {result.conditions.map((condition: any, index: number) => (
-                        <Card key={index} className="p-3 bg-muted/50">
-                          <div className="flex items-start justify-between mb-2 gap-2">
+                        <Card key={index} className="p-4 bg-muted/50">
+                          <div className="flex items-start justify-between mb-3 gap-2">
                             <h4 className="font-semibold text-xs lg:text-sm">{condition.name}</h4>
                             <span className="text-base lg:text-lg font-bold text-destructive flex-shrink-0">
                               {condition.confidence}%
                             </span>
                           </div>
-                          <Progress value={condition.confidence} className="mb-2 h-1.5" />
+                          <Progress value={condition.confidence} className="mb-3 h-1.5" />
                           <p className="text-xs text-muted-foreground">{condition.note}</p>
                         </Card>
                       ))}
@@ -457,74 +405,77 @@ export default function Diagnose() {
                   )}
 
                   {result.recommendation && (
-                    <Alert className="text-xs lg:text-sm">
-                      <AlertCircle className="h-3 w-3 lg:h-4 lg:w-4" />
+                    <Alert className="text-xs lg:text-sm border-primary/20 bg-primary/5">
+                      <AlertCircle className="h-4 w-4 text-primary" />
                       <AlertDescription>
-                        <strong>{t('diagnose.recommendation', 'Recommendation')}:</strong> {result.recommendation}
+                        <strong className="text-primary">{t('diagnose.recommendation', 'Recommendation')}:</strong> {result.recommendation}
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  {result.diseases?.map((disease: any, index: number) => (
-                    <Card key={index} className="p-3 bg-muted/50">
-                      <div className="flex items-start justify-between mb-2 gap-2">
-                        <h3 className="font-semibold text-sm lg:text-base">{disease.name}</h3>
-                        <span className="text-lg lg:text-xl font-bold text-destructive flex-shrink-0">
-                          {disease.confidence}%
-                        </span>
+                  {/* Diseases Grid */}
+                  {result.diseases && result.diseases.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm lg:text-base">{t('diagnose.possible_diseases', 'Possible Diseases')}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                        {result.diseases.map((disease: any, index: number) => (
+                          <Card key={index} className="p-4 bg-muted/50">
+                            <div className="flex items-start justify-between mb-3 gap-2">
+                              <h3 className="font-semibold text-sm lg:text-base">{disease.name}</h3>
+                              <span className="text-lg lg:text-xl font-bold text-destructive flex-shrink-0">
+                                {disease.confidence}%
+                              </span>
+                            </div>
+                            <Progress value={disease.confidence} className="mb-3 h-1.5" />
+                            <p className="text-xs lg:text-sm text-muted-foreground mb-3">{disease.explanation}</p>
+
+                            {disease.solutions && (
+                              <div className="space-y-2 mb-3">
+                                <p className="font-medium text-xs lg:text-sm">Solutions:</p>
+                                <ul className="space-y-1.5">
+                                  {disease.solutions.map((solution: string, i: number) => (
+                                    <li key={i} className="text-xs flex items-start gap-2">
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-secondary mt-0.5 flex-shrink-0" />
+                                      <span className="text-muted-foreground">{solution}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {disease.urgency && (
+                              <div className="mt-3 pt-3 border-t border-border/50">
+                                <span className="text-xs font-medium">{t('diagnose.urgency_level', 'Urgency')}: </span>
+                                <span className={`text-xs font-bold ${getUrgencyColor(disease.urgency)}`}>
+                                  {disease.urgency}
+                                </span>
+                              </div>
+                            )}
+                          </Card>
+                        ))}
                       </div>
-                      <Progress value={disease.confidence} className="mb-2 h-1.5" />
-                      <p className="text-xs lg:text-sm text-muted-foreground mb-2">{disease.explanation}</p>
-
-                      {disease.solutions && (
-                        <div className="space-y-1 mb-2">
-                          <p className="font-medium text-xs lg:text-sm">Solutions:</p>
-                          <ul className="space-y-0.5">
-                            {disease.solutions.map((solution: string, i: number) => (
-                              <li key={i} className="text-xs flex items-start gap-1.5">
-                                <CheckCircle2 className="h-3 w-3 text-secondary mt-0.5 flex-shrink-0" />
-                                <span>{solution}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {disease.urgency && (
-                        <div className="mt-2 pt-2 border-t">
-                          <span className="text-xs font-medium">{t('diagnose.urgency_level', 'Urgency')}: </span>
-                          <span className={`text-xs font-bold ${getUrgencyColor(disease.urgency)}`}>
-                            {disease.urgency}
-                          </span>
-                        </div>
-                      )}
-                    </Card>
-                  ))}
-
-                  {result.general_advice && (
-                    <Alert className="text-xs lg:text-sm">
-                      <AlertCircle className="h-3 w-3 lg:h-4 lg:w-4" />
-                      <AlertDescription>
-                        <strong>{t('diagnose.general_advice', 'Advice:')}</strong> {result.general_advice}
-                      </AlertDescription>
-                    </Alert>
+                    </div>
                   )}
 
-                  {result.disclaimer && (
-                    <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
-                  )}
+                  {/* Footer: Advice & Disclaimer */}
+                  <div className="space-y-4 mt-2">
+                    {result.general_advice && (
+                      <Alert className="text-xs lg:text-sm">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>{t('diagnose.general_advice', 'Advice:')}</strong> {result.general_advice}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {result.disclaimer && (
+                      <p className="text-xs text-muted-foreground text-center pt-4 border-t border-border/50">{result.disclaimer}</p>
+                    )}
+                  </div>
                 </div>
               </Card>
-            ) : (
-              <div className="hidden lg:flex w-full h-[420px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
-                <img 
-                  src="/clay-banks-cEzMOp5FtV4-unsplash.jpg" 
-                  alt="Medical Analysis" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       <BuyCreditsModal

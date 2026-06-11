@@ -153,10 +153,7 @@ export const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover">
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <User className="h-4 w-4 mr-2" />
-                    {t('navbar.profile')}
-                  </DropdownMenuItem>
+
                   <DropdownMenuItem onClick={() => navigate('/about')}>
                     <Info className="h-4 w-4 mr-2" />
                     {t('navbar.about')}
@@ -210,10 +207,7 @@ export const Navbar = () => {
               <NavLinks isMobile={true} />
               {user ? (
                 <>
-                  <Button variant="outline" onClick={() => handleNavigation('/profile')}>
-                    <User className="h-4 w-4 mr-2" />
-                    {t('navbar.profile')}
-                  </Button>
+
                   <Button variant="outline" onClick={() => handleNavigation('/about')}>
                     <Info className="h-4 w-4 mr-2" />
                     {t('navbar.about')}

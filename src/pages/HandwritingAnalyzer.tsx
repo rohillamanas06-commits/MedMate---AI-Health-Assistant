@@ -102,9 +102,9 @@ export default function HandwritingAnalyzer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 sm:py-8">
-      <div className="container max-w-7xl mx-auto">
-        <div className="mb-6 lg:mb-8 px-3 lg:px-4">
+    <div className="min-h-screen bg-transparent py-4 sm:py-8">
+      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
+        <div className="mb-6 lg:mb-8">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
             {t('navbar.prescription_decoder') || 'Prescription Decoder'}
           </h1>
@@ -114,35 +114,27 @@ export default function HandwritingAnalyzer() {
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 px-3 lg:px-4">
-          {/* Left Sidebar - Input Section */}
-          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
+        <div className="flex flex-col gap-6">
+          {/* Input Section */}
+          <div className="w-full flex flex-col gap-3 lg:gap-4">
             <Card className="p-4 glass w-full">
               <div className="space-y-3 lg:space-y-4">
                 <div>
                   <Label className="text-xs lg:text-sm">{t('common.select_image') || 'Select Image'}</Label>
                   <div
-                    className={`mt-2 border-2 border-dashed border-border rounded-lg p-4 lg:p-6 text-center cursor-pointer hover:border-primary transition-colors min-h-[220px] lg:min-h-[280px] flex items-center justify-center ${selectedImage && imagePreview ? 'border-primary' : 'border-border'}`}
+                    className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[260px] lg:min-h-[360px] overflow-hidden relative ${selectedImage && imagePreview ? 'border-primary p-0' : 'border-border p-4 lg:p-6'}`}
                     onClick={() => document.getElementById('handwriting-upload')?.click()}
                   >
                     {selectedImage && imagePreview ? (
-                      <div className="relative group">
+                      <div className="absolute inset-0 w-full h-full group">
                         <img
                           src={imagePreview}
                           alt="Preview"
-                          className="w-full h-40 sm:h-48 object-cover rounded-lg"
+                          className="w-full h-full object-cover"
                         />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6 shadow-md hover:scale-105 transition-transform"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeImage();
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+                          <p className="text-white text-sm lg:text-base font-medium">{t('explainer.change_click', 'Click to change image')}</p>
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -172,13 +164,11 @@ export default function HandwritingAnalyzer() {
                     </>
                   ) : !hasCredits ? (
                     <>
-                      <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                       <span className="hidden sm:inline">{t('features.prescription_no_credits') || 'No Credits'}</span>
                       <span className="sm:hidden">Credits</span>
                     </>
                   ) : (
                     <>
-                      <FileImage className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                       <span className="hidden sm:inline">{t('features.prescription_analyze_btn') || 'Analyze Image'}</span>
                       <span className="sm:hidden">Analyze</span>
                     </>
@@ -188,13 +178,15 @@ export default function HandwritingAnalyzer() {
             </Card>
           </div>
 
-          {/* Right Sidebar - Results Section */}
-          <div className="lg:col-span-3 overflow-y-auto pr-2">
-            {result ? (
+          {/* Results Section */}
+          {result && (
+            <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-3 lg:space-y-4 w-full">
                 <Card className="p-4 lg:p-4 glass overflow-hidden w-full">
-                  <h2 className="text-lg lg:text-xl font-bold mb-3 lg:mb-4 break-words">{t('common.analysis_results') || 'Analysis Results'}</h2>
-                  <div className="space-y-3 lg:space-y-4">
+                  <h2 className="text-lg lg:text-xl font-bold mb-4 border-b border-border/50 pb-4 break-words">{t('common.analysis_results') || 'Analysis Results'}</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                    {/* Left Column */}
+                    <div className="space-y-4">
                     {/* Extracted Text */}
                     {result.extracted_text && (
                       <div className="space-y-2">
@@ -240,30 +232,26 @@ export default function HandwritingAnalyzer() {
                       </div>
                     )}
 
-                    {/* Recommendations */}
-                    {result.recommendations && result.recommendations.length > 0 && (
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm lg:text-base">{t('features.recommendations') || 'Recommendations'}</h3>
-                        <ul className="space-y-2 text-xs lg:text-sm">
-                          {result.recommendations.map((rec: string, idx: number) => (
-                            <li key={idx} className="flex gap-2 text-foreground/80"><span className="text-green-600 dark:text-green-400 font-bold">•</span><span>{rec}</span></li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    </div>
+                    {/* Right Column */}
+                    <div className="space-y-4">
+                      {/* Recommendations */}
+                      {result.recommendations && result.recommendations.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm lg:text-base">{t('features.recommendations') || 'Recommendations'}</h3>
+                          <ul className="space-y-2 text-xs lg:text-sm bg-muted/30 p-3 lg:p-4 rounded-lg border border-border/50">
+                            {result.recommendations.map((rec: string, idx: number) => (
+                              <li key={idx} className="flex gap-2 text-foreground/80"><span className="text-green-600 dark:text-green-400 font-bold">•</span><span>{rec}</span></li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </Card>
               </div>
-            ) : (
-              <div className="hidden lg:flex w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
-                <img 
-                  src="/cesar-badilla-miranda-0Fv4M2hSZJU-unsplash.jpg" 
-                  alt="Prescription Decoder" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

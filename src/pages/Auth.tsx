@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { Activity, Loader2, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { login, register, user } = useAuth();
+  
+  // "login" or "register" mode based on query param or state
+  const [mode, setMode] = useState<'login' | 'register'>(
+    searchParams.get('mode') === 'register' ? 'register' : 'login'
+  );
+
   const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [backgroundImages, setBackgroundImages] = useState<string[]>([]);
@@ -21,7 +26,6 @@ export default function Auth() {
   useEffect(() => {
     const fetchMedicalImages = async () => {
       try {
-        // Using local images from public folder
         const imageUrls: string[] = [
           '/r1.jpg',
           '/r2.jpg',
@@ -39,21 +43,19 @@ export default function Auth() {
     fetchMedicalImages();
   }, []);
 
-  // Auto-rotate images every 2 seconds
+  // Auto-rotate images every 5 seconds
   useEffect(() => {
     if (backgroundImages.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [backgroundImages]);
 
-  // Login state
+  // Form states
   const [loginData, setLoginData] = useState({ username: '', password: '' });
-
-  // Register state
   const [registerData, setRegisterData] = useState({
     username: '',
     email: '',
@@ -61,41 +63,18 @@ export default function Auth() {
     confirmPassword: '',
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState({
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    digit: false,
-    special: false,
-  });
-
-  // Update password strength on password change
-  useEffect(() => {
-    const password = registerData.password;
-    setPasswordStrength({
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      digit: /\d/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    });
-  }, [registerData.password]);
-
   // Redirect if already logged in
-  if (user) {
-    navigate('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await login(loginData.username, loginData.password);
-      // Small delay to ensure user state is updated
       setTimeout(() => {
         navigate('/dashboard');
       }, 100);
@@ -109,7 +88,6 @@ export default function Auth() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate username
     if (registerData.username.length < 3 || registerData.username.length > 20) {
       toast.error('Username must be between 3 and 20 characters');
       return;
@@ -117,13 +95,6 @@ export default function Auth() {
 
     if (!/^[a-zA-Z0-9_]+$/.test(registerData.username)) {
       toast.error('Username can only contain letters, numbers, and underscores');
-      return;
-    }
-
-    // Validate password strength
-    const isStrong = Object.values(passwordStrength).every(Boolean);
-    if (!isStrong) {
-      toast.error('Password does not meet security requirements');
       return;
     }
 
@@ -135,7 +106,6 @@ export default function Auth() {
     setLoading(true);
     try {
       await register(registerData.username, registerData.email, registerData.password);
-      // Small delay to ensure user state is updated
       setTimeout(() => {
         navigate('/dashboard');
       }, 100);
@@ -146,10 +116,16 @@ export default function Auth() {
     }
   };
 
+  const toggleMode = () => {
+    const newMode = mode === 'login' ? 'register' : 'login';
+    setMode(newMode);
+    setSearchParams({ mode: newMode });
+  };
+
   return (
-    <div className="min-h-screen w-full flex h-screen max-h-screen fixed inset-0 overflow-hidden">
+    <div className="min-h-screen w-full flex h-screen max-h-screen fixed inset-0 overflow-hidden bg-[#050505]">
       {/* Left Side - Medical Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-black">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-black items-center justify-center">
         {backgroundImages.length > 0 && (
           <>
             {backgroundImages.map((image, index) => (
@@ -157,216 +133,180 @@ export default function Auth() {
                 key={index}
                 src={image}
                 alt={`Medical background ${index + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${
                   index === currentImageIndex ? 'opacity-100' : 'opacity-0'
                 }`}
                 loading="eager"
-                onLoad={() => console.log(`Image ${index + 1} loaded successfully`)}
-                onError={(e) => {
-                  console.error(`Image ${index + 1} failed to load from:`, image);
-                }}
               />
             ))}
+            <div className="absolute inset-0 bg-black/30" />
           </>
         )}
 
-        {/* Fallback gradient if images haven't loaded */}
         {imagesLoading && backgroundImages.length === 0 && (
-          <div className="w-full h-full bg-gradient-to-br from-primary/30 via-accent/20 to-background flex items-center justify-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-white/50" />
           </div>
         )}
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-accent/5 to-background h-screen max-h-screen overflow-hidden">
-        <Card className="w-full max-w-md p-8 glass animate-scale-in backdrop-blur-sm bg-white/95 dark:bg-slate-900/95 max-h-screen overflow-y-auto">
-          {/* Back to Home Button */}
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-primary hover:text-primary/80 mb-6 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm font-medium">Back to Home</span>
-          </button>
-
-          <div className="flex flex-col items-center mb-8">
-            <Activity className="h-12 w-12 text-primary mb-4" />
-            <h1 className="text-3xl font-bold gradient-text">Welcome to MedMate</h1>
-            <p className="text-muted-foreground text-center mt-2">
-              Your AI-powered medical assistant
-            </p>
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-screen overflow-y-auto">
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
+          
+          <div className="mb-6 lg:mb-8">
+            <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase mb-2">
+              {mode === 'login' ? 'Sign In' : 'Register'}
+            </h2>
+            <h1 className="text-3xl md:text-4xl font-serif tracking-tight text-white/90">
+              {mode === 'login' ? 'Your account' : 'New account'}
+            </h1>
           </div>
 
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
+          {mode === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="login-username" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                  Username
+                </Label>
+                <Input
+                  id="login-username"
+                  placeholder=""
+                  value={loginData.username}
+                  onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                  required
+                  className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                />
+              </div>
 
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-username">Username</Label>
-                  <Input
-                    id="login-username"
-                    placeholder="Enter your username"
-                    value={loginData.username}
-                    onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                    required
-                  />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="login-password" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                    Password
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[11px] font-semibold tracking-widest text-white/50 uppercase hover:text-white transition-colors"
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Link
-                      to="/forgot-password"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="login-password"
-                      type={showLoginPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      className="pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showLoginPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logging in...
-                    </>
-                  ) : (
-                    'Login'
-                  )}
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder=""
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  required
+                  className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                />
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
                 </Button>
-              </form>
-            </TabsContent>
+              </div>
 
-            <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-username">Username</Label>
-                  <Input
-                    id="register-username"
-                    placeholder="Choose a username"
-                    value={registerData.username}
-                    onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="register-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a password"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      className="pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
+              <div className="flex items-center justify-start mt-6 text-sm text-white/50">
+                <span>No account? </span>
+                <button 
+                  type="button" 
+                  onClick={toggleMode}
+                  className="ml-2 text-white hover:underline underline-offset-4"
+                >
+                  Create one
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="register-username" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                  Name
+                </Label>
+                <Input
+                  id="register-username"
+                  placeholder=""
+                  value={registerData.username}
+                  onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                  required
+                  className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                />
+              </div>
 
-                  {registerData.password && (
-                    <div className="space-y-1 text-xs p-3 bg-muted rounded-md">
-                      <div className={`flex items-center gap-2 ${passwordStrength.length ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        {passwordStrength.length ? <CheckCircle className="h-4 w-4" /> : <div className="h-4 w-4 rounded-full border-2" />}
-                        At least 8 characters
-                      </div>
-                      <div className={`flex items-center gap-2 ${passwordStrength.uppercase ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        {passwordStrength.uppercase ? <CheckCircle className="h-4 w-4" /> : <div className="h-4 w-4 rounded-full border-2" />}
-                        One uppercase letter
-                      </div>
-                      <div className={`flex items-center gap-2 ${passwordStrength.lowercase ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        {passwordStrength.lowercase ? <CheckCircle className="h-4 w-4" /> : <div className="h-4 w-4 rounded-full border-2" />}
-                        One lowercase letter
-                      </div>
-                      <div className={`flex items-center gap-2 ${passwordStrength.digit ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        {passwordStrength.digit ? <CheckCircle className="h-4 w-4" /> : <div className="h-4 w-4 rounded-full border-2" />}
-                        One number
-                      </div>
-                      <div className={`flex items-center gap-2 ${passwordStrength.special ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        {passwordStrength.special ? <CheckCircle className="h-4 w-4" /> : <div className="h-4 w-4 rounded-full border-2" />}
-                        One special character
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-confirm">Confirm Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="register-confirm"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirm your password"
-                      value={registerData.confirmPassword}
-                      onChange={(e) =>
-                        setRegisterData({ ...registerData, confirmPassword: e.target.value })
-                      }
-                      className="pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  {registerData.confirmPassword && registerData.password !== registerData.confirmPassword && (
-                    <p className="text-sm text-destructive">Passwords do not match</p>
-                  )}
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    'Create Account'
-                  )}
+              <div className="space-y-2">
+                <Label htmlFor="register-email" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                  Email
+                </Label>
+                <Input
+                  id="register-email"
+                  type="email"
+                  placeholder=""
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                  required
+                  className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="register-password" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                  Password (Min 6)
+                </Label>
+                <Input
+                  id="register-password"
+                  type="password"
+                  placeholder=""
+                  value={registerData.password}
+                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                  required
+                  className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="register-confirm" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                  Confirm Password
+                </Label>
+                <Input
+                  id="register-confirm"
+                  type="password"
+                  placeholder=""
+                  value={registerData.confirmPassword}
+                  onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                  required
+                  className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                />
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
                 </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </Card>
+              </div>
+
+              <div className="flex items-center justify-start mt-6 text-sm text-white/50">
+                <span>Already have one? </span>
+                <button 
+                  type="button" 
+                  onClick={toggleMode}
+                  className="ml-2 text-white hover:underline underline-offset-4"
+                >
+                  Sign in
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -11,7 +11,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Footer } from "@/components/Footer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { MobileBlocker } from "@/components/MobileBlocker";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -19,7 +18,7 @@ import Diagnose from "./pages/Diagnose";
 import Chat from "./pages/Chat";
 import Hospitals from "./pages/Hospitals";
 import History from "./pages/History";
-import Profile from "./pages/Profile";
+
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
@@ -44,7 +43,7 @@ function ConditionalLayout() {
   return (
     <>
       {!isAuthPage && <AppSidebar />}
-      <main className="w-full min-h-screen bg-background">
+      <main className="w-full min-h-screen bg-transparent">
         {!isAuthPage && (
           <div className="p-4 flex items-center justify-between">
             <SidebarTrigger />
@@ -111,14 +110,7 @@ function ConditionalLayout() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
@@ -142,11 +134,9 @@ const App = () => (
           <LanguageProvider>
             <BrowserRouter>
               <ScrollToTop />
-              <MobileBlocker>
-                <SidebarProvider>
-                  <ConditionalLayout />
-                </SidebarProvider>
-              </MobileBlocker>
+              <SidebarProvider>
+                <ConditionalLayout />
+              </SidebarProvider>
             </BrowserRouter>
             <Toaster />
             <Sonner />

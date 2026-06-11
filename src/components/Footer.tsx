@@ -34,9 +34,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="space-y-5 lg:col-span-1">
             <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-                <Activity className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <img src="/medmate-icon.svg" alt="MedMate" className="h-8 w-8" />
               <span className="text-xl font-bold">
                 Med<span className="text-primary">Mate</span>
               </span>

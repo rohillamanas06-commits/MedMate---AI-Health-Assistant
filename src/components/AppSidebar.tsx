@@ -240,13 +240,7 @@ export function AppSidebar() {
                     </>
                   ) : (
                     <>
-                      <DropdownMenuItem onClick={() => {
-                        navigate('/profile');
-                        closeOnMobile();
-                      }}>
-                        <User className="mr-2 h-4 w-4" />
-                        {t('navbar.profile')}
-                      </DropdownMenuItem>
+
                       <DropdownMenuItem onClick={toggleTheme}>
                         {getThemeIcon()}
                         {getThemeLabel()}

@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Activity, Loader2, ArrowLeft, Mail } from 'lucide-react';
+import { Loader2, Mail, CheckSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 
@@ -13,6 +12,42 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [backgroundImages, setBackgroundImages] = useState<string[]>([]);
+  const [imagesLoading, setImagesLoading] = useState(true);
+
+  // Fetch medical images from public folder
+  useEffect(() => {
+    const fetchMedicalImages = async () => {
+      try {
+        const imageUrls: string[] = [
+          '/r1.jpg',
+          '/r2.jpg',
+          '/r3.jpg',
+        ];
+        
+        setBackgroundImages(imageUrls);
+        setImagesLoading(false);
+      } catch (error) {
+        console.error('Failed to load images:', error);
+        setImagesLoading(false);
+      }
+    };
+
+    fetchMedicalImages();
+  }, []);
+
+  // Auto-rotate images every 5 seconds
+  useEffect(() => {
+    if (backgroundImages.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [backgroundImages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,83 +65,117 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-accent/5 to-background p-4">
-      <Card className="w-full max-w-md p-8 glass animate-scale-in">
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative mb-4">
-            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-            <Activity className="h-12 w-12 text-primary relative" />
-          </div>
-          <h1 className="text-3xl font-bold gradient-text">Forgot Password?</h1>
-          <p className="text-muted-foreground text-center mt-2">
-            No worries! Enter your email and we'll send you reset instructions
-          </p>
-        </div>
+    <div className="min-h-screen w-full flex h-screen max-h-screen fixed inset-0 overflow-hidden bg-[#050505]">
+      {/* Left Side - Medical Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-black items-center justify-center">
+        {backgroundImages.length > 0 && (
+          <>
+            {backgroundImages.map((image, index) => (
+              <img
+                key={index}
+                src={image}
+                alt={`Medical background ${index + 1}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${
+                  index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+                loading="eager"
+              />
+            ))}
+            <div className="absolute inset-0 bg-black/30" />
+          </>
+        )}
 
-        {!emailSent ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                'Send Reset Link'
-              )}
-            </Button>
-
-            <div className="text-center">
-              <Link
-                to="/auth"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Login
-              </Link>
-            </div>
-          </form>
-        ) : (
-          <div className="text-center space-y-4">
-            <div className="rounded-full bg-primary/10 p-3 w-fit mx-auto">
-              <Mail className="h-8 w-8 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold">Check Your Email</h2>
-            <p className="text-muted-foreground">
-              We've sent password reset instructions to <strong>{email}</strong>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Didn't receive the email? Check your spam folder or try again.
-            </p>
-            <div className="flex flex-col gap-2 pt-4">
-              <Button onClick={() => setEmailSent(false)} variant="outline" className="w-full">
-                Try Another Email
-              </Button>
-              <Link to="/auth">
-                <Button variant="ghost" className="w-full">
-                  Back to Login
-                </Button>
-              </Link>
-            </div>
+        {imagesLoading && backgroundImages.length === 0 && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-white/50" />
           </div>
         )}
-      </Card>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-screen overflow-y-auto">
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
+          
+          <div className="mb-6 lg:mb-8">
+            <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase mb-2">
+              Recovery
+            </h2>
+            <h1 className="text-3xl md:text-4xl font-serif tracking-tight text-white/90">
+              Forgot Password
+            </h1>
+          </div>
+
+          {!emailSent ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder=""
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-transparent border-0 border-b border-white/20 rounded-none px-0 h-10 text-white focus-visible:ring-0 focus-visible:border-white focus-visible:ring-offset-0 transition-colors"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-start mt-6 text-sm text-white/50">
+                <Link
+                  to="/auth"
+                  className="text-white hover:underline underline-offset-4"
+                >
+                  Back to Login
+                </Link>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="space-y-4 text-white/70">
+                <p>
+                  We've sent password reset instructions to <strong className="text-white">{email}</strong>
+                </p>
+                <p className="text-sm">
+                  Didn't receive the email? Check your spam folder or try again.
+                </p>
+              </div>
+
+              <div className="pt-4 space-y-4">
+                <Button 
+                  onClick={() => setEmailSent(false)} 
+                  variant="outline" 
+                  className="w-full bg-transparent border-white/20 text-white hover:bg-white/10 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
+                >
+                  Try Another Email
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-start mt-6 text-sm text-white/50">
+                <Link
+                  to="/auth"
+                  className="text-white hover:underline underline-offset-4"
+                >
+                  Back to Login
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -50,21 +50,20 @@ function RangeChart({
     status === 'High'
       ? '#ef4444'
       : status === 'Low'
-      ? '#3b82f6'
-      : '#22c55e';
+        ? '#3b82f6'
+        : '#22c55e';
 
   return (
     <div className="mb-5 p-4 rounded-xl border border-border/60 bg-card shadow-sm">
       <div className="flex justify-between items-center mb-3">
         <span className="font-semibold text-sm text-foreground">{testName}</span>
         <span
-          className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-            status === 'High'
-              ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-              : status === 'Low'
+          className={`text-xs font-bold px-2.5 py-1 rounded-full ${status === 'High'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+            : status === 'Low'
               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
               : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400'
-          }`}
+            }`}
         >
           {value}{unit ? ` ${unit}` : ''} — {status}
         </span>
@@ -154,7 +153,7 @@ export default function ReportExplainer() {
     await checkAuth();
     toast.success('Credits added! You can continue.');
   };
-  
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -190,9 +189,9 @@ export default function ReportExplainer() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 sm:py-8">
-      <div className="container max-w-7xl mx-auto">
-        <div className="mb-6 lg:mb-8 px-3 lg:px-4">
+    <div className="min-h-screen bg-transparent py-4 sm:py-8">
+      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
+        <div className="mb-6 lg:mb-8">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
             {t('explainer.title')}
           </h1>
@@ -202,25 +201,38 @@ export default function ReportExplainer() {
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 px-3 lg:px-4">
-          {/* Left Sidebar - Input Section */}
-          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4">
+        <div className="flex flex-col gap-6">
+          {/* Input Section */}
+          <div className="w-full flex flex-col gap-3 lg:gap-4">
             <Card className="p-4 glass w-full">
               <div className="space-y-3 lg:space-y-4">
                 <div>
                   <Label className="text-xs lg:text-sm">{t('explainer.upload_label')}</Label>
                   <div
-                    className="mt-2 border-2 border-dashed border-border rounded-lg p-4 lg:p-6 text-center cursor-pointer hover:border-primary transition-colors min-h-[220px] lg:min-h-[280px] flex items-center justify-center"
+                    className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[260px] lg:min-h-[360px] overflow-hidden relative ${selectedFile && selectedFile.type.startsWith('image/') ? 'border-primary p-0' : 'border-border p-4 lg:p-6'}`}
                     onClick={() => document.getElementById('report-upload')?.click()}
                   >
                     {selectedFile ? (
-                      <div className="space-y-2">
-                        <FileText className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-primary" />
-                        <p className="text-xs lg:text-sm font-medium truncate">{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {t('explainer.change_click')}
-                        </p>
-                      </div>
+                      selectedFile.type.startsWith('image/') ? (
+                        <div className="absolute inset-0 w-full h-full group">
+                          <img
+                            src={URL.createObjectURL(selectedFile)}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+                            <p className="text-white text-sm lg:text-base font-medium">{t('explainer.change_click', 'Click to change image')}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <FileText className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-primary" />
+                          <p className="text-xs lg:text-sm font-medium truncate px-4">{selectedFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('explainer.change_click')}
+                          </p>
+                        </div>
+                      )
                     ) : (
                       <div className="space-y-2">
                         <Upload className="h-6 w-6 lg:h-8 lg:w-8 mx-auto text-muted-foreground" />
@@ -239,7 +251,7 @@ export default function ReportExplainer() {
                     className="hidden"
                   />
                 </div>
-                
+
                 <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} size="sm">
                   {loading ? (
                     <>
@@ -249,13 +261,11 @@ export default function ReportExplainer() {
                     </>
                   ) : !hasCredits ? (
                     <>
-                      <AlertCircle className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                       <span className="hidden sm:inline">No Credits</span>
                       <span className="sm:hidden">Credits</span>
                     </>
                   ) : (
                     <>
-                      <FileText className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
                       <span className="hidden sm:inline">{t('explainer.analyze_btn')}</span>
                       <span className="sm:hidden">Analyze</span>
                     </>
@@ -265,13 +275,13 @@ export default function ReportExplainer() {
             </Card>
           </div>
 
-          {/* Right Sidebar - Results Section */}
-          <div className="lg:col-span-3 overflow-y-auto pr-2">
-            {result ? (
+          {/* Results Section */}
+          {result && (
+            <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-3 lg:space-y-4 w-full">
                 <Card className="p-4 lg:p-4 glass overflow-hidden w-full">
                   <h2 className="text-lg lg:text-xl font-bold mb-3 lg:mb-4 break-words">{t('explainer.summary_title')}</h2>
-                  
+
                   {/* Handle new text/PDF explanation format (english/hindi) */}
                   {result.explanation && (result.explanation.english || result.explanation.hindi) && !result.explanation.summary && (
                     <Card className="p-3 lg:p-4 mb-3 lg:mb-4 bg-primary/10 border-primary/20 overflow-hidden">
@@ -324,28 +334,28 @@ export default function ReportExplainer() {
                     result.interpreted.filter(
                       (r: any) => r.status !== 'Normal' && r.status !== 'Unknown' && r.status !== 'Review'
                     ).length > 0 && (
-                    <div className="mt-4 sm:mt-6 mb-4 sm:mb-6 overflow-hidden">
-                      <h3 className="text-lg font-semibold mb-1 sm:mb-1 flex items-center gap-2 break-words">
-                        <span>📊</span> Abnormal Values
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
-                        The bar shows where your value falls relative to the normal range.
-                      </p>
-                      {result.interpreted
-                        .filter((r: any) => r.status !== 'Normal' && r.status !== 'Unknown' && r.status !== 'Review')
-                        .map((r: any) => (
-                          <RangeChart
-                            key={r.test_name}
-                            testName={r.test_name}
-                            value={r.value}
-                            unit={r.unit}
-                            status={r.status}
-                            refMin={r.ref_min}
-                            refMax={r.ref_max}
-                          />
-                        ))}
-                    </div>
-                  )}
+                      <div className="mt-4 sm:mt-6 mb-4 sm:mb-6 overflow-hidden">
+                        <h3 className="text-lg font-semibold mb-1 sm:mb-1 flex items-center gap-2 break-words">
+                          <span>📊</span> Abnormal Values
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-3 sm:mb-4">
+                          The bar shows where your value falls relative to the normal range.
+                        </p>
+                        {result.interpreted
+                          .filter((r: any) => r.status !== 'Normal' && r.status !== 'Unknown' && r.status !== 'Review')
+                          .map((r: any) => (
+                            <RangeChart
+                              key={r.test_name}
+                              testName={r.test_name}
+                              value={r.value}
+                              unit={r.unit}
+                              status={r.status}
+                              refMin={r.ref_min}
+                              refMax={r.ref_max}
+                            />
+                          ))}
+                      </div>
+                    )}
 
                   {/* Key Findings List handling */}
                   {((result.explanation?.key_findings) || result.key_findings) && ((result.explanation?.key_findings) || result.key_findings).length > 0 && (
@@ -392,16 +402,8 @@ export default function ReportExplainer() {
                   )}
                 </Card>
               </div>
-            ) : (
-              <div className="hidden lg:flex w-full h-[500px] lg:h-[480px] rounded-lg shadow-md overflow-hidden">
-                <img 
-                  src="/irwan-rbDE93-0hHs-unsplash.jpg" 
-                  alt="Report Analysis" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       <BuyCreditsModal

@@ -49,12 +49,12 @@ export default function Hospitals() {
           try {
             setMapCenter({ lat: latitude, lng: longitude });
             setUserLocation({ lat: latitude, lng: longitude });
-            
+
             const response: any = await api.findNearbyHospitals(latitude, longitude);
             const hospitalList = response.hospitals || [];
             setHospitals(hospitalList);
             setFilteredHospitals(hospitalList);
-            
+
             toast.success(`Found ${hospitalList.length} nearby hospitals`);
           } catch (error) {
             console.error('Error finding hospitals:', error);
@@ -105,9 +105,9 @@ export default function Hospitals() {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((userLocation.lat * Math.PI) / 180) *
-        Math.cos((lat * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
+      Math.cos((lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return (R * c).toFixed(1);
   };
@@ -118,255 +118,227 @@ export default function Hospitals() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-4 lg:py-6 px-3 lg:px-4">
-      <div className="container max-w-7xl">
+    <div className="min-h-screen bg-transparent py-4 sm:py-8">
+      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
         {/* Header */}
         <div className="mb-6 lg:mb-8">
-          <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">{t('hospitals.title', 'Find Nearby Hospitals')}</h1>
-          <p className="text-muted-foreground text-sm lg:text-lg">{t('hospitals.subtitle', 'Locate medical facilities near you instantly')}</p>
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
+            {t('hospitals.title', 'Nearby Hospitals')}
+          </h1>
+          <p className="text-muted-foreground text-sm lg:text-lg">
+            {t('hospitals.subtitle', 'Find healthcare facilities near your location')}
+          </p>
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 lg:h-[520px]">
-          {/* Left Sidebar - Hospital List */}
-          <div className="lg:col-span-2 flex flex-col gap-3 lg:gap-4 overflow-hidden lg:overflow-hidden h-auto lg:h-full">
-            {/* Search and Filters */}
-            <Card className="p-4 glass">
-              <Button
-                onClick={handleCurrentLocation}
-                disabled={loading}
-                className="w-full mb-4"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t('hospitals.searching', 'Searching...')}
-                  </>
-                ) : (
-                  <>
-                    <Navigation className="h-4 w-4 mr-2" />
-                    {t('hospitals.use_location', 'Use My Location')}
-                  </>
-                )}
-              </Button>
+        <div className="flex flex-col gap-6">
+          <div className="w-full flex flex-col gap-3 lg:gap-4">
+            <Card className="p-4 glass w-full">
+              <div className="flex flex-col gap-4 lg:gap-6">
 
-              <Input
-                placeholder={t('hospitals.search_placeholder', 'Search hospitals...')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="mb-3"
-              />
-            </Card>
 
-            {/* Hospital List */}
-            <div className="flex-1 overflow-y-auto lg:overflow-y-auto pr-2 max-h-96 lg:max-h-none">
-              {hospitals.length === 0 ? (
-                <Card className="p-8 text-center glass">
-                  <MapPin className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
-                  <h3 className="text-lg font-semibold mb-2">{t('hospitals.no_hospitals', 'No Hospitals Found')}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t('hospitals.no_hospitals_desc', 'Use your current location to find nearby hospitals')}
-                  </p>
-                </Card>
-              ) : filteredHospitals.length === 0 ? (
-                <Card className="p-8 text-center glass">
-                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-600" />
-                  <h3 className="text-lg font-semibold mb-2">{t('hospitals.no_match', 'No matches found')}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Try adjusting your search query
-                  </p>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground px-2 font-semibold">
-                    {t('hospitals.showing', 'Showing')} {filteredHospitals.length} {t('hospitals.hospitals', 'hospitals')}
-                  </p>
-                  {filteredHospitals.map((hospital, index) => (
-                    <Card
-                      key={index}
-                      className={`p-4 cursor-pointer transition-all hover:shadow-lg glass ${
-                        selectedHospital?.name === hospital.name
-                          ? 'border-primary border-2 bg-primary/5'
-                          : 'hover:border-primary/50'
-                      }`}
-                      onClick={() => {
-                        setSelectedHospital(hospital);
-                        setActiveMarker(hospital.name);
-                        setMapCenter({
-                          lat: hospital.latitude,
-                          lng: hospital.longitude,
-                        });
-                      }}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-sm leading-tight line-clamp-2">{hospital.name}</h3>
-                          </div>
-                          {hospital.rating > 0 && (
-                            <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded text-xs flex-shrink-0">
-                              <Star className="h-3 w-3 fill-primary text-primary" />
-                              <span className="font-semibold">{hospital.rating}</span>
+                {/* Full Width Map */}
+                <div className="w-full h-[300px] lg:h-[384px]">
+                  {apiKey ? (
+                    <LoadScript googleMapsApiKey={apiKey}>
+                      <GoogleMap
+                        mapContainerStyle={{ width: '100%', height: '100%', borderRadius: '12px' }}
+                        center={mapCenter}
+                        zoom={12}
+                        mapTypeId="satellite"
+                        options={{
+                          styles: [
+                            {
+                              featureType: 'poi',
+                              elementType: 'labels',
+                              stylers: [{ visibility: 'off' }],
+                            },
+                          ],
+                        }}
+                      >
+                        {userLocation && (
+                          <Marker
+                            position={{ lat: userLocation.lat, lng: userLocation.lng }}
+                            title="Your Location"
+                            icon="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                          />
+                        )}
+                        {filteredHospitals.map((hospital, index) => (
+                          <Marker
+                            key={index}
+                            position={{ lat: hospital.latitude, lng: hospital.longitude }}
+                            title={hospital.name}
+                            onClick={() => {
+                              setSelectedHospital(hospital);
+                              setActiveMarker(hospital.name);
+                            }}
+                            icon={{
+                              path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
+                              fillColor: selectedHospital?.name === hospital.name ? '#ef4444' : '#3b82f6',
+                              fillOpacity: 1,
+                              strokeColor: '#fff',
+                              strokeWeight: 2,
+                              scale: 2,
+                            }}
+                          />
+                        ))}
+                        {selectedHospital && activeMarker === selectedHospital.name && (
+                          <InfoWindow
+                            position={{ lat: selectedHospital.latitude, lng: selectedHospital.longitude }}
+                            onCloseClick={() => {
+                              setSelectedHospital(null);
+                              setActiveMarker(null);
+                            }}
+                          >
+                            <div className="text-sm w-64 p-2">
+                              <h3 className="font-bold text-base mb-2">{selectedHospital.name}</h3>
+                              <p className="text-xs text-gray-600 mb-2 flex items-start gap-1">
+                                <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                {selectedHospital.address}
+                              </p>
+                              {userLocation && (
+                                <p className="text-xs font-semibold mb-2 text-blue-600">
+                                  {calculateDistance(selectedHospital.latitude, selectedHospital.longitude)} km away
+                                </p>
+                              )}
+                              {selectedHospital.rating > 0 && (
+                                <div className="flex items-center gap-1 mb-2">
+                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs font-semibold">{selectedHospital.rating}</span>
+                                </div>
+                              )}
+                              {selectedHospital.open_now !== undefined && (
+                                <p className={`text-xs font-semibold mb-2 ${selectedHospital.open_now ? 'text-green-600' : 'text-red-600'}`}>
+                                  {selectedHospital.open_now ? 'Open Now' : 'Closed'}
+                                </p>
+                              )}
+                              <Button size="sm" className="w-full text-xs" onClick={() => getDirections(selectedHospital)}>
+                                Get Directions
+                              </Button>
                             </div>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-muted-foreground flex items-start gap-1">
-                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                          <span className="line-clamp-2">{hospital.address}</span>
-                        </p>
-
-                        <div className="flex flex-col gap-1 pt-1">
-                          {userLocation && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Navigation className="h-3 w-3" />
-                              <span className="font-medium">{calculateDistance(hospital.latitude, hospital.longitude)} km away</span>
-                            </div>
-                          )}
-                          {hospital.open_now !== undefined && (
-                            <div className="flex items-center gap-1 text-xs">
-                              <Clock className="h-3 w-3" />
-                              <span
-                                className={hospital.open_now ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}
-                              >
-                                {hospital.open_now ? t('hospitals.open_now', 'Open Now') : t('hospitals.closed', 'Closed')}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            getDirections(hospital);
-                          }}
-                          size="sm"
-                          className="w-full text-xs h-8 mt-2"
-                        >
-                          <Navigation className="h-3 w-3 mr-1" />
-                          {t('hospitals.get_directions', 'Directions')}
-                        </Button>
+                          </InfoWindow>
+                        )}
+                      </GoogleMap>
+                    </LoadScript>
+                  ) : (
+                    <Card className="h-full flex items-center justify-center glass">
+                      <div className="text-center">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+                        <p className="text-muted-foreground">Google Maps API Key not configured</p>
                       </div>
                     </Card>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Right Side - Map */}
-          <div className="hidden lg:flex lg:col-span-3 h-full">
-            {apiKey ? (
-              <LoadScript googleMapsApiKey={apiKey}>
-                <GoogleMap
-                  mapContainerStyle={mapContainerStyle}
-                  center={mapCenter}
-                  zoom={12}
-                  options={{
-                    styles: [
-                      {
-                        featureType: 'poi',
-                        elementType: 'labels',
-                        stylers: [{ visibility: 'off' }],
-                      },
-                    ],
-                  }}
+                {/* Location Action */}
+                <Button
+                  onClick={handleCurrentLocation}
+                  disabled={loading}
+                  className="w-full text-xs lg:text-sm h-9 lg:h-10"
+                  size="sm"
                 >
-                  {/* User Location Marker */}
-                  {userLocation && (
-                    <Marker
-                      position={{
-                        lat: userLocation.lat,
-                        lng: userLocation.lng,
-                      }}
-                      title="Your Location"
-                      icon="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                    />
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('hospitals.searching', 'Searching...')}
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="h-4 w-4 mr-2" />
+                      {t('hospitals.use_location', 'Use My Location')}
+                    </>
                   )}
+                </Button>
 
-                  {/* Hospital Markers */}
-                  {filteredHospitals.map((hospital, index) => (
-                    <Marker
-                      key={index}
-                      position={{
-                        lat: hospital.latitude,
-                        lng: hospital.longitude,
-                      }}
-                      title={hospital.name}
-                      onClick={() => {
-                        setSelectedHospital(hospital);
-                        setActiveMarker(hospital.name);
-                      }}
-                      icon={{
-                        path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z',
-                        fillColor: selectedHospital?.name === hospital.name ? '#ef4444' : '#3b82f6',
-                        fillOpacity: 1,
-                        strokeColor: '#fff',
-                        strokeWeight: 2,
-                        scale: 2,
-                      }}
+                {/* Results Section */}
+                {hospitals.length > 0 && (
+                  <div className="flex flex-col gap-4">
+                    <Input
+                      placeholder={t('hospitals.search_placeholder', 'Search hospitals...')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                  ))}
 
-                  {/* Info Window for selected hospital */}
-                  {selectedHospital && activeMarker === selectedHospital.name && (
-                    <InfoWindow
-                      position={{
-                        lat: selectedHospital.latitude,
-                        lng: selectedHospital.longitude,
-                      }}
-                      onCloseClick={() => {
-                        setSelectedHospital(null);
-                        setActiveMarker(null);
-                      }}
-                    >
-                      <div className="text-sm w-64 p-2">
-                        <h3 className="font-bold text-base mb-2">{selectedHospital.name}</h3>
-                        <p className="text-xs text-gray-600 mb-2 flex items-start gap-1">
-                          <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                          {selectedHospital.address}
+                    {filteredHospitals.length === 0 ? (
+                      <Card className="p-8 text-center glass">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-4 text-yellow-600" />
+                        <h3 className="text-lg font-semibold mb-2">{t('hospitals.no_match', 'No matches found')}</h3>
+                        <p className="text-sm text-muted-foreground">Try adjusting your search query</p>
+                      </Card>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground px-2 font-semibold">
+                          {t('hospitals.showing', 'Showing')} {filteredHospitals.length} {t('hospitals.hospitals', 'hospitals')}
                         </p>
-                        {userLocation && (
-                          <p className="text-xs font-semibold mb-2 text-blue-600">
-                            {calculateDistance(selectedHospital.latitude, selectedHospital.longitude)} km away
-                          </p>
-                        )}
-                        {selectedHospital.rating > 0 && (
-                          <div className="flex items-center gap-1 mb-2">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs font-semibold">{selectedHospital.rating}</span>
-                          </div>
-                        )}
-                        {selectedHospital.open_now !== undefined && (
-                          <p
-                            className={`text-xs font-semibold mb-2 ${
-                              selectedHospital.open_now ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {selectedHospital.open_now ? 'Open Now' : 'Closed'}
-                          </p>
-                        )}
-                        <Button
-                          size="sm"
-                          className="w-full text-xs"
-                          onClick={() => getDirections(selectedHospital)}
-                        >
-                          Get Directions
-                        </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                          {filteredHospitals.map((hospital, index) => (
+                            <Card
+                              key={index}
+                              className={`p-4 cursor-pointer transition-all hover:shadow-lg glass ${selectedHospital?.name === hospital.name
+                                ? 'border-primary border-2 bg-primary/5'
+                                : 'hover:border-primary/50'
+                                }`}
+                              onClick={() => {
+                                setSelectedHospital(hospital);
+                                setActiveMarker(hospital.name);
+                                setMapCenter({ lat: hospital.latitude, lng: hospital.longitude });
+                              }}
+                            >
+                              <div className="space-y-2 h-full flex flex-col justify-between">
+                                <div>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <h3 className="font-semibold text-sm leading-tight line-clamp-2">{hospital.name}</h3>
+                                    </div>
+                                    {hospital.rating > 0 && (
+                                      <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded text-xs flex-shrink-0">
+                                        <Star className="h-3 w-3 fill-primary text-primary" />
+                                        <span className="font-semibold">{hospital.rating}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground flex items-start gap-1 mt-2">
+                                    <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                    <span className="line-clamp-2">{hospital.address}</span>
+                                  </p>
+                                  <div className="flex flex-col gap-1 pt-2">
+                                    {userLocation && (
+                                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                        <Navigation className="h-3 w-3" />
+                                        <span className="font-medium">{calculateDistance(hospital.latitude, hospital.longitude)} km away</span>
+                                      </div>
+                                    )}
+                                    {hospital.open_now !== undefined && (
+                                      <div className="flex items-center gap-1 text-xs">
+                                        <Clock className="h-3 w-3" />
+                                        <span className={hospital.open_now ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                                          {hospital.open_now ? t('hospitals.open_now', 'Open Now') : t('hospitals.closed', 'Closed')}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    getDirections(hospital);
+                                  }}
+                                  size="sm"
+                                  className="w-full text-xs h-8 mt-4"
+                                >
+                                  <Navigation className="h-3 w-3 mr-1" />
+                                  {t('hospitals.get_directions', 'Directions')}
+                                </Button>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
                       </div>
-                    </InfoWindow>
-                  )}
-                </GoogleMap>
-              </LoadScript>
-            ) : (
-              <Card className="h-full flex items-center justify-center glass">
-                <div className="text-center">
-                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
-                  <p className="text-muted-foreground">Google Maps API Key not configured</p>
-                </div>
-              </Card>
-            )}
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
           </div>
         </div>
       </div>

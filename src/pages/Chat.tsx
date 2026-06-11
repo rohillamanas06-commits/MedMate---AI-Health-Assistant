@@ -97,7 +97,7 @@ export default function Chat() {
         timestamp: new Date(response.timestamp),
       };
       setMessages((prev) => [...prev, aiMessage]);
-      
+
       // Update credits after successful message
       if (response.remaining_credits !== undefined) {
         updateCredits(response.remaining_credits);
@@ -157,103 +157,106 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
-      <div className="container max-w-5xl">
-        <div className="mb-6 animate-slide-up">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2 theme-title">{t('chat.title', 'AI Medical Assistant')}</h1>
-            <p className="text-muted-foreground">{t('chat.subtitle', 'Ask me anything about your health concerns')}</p>
-          </div>
+    <div className="min-h-screen bg-transparent py-4 sm:py-8">
+      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
+            {t('chat.title', 'AI Medical Assistant')}
+          </h1>
+          <p className="text-muted-foreground text-sm lg:text-lg">
+            {t('chat.subtitle', 'Ask me anything about your health concerns')}
+          </p>
         </div>
 
-        <Card className="glass overflow-hidden animate-fade-in" style={{ height: 'calc(100vh - 250px)' }}>
-          <div className="flex flex-col h-full">
-            <ScrollArea className="flex-1 p-6">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Bot className="h-24 w-24 text-muted-foreground opacity-30 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">{t('chat.start_conversation', 'Start a Conversation')}</h3>
-                  <p className="text-muted-foreground max-w-md">
-                    {t('chat.greeting', 'Hi')} {user?.username}! {t('chat.greeting_desc', "I'm your AI medical assistant. Ask me about symptoms, medications, or general health advice.")}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((message, index) => (
-                    <div
-                      key={message.id}
-                      className={`flex gap-3 animate-fade-in ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      <Avatar className={`h-10 w-10 flex-shrink-0 ${message.sender === 'user' ? 'bg-gradient-to-br from-primary to-accent' : 'bg-gradient-to-br from-secondary to-accent'}`}>
-                        <div className="flex items-center justify-center h-full w-full text-white">
-                          {message.sender === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-                        </div>
-                      </Avatar>
-                      <div className={`flex-1 max-w-[80%] ${message.sender === 'user' ? 'text-right' : ''}`}>
-                        <Card className={`p-4 relative transition-all duration-300 ${message.sender === 'user' ? 'bg-transparent border-0 shadow-sm hover:shadow-lg hover:bg-gradient-to-r hover:from-primary/10 hover:via-accent/10 hover:to-primary/10' : 'bg-muted border-border/50'}`}>
-                          {message.sender === 'user' && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none"></div>
-                          )}
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap relative z-10">{message.content}</p>
-                        </Card>
-                        <div className="flex items-center gap-2 mt-1 px-1">
-                          <span className="text-xs text-muted-foreground">{message.timestamp.toLocaleTimeString()}</span>
-                          {message.sender === 'ai' && (
-                            <Button
-                              variant="ghost" size="sm"
-                              className={`h-6 px-2 ${playingMessageId === message.id ? 'text-primary animate-pulse' : ''}`}
-                              onClick={() => speakText(message.content, message.id)}
-                            >
-                              <Volume2 className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
+        {/* Main Layout */}
+        <div className="flex flex-col gap-6">
+          <div className="w-full flex flex-col gap-3 lg:gap-4">
+            <Card className="glass overflow-hidden animate-fade-in w-full" style={{ height: 'calc(100vh - 250px)' }}>
+              <div className="flex flex-col h-full">
+                <ScrollArea className="flex-1 p-6">
+                  {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-start pt-8 text-center h-full">
+                      <h3 className="text-xl font-semibold mb-2">{t('chat.start_conversation', 'Start a Conversation')}</h3>
+                      <p className="text-muted-foreground max-w-md">
+                        {t('chat.greeting', 'Hi')} {user?.username}! {t('chat.greeting_desc', "I'm your AI medical assistant. Ask me about symptoms, medications, or general health advice.")}
+                      </p>
                     </div>
-                  ))}
-                  {loading && (
-                    <div className="flex gap-3 animate-fade-in">
-                      <Avatar className="h-10 w-10 bg-gradient-to-br from-secondary to-accent">
-                        <div className="flex items-center justify-center h-full w-full text-white"><Bot className="h-5 w-5" /></div>
-                      </Avatar>
-                      <Card className="p-4 bg-muted">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">{t('chat.thinking', 'Thinking...')}</span>
+                  ) : (
+                    <div className="space-y-4">
+                      {messages.map((message, index) => (
+                        <div
+                          key={message.id}
+                          className={`flex gap-3 animate-fade-in ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}
+                          style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                          <Avatar className={`h-10 w-10 flex-shrink-0 ${message.sender === 'user' ? 'bg-gradient-to-br from-primary to-accent' : 'bg-gradient-to-br from-secondary to-accent'}`}>
+                            <div className="flex items-center justify-center h-full w-full text-white">
+                              {message.sender === 'user' ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+                            </div>
+                          </Avatar>
+                          <div className={`flex-1 max-w-[80%] ${message.sender === 'user' ? 'text-right' : ''}`}>
+                            <Card className={`p-4 relative transition-all duration-300 ${message.sender === 'user' ? 'bg-transparent border-0 shadow-sm' : 'bg-muted border-border/50'}`}>
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap relative z-10">{message.content}</p>
+                            </Card>
+                            <div className="flex items-center gap-2 mt-1 px-1">
+                              <span className="text-xs text-muted-foreground">{message.timestamp.toLocaleTimeString()}</span>
+                              {message.sender === 'ai' && (
+                                <Button
+                                  variant="ghost" size="sm"
+                                  className={`h-6 px-2 ${playingMessageId === message.id ? 'text-primary animate-pulse' : ''}`}
+                                  onClick={() => speakText(message.content, message.id)}
+                                >
+                                  <Volume2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </Card>
+                      ))}
+                      {loading && (
+                        <div className="flex gap-3 animate-fade-in">
+                          <Avatar className="h-10 w-10 bg-gradient-to-br from-secondary to-accent">
+                            <div className="flex items-center justify-center h-full w-full text-white"><Bot className="h-5 w-5" /></div>
+                          </Avatar>
+                          <Card className="p-4 bg-muted">
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm">{t('chat.thinking', 'Thinking...')}</span>
+                            </div>
+                          </Card>
+                        </div>
+                      )}
+                      <div ref={scrollRef} />
                     </div>
                   )}
-                  <div ref={scrollRef} />
+                </ScrollArea>
+
+                <div className="border-t bg-background/50 p-4">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="icon" onClick={startVoiceRecognition} disabled={isListening || loading || !hasCredits}>
+                      <Mic className={`h-4 w-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
+                    </Button>
+                    <Input
+                      placeholder={hasCredits ? t('chat.placeholder', 'Type your message...') : 'You have 0 credits. Please purchase more.'}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      disabled={loading || !hasCredits}
+                      className="flex-1"
+                    />
+                    <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleSend} disabled={loading || (!input.trim() && hasCredits)} className={!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hasCredits ? <AlertCircle className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-center gap-4 mt-2">
+                    <p className="text-xs text-muted-foreground">{t('chat.enter_to_send', 'Press Enter to send • Shift+Enter for new line')}</p>
+                  </div>
+
                 </div>
-              )}
-            </ScrollArea>
-
-            <div className="border-t bg-background/50 p-4">
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={startVoiceRecognition} disabled={isListening || loading || !hasCredits}>
-                  <Mic className={`h-4 w-4 ${isListening ? 'text-destructive animate-pulse' : ''}`} />
-                </Button>
-                <Input
-                  placeholder={hasCredits ? t('chat.placeholder', 'Type your message...') : 'You have 0 credits. Please purchase more.'}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={loading || !hasCredits}
-                  className="flex-1"
-                />
-                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleSend} disabled={loading || (!input.trim() && hasCredits)} className={!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : !hasCredits ? <AlertCircle className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-                </Button>
               </div>
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-xs text-muted-foreground">{t('chat.enter_to_send', 'Press Enter to send • Shift+Enter for new line')}</p>
-              </div>
-
-            </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       </div>
       <BuyCreditsModal
         isOpen={showBuyCredits}

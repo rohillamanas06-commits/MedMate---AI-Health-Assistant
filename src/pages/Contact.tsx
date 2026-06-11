@@ -41,31 +41,8 @@ export default function Contact() {
   return (
     <div className="min-h-screen flex flex-col">
       <section className="py-16 lg:py-24 flex-1">
-        <div className="container">
-          <div className="grid lg:grid-cols-5 gap-12 items-start">
-            <div className="lg:col-span-2 space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{t('contact.lets_talk', "Let's talk")}</h2>
-                <p className="text-muted-foreground">{t('contact.team_help', 'Our team is here to help you with any questions about MedMate.')}</p>
-              </div>
-              <div className="space-y-4">
-                {contactInfo.map((item) => (
-                  <Card key={item.label} className="p-4 flex items-center gap-4 hover-lift">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">{item.icon}</div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{item.label}</p>
-                      {item.href ? (
-                        <a href={item.href} className="font-medium hover:text-primary transition-colors">{item.value}</a>
-                      ) : (
-                        <p className="font-medium">{item.value}</p>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            <Card className="lg:col-span-3 p-8 space-y-6">
+        <div className="container max-w-4xl mx-auto">
+            <Card className="p-8 space-y-6 w-full">
               <h2 className="text-2xl font-bold">{t('contact.send_message', 'Send a message')}</h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -88,12 +65,11 @@ export default function Contact() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? t('contact.sending', 'Sending...') : (
-                    <>{t('contact.send', 'Send Message')} <Send className="ml-2 h-4 w-4" /></>
+                    <>{t('contact.send', 'Send Message')}</>
                   )}
                 </Button>
               </form>
             </Card>
-          </div>
         </div>
       </section>
     </div>

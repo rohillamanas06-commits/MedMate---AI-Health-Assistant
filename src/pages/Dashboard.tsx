@@ -128,8 +128,8 @@ export default function Dashboard() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background py-8">
-      <div className="container max-w-7xl">
+      <div className="min-h-screen bg-transparent py-8">
+      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
         {/* Welcome Header with Credits */}
         <div className="mb-8 animate-slide-up relative">
           <div className="flex items-center justify-between">
