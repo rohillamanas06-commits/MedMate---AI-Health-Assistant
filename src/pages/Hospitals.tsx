@@ -244,7 +244,6 @@ export default function Hospitals() {
                     </>
                   ) : (
                     <>
-                      <Navigation className="h-4 w-4 mr-2" />
                       {t('hospitals.use_location', 'Use My Location')}
                     </>
                   )}
