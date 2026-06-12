@@ -16,11 +16,13 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { BuyCreditsModal } from '@/components/BuyCreditsModal';
 
 export default function HandwritingAnalyzer() {
   const { user, updateCredits, checkAuth } = useAuth();
   const { t } = useTranslation();
+  const { currentLanguage } = useLanguage();
   const hasCredits = (user?.credits ?? 0) > 0;
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -74,7 +76,7 @@ export default function HandwritingAnalyzer() {
     setResult(null);
 
     try {
-      const response: any = await api.analyzeHandwriting(selectedImage);
+      const response: any = await api.analyzeHandwriting(selectedImage, currentLanguage);
       setResult(response.result);
       toast.success(t('features.prescription_complete') || 'Prescription analysis complete!');
 
@@ -187,50 +189,50 @@ export default function HandwritingAnalyzer() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                     {/* Left Column */}
                     <div className="space-y-4">
-                    {/* Extracted Text */}
-                    {result.extracted_text && (
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm lg:text-base">{t('features.extracted_text') || 'Extracted Text'}</h3>
-                        <div className="bg-muted/50 p-3 lg:p-4 rounded-lg border border-border/50 max-h-[200px] overflow-y-auto">
-                          <p className="text-xs lg:text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
-                            {result.extracted_text}
-                          </p>
+                      {/* Extracted Text */}
+                      {result.extracted_text && (
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm lg:text-base">{t('features.extracted_text') || 'Extracted Text'}</h3>
+                          <div className="bg-muted/50 p-3 lg:p-4 rounded-lg border border-border/50 max-h-[200px] overflow-y-auto">
+                            <p className="text-xs lg:text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">
+                              {result.extracted_text}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Medical Terms */}
-                    {result.medical_terms && result.medical_terms.length > 0 && (
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm lg:text-base">{t('features.medical_terms') || 'Medical Terms'}</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {result.medical_terms.map((term: string, idx: number) => (
-                            <span key={idx} className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2.5 py-1 rounded-full text-xs lg:text-sm font-medium">{term}</span>
-                          ))}
+                      {/* Medical Terms */}
+                      {result.medical_terms && result.medical_terms.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm lg:text-base">{t('features.medical_terms') || 'Medical Terms'}</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {result.medical_terms.map((term: string, idx: number) => (
+                              <span key={idx} className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2.5 py-1 rounded-full text-xs lg:text-sm font-medium">{term}</span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* AI Explanation */}
-                    {result.explanation && (
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm lg:text-base">{t('features.ai_explanation') || 'AI Explanation'}</h3>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 lg:p-4 rounded-lg">
-                          <p className="text-xs lg:text-sm text-foreground/80 leading-relaxed">{result.explanation}</p>
+                      {/* AI Explanation */}
+                      {result.explanation && (
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm lg:text-base">{t('features.ai_explanation') || 'AI Explanation'}</h3>
+                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 lg:p-4 rounded-lg">
+                            <p className="text-xs lg:text-sm text-foreground/80 leading-relaxed">{result.explanation}</p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Confidence Score */}
-                    {result.confidence_score !== undefined && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <h3 className="font-semibold text-sm lg:text-base">{t('features.confidence') || 'Confidence'}</h3>
-                          <span className="text-xs lg:text-sm text-muted-foreground">{(result.confidence_score * 100).toFixed(1)}%</span>
+                      {/* Confidence Score */}
+                      {result.confidence_score !== undefined && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <h3 className="font-semibold text-sm lg:text-base">{t('features.confidence') || 'Confidence'}</h3>
+                            <span className="text-xs lg:text-sm text-muted-foreground">{(result.confidence_score * 100).toFixed(1)}%</span>
+                          </div>
+                          <Progress value={result.confidence_score * 100} className="h-2" />
                         </div>
-                        <Progress value={result.confidence_score * 100} className="h-2" />
-                      </div>
-                    )}
+                      )}
 
                     </div>
                     {/* Right Column */}

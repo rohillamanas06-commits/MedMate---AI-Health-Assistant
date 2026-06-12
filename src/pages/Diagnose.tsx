@@ -85,7 +85,7 @@ export default function Diagnose() {
 
     try {
       // For now, analyze the first image (backend needs update for multiple)
-      const response: any = await api.diagnoseImage(selectedImages[0], symptoms);
+      const response: any = await api.diagnoseImage(selectedImages[0], symptoms, currentLanguage);
       setResult(response.result);
       toast.success(`Image analysis complete! (${selectedImages.length} image${selectedImages.length > 1 ? 's' : ''} uploaded)`);
 

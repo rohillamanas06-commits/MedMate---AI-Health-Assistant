@@ -274,7 +274,7 @@ export default function History() {
                             </div>
                             <div className="flex items-center gap-1 ml-2 flex-shrink min-w-0">
                               {/* View Results toggle — show if there is any result data */}
-                              {(diagnosis.result?.diseases?.length > 0 || diagnosis.result?.conditions?.length > 0 || diagnosis.result?.observation || diagnosis.result?.analysis || diagnosis.image_url) && (
+                              {(diagnosis.result?.diseases?.length > 0 || diagnosis.result?.conditions?.length > 0 || diagnosis.result?.observation || diagnosis.result?.analysis || diagnosis.image_url || diagnosis.result?.general_advice) && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -289,7 +289,7 @@ export default function History() {
                                 </Button>
                               )}
                               {/* Mobile icon button for View Results */}
-                              {(diagnosis.result?.diseases?.length > 0 || diagnosis.result?.conditions?.length > 0 || diagnosis.result?.observation || diagnosis.result?.analysis || diagnosis.image_url) && (
+                              {(diagnosis.result?.diseases?.length > 0 || diagnosis.result?.conditions?.length > 0 || diagnosis.result?.observation || diagnosis.result?.analysis || diagnosis.image_url || diagnosis.result?.general_advice) && (
                                 <Button
                                   variant="outline"
                                   size="icon"
@@ -337,9 +337,11 @@ export default function History() {
                                   <Progress value={d.confidence} />
                                 </div>
                               ))}
-                              {/* observation preview */}
-                              {diagnosis.result?.observation && (
-                                <p className="text-xs text-muted-foreground italic truncate">{diagnosis.result.observation}</p>
+                              {/* observation/general advice preview */}
+                              {(diagnosis.result?.observation || diagnosis.result?.general_advice) && (
+                                <p className="text-xs text-muted-foreground italic line-clamp-2 break-words">
+                                  {diagnosis.result.observation || diagnosis.result.general_advice}
+                                </p>
                               )}
                             </div>
                           )}
@@ -366,12 +368,14 @@ export default function History() {
                                 </div>
                               )}
 
-                              {/* IMAGE ANALYSIS: observation */}
-                              {diagnosis.result?.observation && (
+                              {/* IMAGE/TEXT ANALYSIS: observation or general advice */}
+                              {(diagnosis.result?.observation || diagnosis.result?.general_advice) && (
                                 <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                                  <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2 text-sm">🔍 Image Observation</h4>
-                                  <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {diagnosis.result.observation}
+                                  <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2 text-sm">
+                                    {diagnosis.result?.observation ? "🔍 Image Observation" : "💡 General Advice"}
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">
+                                    {diagnosis.result.observation || diagnosis.result.general_advice}
                                   </p>
                                 </div>
                               )}
@@ -428,7 +432,7 @@ export default function History() {
                               {diagnosis.result?.analysis && (
                                 <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
                                   <h4 className="font-semibold text-primary mb-2 text-sm">📋 AI Analysis</h4>
-                                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                                     {diagnosis.result.analysis}
                                   </p>
                                 </div>
@@ -438,7 +442,7 @@ export default function History() {
                               {diagnosis.result?.recommendation && (
                                 <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                                   <h4 className="font-semibold text-yellow-700 dark:text-yellow-400 text-sm mb-1">⚠️ Recommendation</h4>
-                                  <p className="text-sm text-yellow-600 dark:text-yellow-300">{diagnosis.result.recommendation}</p>
+                                  <p className="text-sm text-yellow-600 dark:text-yellow-300 break-words whitespace-pre-wrap">{diagnosis.result.recommendation}</p>
                                 </div>
                               )}
                             </div>

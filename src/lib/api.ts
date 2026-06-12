@@ -122,10 +122,11 @@ class ApiClient {
     }, 60000); // 60 second timeout for diagnosis
   }
 
-  async diagnoseImage(image: File, symptoms?: string) {
+  async diagnoseImage(image: File, symptoms?: string, language: string = 'en') {
     const formData = new FormData();
     formData.append('image', image);
     if (symptoms) formData.append('symptoms', symptoms);
+    formData.append('language', language);
 
     // Use longer timeout for image analysis
     const controller = new AbortController();
@@ -195,9 +196,10 @@ class ApiClient {
     }
   }
 
-  async analyzeHandwriting(image: File) {
+  async analyzeHandwriting(image: File, language: string = 'en') {
     const formData = new FormData();
     formData.append('image', image);
+    formData.append('language', language);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout for handwriting analysis

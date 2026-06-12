@@ -835,18 +835,319 @@ def speak_text(text):
 
 # ==================== AI FUNCTIONS ====================
 
+# ---- Multi-language support helpers ----
+
+# Shared language name map used across Diagnose, Chat, and Report Explainer
+LANG_NAMES = {
+    'en': 'English',
+    'hi': 'Hindi',
+    'bn': 'Bengali',
+    'pa': 'Punjabi',
+    'ml': 'Malayalam',
+    'kn': 'Kannada'
+}
+
+# Unicode script ranges used to verify that AI output is actually written
+# in the requested language's script (not just instructed to be).
+LANG_SCRIPT_RANGES = {
+    'hi': [(0x0900, 0x097F)],   # Devanagari
+    'bn': [(0x0980, 0x09FF)],   # Bengali
+    'pa': [(0x0A00, 0x0A7F)],   # Gurmukhi
+    'ml': [(0x0D00, 0x0D7F)],   # Malayalam
+    'kn': [(0x0C80, 0x0CFF)],   # Kannada
+    # English (and the fallback) is Latin script — no special check needed
+}
+
+
+def _text_in_target_script(text, language):
+    """
+    Check whether `text` contains characters from the Unicode script
+    expected for `language`. For English (or unrecognized languages),
+    always returns True (no script check needed).
+
+    This is a lightweight heuristic: if the target language has its own
+    script (Hindi, Bengali, Punjabi, Malayalam, Kannada) and the text
+    contains essentially none of those characters, it's a strong signal
+    that the AI responded in English instead of the requested language.
+    """
+    if language not in LANG_SCRIPT_RANGES:
+        return True  # English / unknown -> nothing to verify
+
+    if not text:
+        return True  # empty text can't fail the check
+
+    ranges = LANG_SCRIPT_RANGES[language]
+    for ch in text:
+        code = ord(ch)
+        for start, end in ranges:
+            if start <= code <= end:
+                return True
+    return False
+
+
+def _collect_text_values(obj):
+    """
+    Recursively collect all string values from a JSON-like structure
+    (dicts/lists/strings) for language verification.
+    """
+    texts = []
+    if isinstance(obj, dict):
+        for v in obj.values():
+            texts.extend(_collect_text_values(v))
+    elif isinstance(obj, list):
+        for item in obj:
+            texts.extend(_collect_text_values(item))
+    elif isinstance(obj, str):
+        texts.append(obj)
+    return texts
+
+
+def response_needs_translation(result, language):
+    """
+    Decide whether a Gemini JSON response actually needs a translation
+    fallback pass. Returns True if the target language has its own script
+    and the combined text content shows essentially no characters from
+    that script (i.e., Gemini likely answered in English despite
+    instructions).
+    """
+    if language not in LANG_SCRIPT_RANGES:
+        return False  # English target -> no translation needed
+
+    texts = _collect_text_values(result)
+    combined = " ".join(texts)
+
+    # If there's barely any text to check, don't bother translating
+    if len(combined.strip()) < 3:
+        return False
+
+    return not _text_in_target_script(combined, language)
+
+
+def translate_json_result(result, language, timeout=30):
+    """
+    Fallback translation pass: ask Gemini to translate all text VALUES
+    of a JSON object into the target language, keeping keys, numbers,
+    and structure unchanged. Returns the translated dict, or the original
+    `result` unchanged if translation fails for any reason.
+    """
+    lang_name = LANG_NAMES.get(language, 'English')
+
+    if not gemini_model:
+        return result
+
+    translation_prompt = f"""Translate all text VALUES in the following JSON object into {lang_name} 
+(using {lang_name} script). 
+
+Rules:
+- Keep all JSON keys exactly as they are (do not translate keys).
+- Keep all numbers, booleans, and structure exactly unchanged.
+- Translate every string value, including names, explanations, advice, and disclaimers.
+- Return ONLY the translated JSON object, with no extra text or markdown formatting.
+
+JSON:
+{json.dumps(result, ensure_ascii=False)}"""
+
+    try:
+        import threading
+        result_container = {'data': None, 'error': None}
+
+        def call_gemini():
+            try:
+                response = gemini_model.generate_content(translation_prompt)
+                result_text = response.text
+                if '```json' in result_text:
+                    result_text = result_text.split('```json')[1].split('```')[0].strip()
+                elif '```' in result_text:
+                    result_text = result_text.split('```')[1].split('```')[0].strip()
+                result_container['data'] = json.loads(result_text)
+            except Exception as e:
+                result_container['error'] = e
+
+        thread = threading.Thread(target=call_gemini)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=timeout)
+
+        if thread.is_alive():
+            print(f"⏰ Translation fallback timed out after {timeout}s — returning original response")
+            return result
+
+        if result_container['error']:
+            print(f"⚠️ Translation fallback error: {result_container['error']} — returning original response")
+            return result
+
+        if result_container['data']:
+            print(f"✅ Translation fallback succeeded ({lang_name})")
+            return result_container['data']
+
+    except Exception as e:
+        print(f"⚠️ Translation fallback unexpected error: {e} — returning original response")
+
+    return result
+
+
+def translate_text_result(text, language, timeout=20):
+    """
+    Fallback translation pass for plain-text (non-JSON) AI responses,
+    e.g. the Chat assistant. Returns the translated text, or the
+    original `text` unchanged if translation fails for any reason.
+    """
+    lang_name = LANG_NAMES.get(language, 'English')
+
+    if not gemini_model:
+        return text
+
+    if language not in LANG_SCRIPT_RANGES:
+        return text  # English target -> nothing to do
+
+    if not text or _text_in_target_script(text, language):
+        return text  # already looks correct, or nothing to check
+
+    translation_prompt = f"""Translate the following text into {lang_name} (using {lang_name} script). 
+Keep the meaning, tone, and any formatting (like line breaks) the same. 
+Return ONLY the translated text, with no extra commentary.
+
+Text:
+{text}"""
+
+    try:
+        import threading
+        result_container = {'data': None, 'error': None}
+
+        def call_gemini():
+            try:
+                response = gemini_model.generate_content(translation_prompt)
+                result_container['data'] = response.text
+            except Exception as e:
+                result_container['error'] = e
+
+        thread = threading.Thread(target=call_gemini)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=timeout)
+
+        if thread.is_alive():
+            print(f"⏰ Chat translation fallback timed out after {timeout}s — returning original response")
+            return text
+
+        if result_container['error']:
+            print(f"⚠️ Chat translation fallback error: {result_container['error']} — returning original response")
+            return text
+
+        if result_container['data']:
+            print(f"✅ Chat translation fallback succeeded ({lang_name})")
+            return result_container['data']
+
+    except Exception as e:
+        print(f"⚠️ Chat translation fallback unexpected error: {e} — returning original response")
+
+    return text
+
+
+def translate_result_fields(result, fields, language, timeout=30):
+    """
+    Fallback translation pass for a SUBSET of fields in a result dict —
+    used when some fields (e.g. extracted OCR text, drug names/medical_terms)
+    must be preserved as-is, while other fields (e.g. explanation,
+    interpretation, recommendations) should be translated.
+
+    Only triggers if the combined text in `fields` doesn't already contain
+    characters from the target language's script. Returns a new dict with
+    the same keys; on any failure, returns `result` unchanged.
+    """
+    if language not in LANG_SCRIPT_RANGES:
+        return result  # English target -> nothing to do
+
+    if not gemini_model:
+        return result
+
+    # Build a sub-object containing only the fields to check/translate
+    subset = {k: result.get(k) for k in fields if k in result}
+    texts = _collect_text_values(subset)
+    combined = " ".join(texts)
+
+    if len(combined.strip()) < 3:
+        return result  # nothing meaningful to translate
+
+    if _text_in_target_script(combined, language):
+        return result  # already in target language
+
+    lang_name = LANG_NAMES.get(language, 'English')
+
+    translation_prompt = f"""Translate all text VALUES in the following JSON object into {lang_name} 
+(using {lang_name} script). 
+
+Rules:
+- Keep all JSON keys exactly as they are (do not translate keys).
+- Keep all numbers, booleans, and structure exactly unchanged.
+- Translate every string value naturally.
+- Return ONLY the translated JSON object, with no extra text or markdown formatting.
+
+JSON:
+{json.dumps(subset, ensure_ascii=False)}"""
+
+    try:
+        import threading
+        result_container = {'data': None, 'error': None}
+
+        def call_gemini():
+            try:
+                response = gemini_model.generate_content(translation_prompt)
+                result_text = response.text
+                if '```json' in result_text:
+                    result_text = result_text.split('```json')[1].split('```')[0].strip()
+                elif '```' in result_text:
+                    result_text = result_text.split('```')[1].split('```')[0].strip()
+                result_container['data'] = json.loads(result_text)
+            except Exception as e:
+                result_container['error'] = e
+
+        thread = threading.Thread(target=call_gemini)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=timeout)
+
+        if thread.is_alive():
+            print(f"⏰ Field translation fallback timed out after {timeout}s — returning original response")
+            return result
+
+        if result_container['error']:
+            print(f"⚠️ Field translation fallback error: {result_container['error']} — returning original response")
+            return result
+
+        if result_container['data']:
+            print(f"✅ Field translation fallback succeeded ({lang_name})")
+            updated = dict(result)
+            updated.update(result_container['data'])
+            return updated
+
+    except Exception as e:
+        print(f"⚠️ Field translation fallback unexpected error: {e} — returning original response")
+
+    return result
+
+
 def analyze_symptoms_with_ai(symptoms, language='en'):
     """
     Analyze symptoms using AI (Gemini or OpenAI) to predict possible diseases
     Returns: List of diseases with confidence percentages and solutions
     """
     try:
-        lang_names = {'en':'English','hi':'Hindi','bn':'Bengali','pa':'Punjabi','ml':'Malayalam','kn':'Kannada'}
-        lang_name = lang_names.get(language, 'English')
-        
-        prompt = f"""You are a medical AI assistant.
-IMPORTANT: Respond entirely in {lang_name}.
+        lang_name = LANG_NAMES.get(language, 'English')
 
+        if language == 'en':
+            language_block = ""
+        else:
+            language_block = f"""
+CRITICAL LANGUAGE INSTRUCTION:
+Every text value in your JSON response — including "name" (disease/condition names), 
+"explanation", "solutions", "urgency", "general_advice", and "disclaimer" — MUST be 
+written in {lang_name}, using {lang_name} script. Do NOT respond in English.
+Only the JSON keys themselves stay in English (e.g., "name", "confidence", "solutions").
+"""
+
+        prompt = f"""You are a medical AI assistant.
+{language_block}
 Analyze the following symptoms and provide:
 1. Top 3-5 possible diseases/conditions with confidence percentages (must add up to 100%)
 2. Brief explanation for each
@@ -908,14 +1209,22 @@ Respond in JSON format:
                 
                 if thread.is_alive():
                     print("⏰ Gemini API call timed out after 60s, using fallback")
-                    return get_fallback_diagnosis(symptoms)
+                    return get_fallback_diagnosis("AI service request timed out.")
                 
                 if result_container['error']:
                     raise result_container['error']
                 
                 if result_container['data']:
                     print(f"✓ Gemini diagnosis completed successfully")
-                    return result_container['data']
+                    final_result = result_container['data']
+
+                    # Verify the response is actually in the requested language;
+                    # if not, run a translation fallback pass.
+                    if response_needs_translation(final_result, language):
+                        print(f"⚠️ Diagnosis response not in {LANG_NAMES.get(language)} — running translation fallback")
+                        final_result = translate_json_result(final_result, language)
+
+                    return final_result
                 
             except Exception as e:
                 print(f"❌ Gemini error: {type(e).__name__}: {str(e)}")
@@ -957,7 +1266,7 @@ Respond in JSON format:
                 
                 if thread.is_alive():
                     print("⏰ OpenAI API call timed out, using fallback")
-                    return get_fallback_diagnosis(symptoms)
+                    return get_fallback_diagnosis("AI service request timed out.")
                 
                 if result_container['error']:
                     raise result_container['error']
@@ -971,13 +1280,13 @@ Respond in JSON format:
         
         # If both fail, use fallback
         print("No AI service available - using fallback")
-        return get_fallback_diagnosis(symptoms)
+        return get_fallback_diagnosis("AI service is currently unavailable. Quota exceeded or API error.")
     
     except Exception as e:
         print(f"AI Analysis Error: {e}")
-        return get_fallback_diagnosis(symptoms)
+        return get_fallback_diagnosis(f"AI Analysis failed: {str(e)}")
 
-def analyze_image_with_vision(image_path, symptoms=""):
+def analyze_image_with_vision(image_path, symptoms="", language='en'):
     """
     Analyze medical image using AI Vision (Gemini or OpenAI)
     Returns: Analysis results with possible conditions
@@ -996,10 +1305,23 @@ def analyze_image_with_vision(image_path, symptoms=""):
         # Convert to RGB if needed
         if img.mode != 'RGB':
             img = img.convert('RGB')
-        
+
+        lang_name = LANG_NAMES.get(language, 'English')
+
+        if language == 'en':
+            language_block = ""
+        else:
+            language_block = f"""
+CRITICAL LANGUAGE INSTRUCTION:
+Every text value in your JSON response — including "observation", "conditions" 
+(name + note), "recommendation", and "professional_evaluation" — MUST be written in 
+{lang_name}, using {lang_name} script. Do NOT respond in English.
+Only the JSON keys themselves stay in English (e.g., "observation", "conditions", "name").
+"""
+
         prompt = f"""Analyze this medical image quickly and efficiently. 
 Symptoms provided: {symptoms if symptoms else 'None provided'}
-
+{language_block}
 Provide a concise analysis in JSON format:
 {{
     "observation": "Brief description of what you see",
@@ -1048,27 +1370,34 @@ Keep response concise and focused."""
                 thread.join(timeout=60)
                 
                 if thread.is_alive():
-                    print("⏰ Gemini API call timed out after 60s, using fallback")
-                    return get_fallback_result(symptoms)
+                    print("⏰ Gemini Vision API call timed out, using fallback")
+                    return get_fallback_result("AI image analysis request timed out.")
                 
                 if result_container['error']:
                     raise result_container['error']
                 
                 if result_container['data']:
                     print(f"✓ Gemini image analysis completed successfully")
-                    return result_container['data']
+                    final_result = result_container['data']
+
+                    # Verify the response is actually in the requested language;
+                    # if not, run a translation fallback pass.
+                    if response_needs_translation(final_result, language):
+                        print(f"⚠️ Image analysis response not in {lang_name} — running translation fallback")
+                        final_result = translate_json_result(final_result, language)
+
+                    return final_result
                 
             except Exception as e:
                 print(f"❌ Gemini Vision error: {type(e).__name__}: {str(e)}")
-                print("⚠️ Using fallback result...")
-                return get_fallback_result(symptoms)
+                return get_fallback_result(f"AI image analysis failed: {str(e)}")
         
         # Fallback if no AI model available
-        return get_fallback_result(symptoms)
+        return get_fallback_result("AI Vision service is currently unavailable. Quota exceeded or API error.")
         
     except Exception as e:
         print(f"❌ Image analysis error: {type(e).__name__}: {str(e)}")
-        return get_fallback_result(symptoms)
+        return get_fallback_result(f"Image analysis failed: {str(e)}")
 
 def get_fallback_result(symptoms=""):
     """Provide a fallback result when AI analysis fails"""
@@ -1091,12 +1420,20 @@ def chat_with_assistant(message, chat_history=[], language='en'):
     Returns: AI response
     """
     try:
-        lang_names = {'en':'English','hi':'Hindi','bn':'Bengali','pa':'Punjabi','ml':'Malayalam','kn':'Kannada'}
-        lang_name = lang_names.get(language, 'English')
-        
-        system_prompt = f"""IMPORTANT: You must respond only in {lang_name}. All your responses must be in {lang_name} only.
+        lang_name = LANG_NAMES.get(language, 'English')
 
-You are MedMate, a personal health assistant 
+        if language == 'en':
+            language_instruction = ""
+        else:
+            language_instruction = f"""CRITICAL LANGUAGE INSTRUCTION: 
+You must write your ENTIRE reply in {lang_name}, using {lang_name} script — not English, 
+not transliteration, not a mix. Medical terms should also be explained in {lang_name} 
+(using simple local equivalents, e.g. translate "sugar" / "blood pressure" naturally).
+Do not include any English sentences in your response.
+
+"""
+
+        system_prompt = f"""{language_instruction}You are MedMate, a personal health assistant 
 for Indian patients. You are NOT a general purpose chatbot.
 
 YOUR ONLY JOB:
@@ -1183,7 +1520,15 @@ Never alarming. Never dismissive. Never robotic."""
                 
                 if result_container['data']:
                     print(f"✓ Gemini chat response generated for: {message[:50]}...")
-                    return result_container['data']
+                    ai_response = result_container['data']
+
+                    # Verify the response is actually in the requested language;
+                    # if not, run a translation fallback pass.
+                    if not _text_in_target_script(ai_response, language):
+                        print(f"⚠️ Chat response not in {LANG_NAMES.get(language)} — running translation fallback")
+                        ai_response = translate_text_result(ai_response, language)
+
+                    return ai_response
                     
             except Exception as e:
                 print(f"Gemini chat error: {e}, falling back...")
@@ -1247,48 +1592,20 @@ Never alarming. Never dismissive. Never robotic."""
         print(f"Chat Error: {e}")
         return "I apologize, but I'm having trouble processing your request right now. Please try again."
 
-def get_fallback_diagnosis(symptoms):
+def get_fallback_diagnosis(error_msg="AI service is currently unavailable. Please try again later."):
     """Fallback diagnosis when AI is unavailable"""
     return {
-        "diseases": [
-            {
-                "name": "Common Cold",
-                "confidence": 40,
-                "explanation": "Based on general symptoms",
-                "solutions": ["Rest", "Stay hydrated", "Over-the-counter medication"],
-                "urgency": "Low"
-            },
-            {
-                "name": "Viral Infection",
-                "confidence": 35,
-                "explanation": "Common viral symptoms",
-                "solutions": ["Rest", "Fluids", "Monitor symptoms"],
-                "urgency": "Medium"
-            },
-            {
-                "name": "Allergic Reaction",
-                "confidence": 25,
-                "explanation": "Possible allergic response",
-                "solutions": ["Identify allergen", "Antihistamines", "Avoid triggers"],
-                "urgency": "Low"
-            }
-        ],
-        "general_advice": "Monitor your symptoms and stay hydrated. If symptoms worsen, consult a doctor.",
+        "diseases": [],
+        "general_advice": error_msg,
         "disclaimer": "This is not a professional medical diagnosis. Please consult a healthcare provider for accurate diagnosis."
     }
 
-def get_fallback_image_analysis():
+def get_fallback_result(error_msg="AI service is currently unavailable."):
     """Fallback image analysis when Vision API is unavailable"""
     return {
-        "observation": "Image received but AI analysis is currently unavailable",
-        "conditions": [
-            {
-                "name": "Unable to analyze",
-                "confidence": 0,
-                "note": "Please consult a healthcare professional for image analysis"
-            }
-        ],
-        "recommendation": "Please show this image to a qualified healthcare provider for proper evaluation",
+        "observation": error_msg,
+        "conditions": [],
+        "recommendation": "Please try again later or consult a healthcare provider.",
         "professional_evaluation": "Required"
     }
 
@@ -1726,11 +2043,22 @@ def explain_medical_report_with_ai(file_content, is_image=False, language='en'):
     """
     Analyze medical report (image or text) to extract terms and generate simplified explanation.
     """
-    lang_instruction = "Hindi" if language == 'hi' else "English"
-    
-    prompt = f"""You are a medical AI assistant helping a patient understand their medical report.
-Analyze the provided medical report and provide a simplified explanation in {lang_instruction}.
+    lang_name = LANG_NAMES.get(language, 'English')
 
+    if language == 'en':
+        language_block = ""
+    else:
+        language_block = f"""
+CRITICAL LANGUAGE INSTRUCTION:
+Every text value in your JSON response — including "summary", "terms" (term + meaning), 
+"key_findings", "next_steps", and "disclaimer" — MUST be written in {lang_name}, 
+using {lang_name} script. Do NOT respond in English.
+Only the JSON keys themselves stay in English (e.g., "summary", "terms", "meaning").
+"""
+
+    prompt = f"""You are a medical AI assistant helping a patient understand their medical report.
+Analyze the provided medical report and provide a simplified explanation in {lang_name}.
+{language_block}
 Provide the response strictly in JSON format:
 {{
     "summary": "Overall simplified summary of the report",
@@ -1739,7 +2067,7 @@ Provide the response strictly in JSON format:
     ],
     "key_findings": ["Finding 1 in simple terms", "Finding 2 in simple terms"],
     "next_steps": "What the patient should do next (e.g., consult doctor)",
-    "disclaimer": "Medical disclaimer in {lang_instruction}"
+    "disclaimer": "Medical disclaimer in {lang_name}"
 }}
 """
     try:
@@ -1772,8 +2100,16 @@ Provide the response strictly in JSON format:
                 
             if result_container['error']:
                 raise result_container['error']
-                
-            return result_container['data']
+
+            final_result = result_container['data']
+
+            # Verify the response is actually in the requested language;
+            # if not, run a translation fallback pass.
+            if response_needs_translation(final_result, language):
+                print(f"⚠️ Report explanation not in {lang_name} — running translation fallback")
+                final_result = translate_json_result(final_result, language)
+
+            return final_result
             
         elif openai_client and not is_image:
             print(f"🔄 Calling OpenAI API for report explanation ({language})")
@@ -1786,7 +2122,13 @@ Provide the response strictly in JSON format:
                 temperature=0.7,
                 max_tokens=1000
             )
-            return json.loads(response.choices[0].message.content)
+            final_result = json.loads(response.choices[0].message.content)
+
+            if response_needs_translation(final_result, language):
+                print(f"⚠️ Report explanation not in {lang_name} — running translation fallback")
+                final_result = translate_json_result(final_result, language)
+
+            return final_result
             
     except Exception as e:
         print(f"❌ Report Explanation Error: {e}")
@@ -1976,7 +2318,7 @@ def explain_report():
             description='Medical report analysis'
         )
         db.session.add(transaction)
-        db.session.commit()
+        # db.session.commit() deferred until end to allow rollback on AI failure
         
         ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
         
@@ -2114,10 +2456,18 @@ Respond ONLY in this JSON format:
                 thread.start()
                 thread.join(timeout=60)
                 
-                if result_container['data']:
+                if thread.is_alive():
+                    explanation = {"english": "AI explanation request timed out.", "hindi": "AI explanation request timed out."}
+                
+                elif result_container['error']:
+                    err_msg = str(result_container['error'])
+                    explanation = {"english": f"AI service error: {err_msg}", "hindi": f"AI service error: {err_msg}"}
+                
+                elif result_container['data']:
                     explanation = result_container['data']
         except Exception as e:
             print(f"LLM explanation error: {e}")
+            explanation = {"english": f"AI service is currently unavailable: {str(e)}", "hindi": f"AI service is currently unavailable: {str(e)}"}
         
         # Save to report history
         try:
@@ -2571,7 +2921,7 @@ def diagnose():
             description='Symptom analysis'
         )
         db.session.add(transaction)
-        db.session.commit()
+        # db.session.commit() deferred until end to allow rollback on AI failure
         
         language = data.get('language', 'en')
         
@@ -2602,7 +2952,7 @@ def diagnose():
         traceback.print_exc()
         return jsonify({'error': f'Diagnosis failed: {str(e)}'}), 500
 
-def analyze_handwriting_with_vision(image_path):
+def analyze_handwriting_with_vision(image_path, language='en'):
     """
     Analyze handwritten medical notes using AI Vision (Gemini or OpenAI)
     Returns: Extracted text, medical terms, interpretation, and recommendations
@@ -2621,18 +2971,33 @@ def analyze_handwriting_with_vision(image_path):
         # Convert to RGB if needed
         if img.mode != 'RGB':
             img = img.convert('RGB')
-        
-        prompt = """You are an expert medical document analyzer. Analyze this handwritten medical note image and extract ALL text that is written.
 
+        lang_name = LANG_NAMES.get(language, 'English')
+
+        if language == 'en':
+            language_block = ""
+        else:
+            language_block = f"""
+CRITICAL LANGUAGE INSTRUCTION:
+The "explanation", "interpretation", and each item in "recommendations" MUST be written 
+in {lang_name}, using {lang_name} script. Do NOT write these fields in English.
+However, "extracted_text" and "medical_terms" MUST remain as written/standard medical 
+terminology (do not translate drug names, dosages, or the original handwriting transcription) — 
+keep these in their original form for accuracy.
+Only the JSON keys themselves stay in English.
+"""
+
+        prompt = f"""You are an expert medical document analyzer. Analyze this handwritten medical note image and extract ALL text that is written.
+{language_block}
 Return a JSON response with exactly this structure:
-{
+{{
     "extracted_text": "Complete transcription of all handwritten text",
     "medical_terms": ["list", "of", "medical", "terms", "found"],
     "explanation": "Simple explanation of what the handwritten note contains in medical terms",
     "confidence_score": 0.85,
     "recommendations": ["Recommendation 1", "Recommendation 2"],
     "interpretation": "Brief interpretation of the medical content"
-}
+}}
 
 Rules:
 - Extract ALL text exactly as written (including spelling variations)
@@ -2697,7 +3062,15 @@ Rules:
                 if 'extracted_text' in result and result.get('medical_terms') is None:
                     nlp_terms = extract_medical_terms_nlp(result['extracted_text'])
                     result['medical_terms'] = [term.get('text', '') for term in nlp_terms]
-                
+
+                # Verify explanation/interpretation/recommendations are in the
+                # requested language; translate only those fields if not.
+                result = translate_result_fields(
+                    result,
+                    fields=['explanation', 'interpretation', 'recommendations'],
+                    language=language
+                )
+
                 print(f"✅ Gemini handwriting analysis successful")
                 return result
                 
@@ -2770,6 +3143,7 @@ def diagnose_image():
         
         file = request.files['image']
         symptoms = request.form.get('symptoms', '')
+        language = request.form.get('language', 'en')
         
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
@@ -2791,10 +3165,10 @@ def diagnose_image():
             description='Medical image analysis'
         )
         db.session.add(transaction)
-        db.session.commit()
+        # db.session.commit() deferred until end to allow rollback on AI failure
         
         # Analyze image with Vision API
-        result = analyze_image_with_vision(filepath, symptoms)
+        result = analyze_image_with_vision(filepath, symptoms, language)
         
         # Save diagnosis to database
         diagnosis = Diagnosis(
@@ -2846,7 +3220,8 @@ def analyze_handwriting():
             return jsonify({'error': 'No image provided'}), 400
         
         file = request.files['image']
-        
+        language = request.form.get('language', 'en')
+
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
@@ -2867,10 +3242,10 @@ def analyze_handwriting():
             description='Prescription Decoder'
         )
         db.session.add(transaction)
-        db.session.commit()
+        # db.session.commit() deferred until end to allow rollback on AI failure
         
         # Analyze handwriting with Vision API
-        result = analyze_handwriting_with_vision(filepath)
+        result = analyze_handwriting_with_vision(filepath, language)
         
         # Save analysis to database as diagnosis for consistency
         analysis = Diagnosis(
@@ -3063,7 +3438,7 @@ def chat():
             description='AI chat message'
         )
         db.session.add(transaction)
-        db.session.commit()
+        # db.session.commit() deferred until end to allow rollback on AI failure
         
         # Get recent chat history for context
         recent_chats = ChatHistory.query.filter_by(user_id=session['user_id'])\
