@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ActionButton } from '@/components/ui/action-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Brain, MessageSquare, Calendar, Clock, Trash2, FileText, ChevronDown, ChevronUp, FileImage } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -93,91 +94,50 @@ export default function History() {
   };
 
   const handleDeleteDiagnosis = async (id: number) => {
-    try {
-      await api.deleteDiagnosisHistoryItem(id);
-      setDiagnoses(prev => prev.filter(d => d.id !== id));
-      toast.success('Diagnosis removed');
-    } catch {
-      toast.error('Failed to remove diagnosis');
-    }
+    await api.deleteDiagnosisHistoryItem(id);
+    setDiagnoses(prev => prev.filter(d => d.id !== id));
   };
 
   const handleDeletePrescription = async (id: number) => {
-    try {
-      await api.deleteDiagnosisHistoryItem(id);
-      setPrescriptions(prev => prev.filter(p => p.id !== id));
-      toast.success(t('history.removed', 'Prescription removed'));
-    } catch {
-      toast.error(t('history.failed_remove', 'Failed to remove prescription'));
-    }
+    await api.deleteDiagnosisHistoryItem(id);
+    setPrescriptions(prev => prev.filter(p => p.id !== id));
   };
 
   const handleClearAllDiagnoses = async () => {
-    if (!confirm(t('history.confirm_clear_diagnoses', 'Are you sure you want to clear all diagnoses?'))) return;
-    try {
-      await api.deleteAllDiagnosisHistory();
-      setDiagnoses([]);
-      setPrescriptions([]);
-      toast.success(t('history.cleared_all', 'All diagnoses cleared'));
-    } catch {
-      toast.error(t('history.failed_clear', 'Failed to clear diagnoses'));
-    }
+    if (!confirm(t('history.confirm_clear_diagnoses', 'Are you sure you want to clear all diagnoses?'))) return false;
+    await api.deleteAllDiagnosisHistory();
+    setDiagnoses([]);
+    setPrescriptions([]);
   };
 
   const handleClearAllPrescriptions = async () => {
-    if (!confirm(t('history.confirm_clear_prescriptions', 'Are you sure you want to clear all prescriptions?'))) return;
-    try {
-      // Delete each prescription individually
-      for (const prescription of prescriptions) {
-        await api.deleteDiagnosisHistoryItem(prescription.id);
-      }
-      setPrescriptions([]);
-      toast.success(t('history.cleared_all_prescriptions', 'All prescriptions cleared'));
-    } catch {
-      toast.error(t('history.failed_clear_prescriptions', 'Failed to clear prescriptions'));
+    if (!confirm(t('history.confirm_clear_prescriptions', 'Are you sure you want to clear all prescriptions?'))) return false;
+    for (const prescription of prescriptions) {
+      await api.deleteDiagnosisHistoryItem(prescription.id);
     }
+    setPrescriptions([]);
   };
 
   const handleDeleteChat = async (id: number) => {
-    try {
-      await api.deleteChatHistoryItem(id);
-      setChats(prev => prev.filter(c => c.id !== id));
-      toast.success('Chat removed');
-    } catch {
-      toast.error('Failed to remove chat');
-    }
+    await api.deleteChatHistoryItem(id);
+    setChats(prev => prev.filter(c => c.id !== id));
   };
 
   const handleClearAllChats = async () => {
-    if (!confirm('Are you sure you want to clear all chat conversations?')) return;
-    try {
-      await api.deleteAllChatHistory();
-      setChats([]);
-      toast.success('All chats cleared');
-    } catch {
-      toast.error('Failed to clear chats');
-    }
+    if (!confirm('Are you sure you want to clear all chat conversations?')) return false;
+    await api.deleteAllChatHistory();
+    setChats([]);
   };
 
   const handleDeleteReport = async (id: number) => {
-    try {
-      await api.deleteReportHistoryItem(id);
-      setReports(prev => prev.filter(r => r.id !== id));
-      toast.success('Report removed');
-    } catch {
-      toast.error('Failed to remove report');
-    }
+    await api.deleteReportHistoryItem(id);
+    setReports(prev => prev.filter(r => r.id !== id));
   };
 
   const handleClearAllReports = async () => {
-    if (!confirm('Are you sure you want to clear all report history?')) return;
-    try {
-      await api.deleteAllReportHistory();
-      setReports([]);
-      toast.success('All reports cleared');
-    } catch {
-      toast.error('Failed to clear reports');
-    }
+    if (!confirm('Are you sure you want to clear all report history?')) return false;
+    await api.deleteAllReportHistory();
+    setReports([]);
   };
 
   return (
@@ -219,15 +179,16 @@ export default function History() {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold hidden md:block">{t('history.diagnosis_history', 'Diagnosis History')}</h2>
                     {diagnoses.length > 0 && !loading && (
-                      <Button
+                      <ActionButton
                         variant="outline"
                         size="icon"
-                        onClick={handleClearAllDiagnoses}
+                        action={handleClearAllDiagnoses}
                         className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
                         title={t('history.remove_all', 'Remove All')}
+                        iconOnly
                       >
                         <Trash2 className="h-4.5 w-4.5" />
-                      </Button>
+                      </ActionButton>
                     )}
                   </div>
                   {loading ? (
@@ -303,14 +264,15 @@ export default function History() {
                                   )}
                                 </Button>
                               )}
-                              <Button
+                              <ActionButton
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent flex-shrink-0"
-                                onClick={() => handleDeleteDiagnosis(diagnosis.id)}
+                                action={() => handleDeleteDiagnosis(diagnosis.id)}
+                                iconOnly
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              </ActionButton>
                             </div>
                           </div>
 
@@ -457,15 +419,16 @@ export default function History() {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold hidden md:block">{t('history.prescription_history', 'Prescriptions')}</h2>
                     {prescriptions.length > 0 && !loading && (
-                      <Button
+                      <ActionButton
                         variant="outline"
                         size="icon"
-                        onClick={handleClearAllPrescriptions}
+                        action={handleClearAllPrescriptions}
                         className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
                         title="Remove All"
+                        iconOnly
                       >
                         <Trash2 className="h-4.5 w-4.5" />
-                      </Button>
+                      </ActionButton>
                     )}
                   </div>
                   {loading ? (
@@ -539,14 +502,15 @@ export default function History() {
                                   )}
                                 </Button>
                               )}
-                              <Button
+                              <ActionButton
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent flex-shrink-0"
-                                onClick={() => handleDeletePrescription(prescription.id)}
+                                action={() => handleDeletePrescription(prescription.id)}
+                                iconOnly
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              </ActionButton>
                             </div>
                           </div>
 
@@ -652,15 +616,16 @@ export default function History() {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold hidden md:block">{t('history.chats_tab', 'Chat History')}</h2>
                     {chats.length > 0 && !loading && (
-                      <Button
+                      <ActionButton
                         variant="outline"
                         size="icon"
-                        onClick={handleClearAllChats}
+                        action={handleClearAllChats}
                         className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
                         title={t('history.remove_all', 'Remove All')}
+                        iconOnly
                       >
                         <Trash2 className="h-4.5 w-4.5" />
-                      </Button>
+                      </ActionButton>
                     )}
                   </div>
                   {loading ? (
@@ -688,14 +653,15 @@ export default function History() {
                           className="p-6 hover-lift animate-fade-in relative group"
                           style={{ animationDelay: `${index * 0.05}s` }}
                         >
-                          <Button
+                          <ActionButton
                             variant="outline"
                             size="icon"
                             className="absolute top-2 right-2 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-white/5 backdrop-blur-sm h-7 w-7"
-                            onClick={() => handleDeleteChat(chat.id)}
+                            action={() => handleDeleteChat(chat.id)}
+                            iconOnly
                           >
                             <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          </ActionButton>
                           <div className="space-y-3">
                             <div>
                               <div className="flex items-center gap-2 mb-2">
@@ -727,15 +693,16 @@ export default function History() {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold hidden md:block">{t('history.reports_tab', 'Report History')}</h2>
                     {reports.length > 0 && !loading && (
-                      <Button
+                      <ActionButton
                         variant="outline"
                         size="icon"
-                        onClick={handleClearAllReports}
+                        action={handleClearAllReports}
                         className="ml-auto shadow-md hover:shadow-lg transition-all duration-300 hover:scale-110 w-9 h-9 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive bg-transparent"
                         title={t('history.remove_all', 'Remove All')}
+                        iconOnly
                       >
                         <Trash2 className="h-4.5 w-4.5" />
-                      </Button>
+                      </ActionButton>
                     )}
                   </div>
                   {loading ? (
@@ -812,14 +779,15 @@ export default function History() {
                                   )}
                                 </Button>
                               )}
-                              <Button
+                              <ActionButton
                                 variant="outline"
                                 size="icon"
                                 className="h-7 w-7 text-destructive border-destructive/20 hover:bg-destructive hover:text-white hover:border-destructive transition-colors bg-transparent flex-shrink-0"
-                                onClick={() => handleDeleteReport(report.id)}
+                                action={() => handleDeleteReport(report.id)}
+                                iconOnly
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              </ActionButton>
                             </div>
                           </div>
 
