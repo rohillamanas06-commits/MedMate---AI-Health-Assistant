@@ -120,7 +120,7 @@ export default function Hospitals() {
 
   return (
     <div className="min-h-screen bg-transparent py-4 sm:py-8">
-      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
+      <div className="w-full px-4 md:px-6 lg:px-8 mx-auto">
         {/* Header */}
         <div className="mb-6 lg:mb-8">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">

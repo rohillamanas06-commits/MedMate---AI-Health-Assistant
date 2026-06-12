@@ -158,7 +158,7 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-transparent py-4 sm:py-8">
-      <div className="w-full px-2 sm:px-6 lg:px-8 mx-auto">
+      <div className="w-full px-4 md:px-6 lg:px-8 mx-auto">
         <div className="mb-6 lg:mb-8">
           <h1 className="text-2xl lg:text-4xl font-bold mb-2 theme-title">
             {t('chat.title', 'AI Medical Assistant')}
@@ -171,7 +171,7 @@ export default function Chat() {
         {/* Main Layout */}
         <div className="flex flex-col gap-6">
           <div className="w-full flex flex-col gap-3 lg:gap-4">
-            <Card className="glass overflow-hidden animate-fade-in w-full" style={{ height: 'calc(100vh - 250px)' }}>
+            <Card className="glass overflow-hidden animate-fade-in w-full" style={{ height: 'calc(100dvh - 250px)' }}>
               <div className="flex flex-col h-full">
                 <ScrollArea className="flex-1 p-6">
                   {messages.length === 0 ? (

@@ -69,7 +69,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full flex h-screen max-h-screen fixed inset-0 overflow-hidden bg-[#050505]">
+    <div className="min-h-[100dvh] w-full flex h-[100dvh] max-h-[100dvh] fixed inset-0 overflow-hidden bg-[#050505]">
       {/* Left Side - Medical Image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-black items-center justify-center">
         {backgroundImages.length > 0 && (
@@ -97,7 +97,7 @@ export default function ForgotPassword() {
       </div>
 
       {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-screen overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-[100dvh] overflow-y-auto">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
           
           <div className="mb-6 lg:mb-8">
