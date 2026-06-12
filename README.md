@@ -8,7 +8,7 @@ MedMate is an advanced AI-powered medical assistant platform that provides insta
 
 ## � Screenshots
 
-
+![MedMate Screenshot 2](public/medmate-screenshot-1.png)
 ![MedMate Screenshot 2](public/medmate-screenshot-2.png)
 ![MedMate Screenshot 3](public/medmate-screenshot-3.png)
 ![MedMate Screenshot 4](public/medmate-screenshot-4.png)
