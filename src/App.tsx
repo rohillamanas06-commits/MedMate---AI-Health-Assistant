@@ -133,11 +133,12 @@ const App = () => (
         <AuthProvider>
           <LanguageProvider>
             <BrowserRouter>
-              <MobileBlocker />
-              <ScrollToTop />
-              <SidebarProvider>
-                <ConditionalLayout />
-              </SidebarProvider>
+              <MobileBlocker>
+                <ScrollToTop />
+                <SidebarProvider>
+                  <ConditionalLayout />
+                </SidebarProvider>
+              </MobileBlocker>
             </BrowserRouter>
           </LanguageProvider>
         </AuthProvider>

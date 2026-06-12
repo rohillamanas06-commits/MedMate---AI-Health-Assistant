@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { MonitorX, Smartphone } from 'lucide-react';
 
-export function MobileBlocker() {
-  const [isMobile, setIsMobile] = useState(false);
+export function MobileBlocker({ children }: { children?: React.ReactNode }) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    const isMobileHardware = 'ontouchstart' in window && window.screen.width <= 768;
+    return isMobileUA || isMobileHardware;
+  });
   const animRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
@@ -35,7 +41,7 @@ export function MobileBlocker() {
     };
   }, [isMobile]);
 
-  if (!isMobile) return null;
+  if (!isMobile) return <>{children}</>;
 
   return (
     <div
