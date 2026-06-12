@@ -111,9 +111,8 @@ export default function ResetPassword() {
                 key={index}
                 src={image}
                 alt={`Medical background ${index + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${
-                  index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                }`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
                 loading="eager"
               />
             ))}
@@ -131,7 +130,7 @@ export default function ResetPassword() {
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-[100dvh] overflow-y-auto">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
+
           <div className="mb-6 lg:mb-8">
             <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase mb-2">
               Recovery
@@ -159,8 +158,8 @@ export default function ResetPassword() {
               </div>
 
               <div className="pt-4">
-                <Button 
-                  onClick={() => navigate('/forgot-password')} 
+                <Button
+                  onClick={() => navigate('/forgot-password')}
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
                 >
                   Request New Link
@@ -207,8 +206,8 @@ export default function ResetPassword() {
               </div>
 
               <div className="pt-4">
-                <ActionButton 
-                  type="submit" 
+                <ActionButton
+                  type="submit"
                   status={status}
                   successMessage="Reset Successful!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"

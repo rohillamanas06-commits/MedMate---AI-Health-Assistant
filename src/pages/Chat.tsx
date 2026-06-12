@@ -171,7 +171,7 @@ export default function Chat() {
         {/* Main Layout */}
         <div className="flex flex-col gap-6">
           <div className="w-full flex flex-col gap-3 lg:gap-4">
-            <Card className="glass overflow-hidden animate-fade-in w-full" style={{ height: 'calc(100dvh - 250px)' }}>
+            <Card className="glass overflow-hidden animate-fade-in w-full" style={{ height: 'calc(100dvh - 300px)' }}>
               <div className="flex flex-col h-full">
                 <ScrollArea className="flex-1 p-6">
                   {messages.length === 0 ? (

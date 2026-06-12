@@ -121,7 +121,8 @@ export default function HandwritingAnalyzer() {
                 <div>
                   <Label className="text-xs lg:text-sm">{t('common.select_image') || 'Select Image'}</Label>
                   <div
-                    className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center min-h-[260px] lg:min-h-[360px] overflow-hidden relative ${selectedImage && imagePreview ? 'border-primary p-0' : 'border-border p-4 lg:p-6'}`}
+                    className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center overflow-hidden relative ${selectedImage && imagePreview ? 'border-primary p-0' : 'border-border p-4 lg:p-6'}`}
+                    style={{ height: 'calc(100dvh - 300px)' }}
                     onClick={() => document.getElementById('handwriting-upload')?.click()}
                   >
                     {selectedImage && imagePreview ? (

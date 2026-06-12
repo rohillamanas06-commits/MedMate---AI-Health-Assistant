@@ -27,7 +27,7 @@ export default function ForgotPassword() {
           '/r2.jpg',
           '/r3.jpg',
         ];
-        
+
         setBackgroundImages(imageUrls);
         setImagesLoading(false);
       } catch (error) {
@@ -79,9 +79,8 @@ export default function ForgotPassword() {
                 key={index}
                 src={image}
                 alt={`Medical background ${index + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${
-                  index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                }`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
                 loading="eager"
               />
             ))}
@@ -99,7 +98,7 @@ export default function ForgotPassword() {
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-[100dvh] overflow-y-auto">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
+
           <div className="mb-6 lg:mb-8">
             <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase mb-2">
               Recovery
@@ -129,8 +128,8 @@ export default function ForgotPassword() {
               </div>
 
               <div className="pt-4">
-                <ActionButton 
-                  type="submit" 
+                <ActionButton
+                  type="submit"
                   status={status}
                   successMessage="Email Sent!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
@@ -160,9 +159,9 @@ export default function ForgotPassword() {
               </div>
 
               <div className="pt-4 space-y-4">
-                <Button 
-                  onClick={() => setEmailSent(false)} 
-                  variant="outline" 
+                <Button
+                  onClick={() => setEmailSent(false)}
+                  variant="outline"
                   className="w-full bg-transparent border-white/20 text-white hover:bg-white/10 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
                 >
                   Try Another Email

@@ -232,7 +232,8 @@ export default function Diagnose() {
                       placeholder={t('diagnose.symptoms_placeholder')}
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
-                      className="mt-2 resize-none text-xs lg:text-sm min-h-[200px] lg:min-h-[308px]"
+                      className="mt-2 resize-none text-xs lg:text-sm"
+                      style={{ height: 'calc(100dvh - 300px)' }}
                     />
                   </div>
                   <div className="flex gap-2">
@@ -272,8 +273,9 @@ export default function Diagnose() {
                   <div>
                     <Label className="text-xs lg:text-sm">Upload Medical Image</Label>
                     <div
-                      className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center h-[100px] lg:h-[184px] overflow-hidden relative ${imagePreviews.length === 1 ? 'border-primary p-0' : imagePreviews.length > 1 ? 'border-primary p-4 lg:p-6' : 'border-border p-4 lg:p-6'
+                      className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center overflow-hidden relative ${imagePreviews.length === 1 ? 'border-primary p-0' : imagePreviews.length > 1 ? 'border-primary p-4 lg:p-6' : 'border-border p-4 lg:p-6'
                         }`}
+                      style={{ height: 'calc(100dvh - 300px)' }}
                       onClick={() => document.getElementById('image-upload')?.click()}
                     >
                       {imagePreviews.length > 0 ? (

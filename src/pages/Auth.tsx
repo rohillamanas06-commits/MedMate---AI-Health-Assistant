@@ -11,7 +11,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { login, register, user } = useAuth();
-  
+
   // "login" or "register" mode based on query param or state
   const [mode, setMode] = useState<'login' | 'register'>(
     searchParams.get('mode') === 'register' ? 'register' : 'login'
@@ -33,7 +33,7 @@ export default function Auth() {
           '/r2.jpg',
           '/r3.jpg',
         ];
-        
+
         setBackgroundImages(imageUrls);
         setImagesLoading(false);
       } catch (error) {
@@ -137,9 +137,8 @@ export default function Auth() {
                 key={index}
                 src={image}
                 alt={`Medical background ${index + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${
-                  index === currentImageIndex ? 'opacity-100' : 'opacity-0'
-                }`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
                 loading="eager"
               />
             ))}
@@ -157,7 +156,7 @@ export default function Auth() {
       {/* Right Side - Auth Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[#0a0a0a] text-white h-[100dvh] overflow-y-auto">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
+
           <div className="mb-6 lg:mb-8">
             <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/50 uppercase mb-2">
               {mode === 'login' ? 'Sign In' : 'Register'}
@@ -207,8 +206,8 @@ export default function Auth() {
               </div>
 
               <div className="pt-4">
-                <ActionButton 
-                  type="submit" 
+                <ActionButton
+                  type="submit"
                   status={loginStatus}
                   successMessage="Welcome back!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
@@ -219,8 +218,8 @@ export default function Auth() {
 
               <div className="flex items-center justify-start mt-6 text-sm text-white/50">
                 <span>No account? </span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={toggleMode}
                   className="ml-2 text-white hover:underline underline-offset-4"
                 >
@@ -290,8 +289,8 @@ export default function Auth() {
               </div>
 
               <div className="pt-4">
-                <ActionButton 
-                  type="submit" 
+                <ActionButton
+                  type="submit"
                   status={registerStatus}
                   successMessage="Account Created!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
@@ -302,8 +301,8 @@ export default function Auth() {
 
               <div className="flex items-center justify-start mt-6 text-sm text-white/50">
                 <span>Already have one? </span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={toggleMode}
                   className="ml-2 text-white hover:underline underline-offset-4"
                 >
