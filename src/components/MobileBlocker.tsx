@@ -9,13 +9,10 @@ export function MobileBlocker() {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
       
-      // Check physical screen size to catch "Desktop site" mode on mobile browsers
-      const isSmallScreen = window.screen.width <= 768 || window.screen.height <= 768;
-      
-      // Many mobile browsers in desktop mode spoof UA but still have maxTouchPoints and small physical screens
-      const isMobileHardware = typeof window !== 'undefined' && 'ontouchstart' in window && isSmallScreen;
+      // Catch "Desktop site" mode on mobile by checking for touch support AND small physical screen width
+      const isMobileHardware = typeof window !== 'undefined' && 'ontouchstart' in window && window.screen.width <= 768;
 
-      if (isMobileUA || isSmallScreen || isMobileHardware) {
+      if (isMobileUA || isMobileHardware) {
         setIsMobile(true);
       } else {
         setIsMobile(false);
@@ -27,19 +24,31 @@ export function MobileBlocker() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  useEffect(() => {
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isMobile]);
+
   if (!isMobile) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col items-center justify-center p-6 text-center overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] animate-pulse delay-1000" />
-      
-      <div className="relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-700">
+    <div className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col items-center justify-center p-6 text-center" style={{ touchAction: 'none' }}>
+      <div className="relative z-10 flex flex-col items-center">
         <div className="relative mb-8">
-          <div className="absolute -inset-4 bg-primary/20 rounded-full blur-xl animate-pulse" />
           <div className="relative bg-black border border-white/10 p-6 rounded-full flex items-center justify-center">
-            <Smartphone className="w-12 h-12 text-white/50 absolute animate-ping opacity-75" />
+            <Smartphone className="w-12 h-12 text-white/50 absolute" />
             <MonitorX className="w-12 h-12 text-white relative z-10" />
           </div>
         </div>
@@ -53,7 +62,7 @@ export function MobileBlocker() {
         </p>
 
         <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-full flex items-center gap-3 backdrop-blur-sm">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-red-500" />
           <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">
             Mobile Access Blocked
           </span>

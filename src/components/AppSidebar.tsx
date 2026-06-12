@@ -305,7 +305,6 @@ export function AppSidebar() {
           )}
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }
