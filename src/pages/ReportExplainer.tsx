@@ -206,8 +206,7 @@ export default function ReportExplainer() {
                 <div>
                   <Label className="text-xs lg:text-sm">{t('explainer.upload_label')}</Label>
                   <div
-                    className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center overflow-hidden relative ${selectedFile && selectedFile.type.startsWith('image/') ? 'border-primary p-0' : 'border-border p-4 lg:p-6'}`}
-                    style={{ height: 'calc(100dvh - 300px)' }}
+                    className={`mt-2 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary transition-colors flex items-center justify-center overflow-hidden relative h-[calc(100dvh-300px)] lg:h-auto lg:min-h-[360px] ${selectedFile && selectedFile.type.startsWith('image/') ? 'border-primary p-0' : 'border-border p-4 lg:p-6'}`}
                     onClick={() => document.getElementById('report-upload')?.click()}
                   >
                     {selectedFile ? (
