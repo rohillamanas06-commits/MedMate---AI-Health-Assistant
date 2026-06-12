@@ -1,22 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MonitorX, Smartphone } from 'lucide-react';
 
 export function MobileBlocker() {
   const [isMobile, setIsMobile] = useState(false);
+  const animRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-      
-      // Catch "Desktop site" mode on mobile by checking for touch support AND small physical screen width
       const isMobileHardware = typeof window !== 'undefined' && 'ontouchstart' in window && window.screen.width <= 768;
-
-      if (isMobileUA || isMobileHardware) {
-        setIsMobile(true);
-      } else {
-        setIsMobile(false);
-      }
+      setIsMobile(isMobileUA || isMobileHardware);
     };
 
     checkMobile();
@@ -44,29 +38,80 @@ export function MobileBlocker() {
   if (!isMobile) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#050505] flex flex-col items-center justify-center p-6 text-center" style={{ touchAction: 'none' }}>
+    <div
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 text-center overflow-hidden"
+      style={{ background: '#0D0F14', touchAction: 'none' }}
+    >
+      {/* bg glow */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: 300,
+          height: 300,
+          top: '40%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle, rgba(0,200,150,0.06) 0%, transparent 70%)',
+        }}
+      />
+
+      {/* ECG line */}
+      <div className="relative w-full max-w-[320px] h-[52px] mb-8">
+        <svg width="100%" height="52" viewBox="0 0 320 52" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M0 26 L60 26 L72 26 L76 10 L82 42 L88 10 L94 42 L98 26 L110 26 L320 26"
+            fill="none"
+            stroke="#00C896"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.2"
+          />
+          <circle r="3" fill="#00C896" ref={animRef}>
+            <animateMotion
+              path="M0 0 L60 0 L72 0 L76 -16 L82 16 L88 -16 L94 16 L98 0 L110 0 L320 0"
+              dur="2.8s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              values="0;1;1;1;0"
+              keyTimes="0;0.05;0.8;0.95;1"
+              dur="2.8s"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </svg>
+      </div>
+
       <div className="relative z-10 flex flex-col items-center">
-        <div className="relative mb-8">
-          <div className="relative bg-black border border-white/10 p-6 rounded-full flex items-center justify-center">
-            <Smartphone className="w-12 h-12 text-white/50 absolute" />
-            <MonitorX className="w-12 h-12 text-white relative z-10" />
-          </div>
+        {/* icon */}
+        <div
+          className="relative flex items-center justify-center rounded-full mb-5"
+          style={{
+            width: 80,
+            height: 80,
+            background: '#141820',
+            border: '1px solid rgba(0,200,150,0.2)',
+          }}
+        >
+          <Smartphone className="absolute w-7 h-7" style={{ color: 'rgba(0,200,150,0.4)' }} />
+          <MonitorX className="relative z-10 w-7 h-7" style={{ color: '#00C896' }} />
         </div>
-        
-        <h1 className="text-3xl md:text-4xl font-serif tracking-tight text-white/90 mb-4 font-bold">
+
+        <h1
+          className="text-3xl font-bold tracking-tight mb-3"
+          style={{ color: 'rgba(255,255,255,0.9)', fontFamily: 'Inter, sans-serif' }}
+        >
           Desktop Only
         </h1>
-        
-        <p className="text-white/60 text-lg max-w-[300px] mx-auto leading-relaxed mb-8">
+
+        <p
+          className="text-base max-w-[280px] mx-auto leading-relaxed"
+          style={{ color: 'rgba(255,255,255,0.6)' }}
+        >
           MedMate's advanced AI interface is optimized exclusively for desktop screens. Please visit us on a computer.
         </p>
-
-        <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-full flex items-center gap-3 backdrop-blur-sm">
-          <div className="w-2 h-2 rounded-full bg-red-500" />
-          <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">
-            Mobile Access Blocked
-          </span>
-        </div>
       </div>
     </div>
   );
