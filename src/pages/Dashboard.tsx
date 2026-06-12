@@ -132,7 +132,7 @@ export default function Dashboard() {
       <div className="w-full px-4 md:px-6 lg:px-8 mx-auto">
         {/* Welcome Header with Credits */}
         <div className="mb-8 animate-slide-up relative">
-          <div className="flex items-center justify-between">
+          <div>
             <div>
               <h1 className="text-2xl md:text-4xl font-bold mb-2">
                 {t('dashboard.welcome')} <span className="gradient-text">{user?.username}</span>!
@@ -140,12 +140,6 @@ export default function Dashboard() {
               <p className="text-muted-foreground text-lg">
                 {t('dashboard.subtitle')}
               </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <CreditsBadge 
-                credits={user?.credits ?? 0}
-                onClick={() => setShowBuyCredits(true)}
-              />
             </div>
           </div>
         </div>
@@ -157,9 +151,15 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl md:text-2xl font-bold">Recent History</h2>
-            <Button variant="outline" onClick={() => navigate('/history')}>
-              {t('dashboard.view_all')}
-            </Button>
+            <div className="flex items-center gap-3">
+              <CreditsBadge 
+                credits={user?.credits ?? 0}
+                onClick={() => setShowBuyCredits(true)}
+              />
+              <Button variant="outline" onClick={() => navigate('/history')}>
+                {t('dashboard.view_all')}
+              </Button>
+            </div>
           </div>
           
           {loading ? (
