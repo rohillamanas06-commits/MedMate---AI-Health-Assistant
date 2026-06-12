@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { MonitorX, Smartphone } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export function MobileBlocker({ children }: { children?: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(() => {
@@ -9,7 +8,6 @@ export function MobileBlocker({ children }: { children?: React.ReactNode }) {
     const isMobileHardware = 'ontouchstart' in window && window.screen.width <= 768;
     return isMobileUA || isMobileHardware;
   });
-  const animRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
