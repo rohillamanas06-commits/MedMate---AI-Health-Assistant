@@ -3,6 +3,7 @@ import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, TrendingDown, TrendingUp, Gift, Trash2 } from 'lucide-react';
+import { ActionButton } from '@/components/ui/action-button';
 import { parseUTCDate } from '@/lib/utils';
 
 interface Transaction {
@@ -74,17 +75,13 @@ export function CreditsHistory() {
     try {
       await api.deleteTransaction(transactionId);
       setTransactions((prev) => prev.filter((tx) => tx.id !== transactionId));
-      toast({
-        title: 'Success',
-        description: 'Transaction deleted successfully',
-        duration: 3000,
-      });
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to delete transaction',
         variant: 'destructive',
       });
+      throw error;
     }
   };
 
@@ -94,19 +91,15 @@ export function CreditsHistory() {
     }
 
     try {
-      const response: any = await api.deleteAllTransactions();
+      await api.deleteAllTransactions();
       setTransactions([]);
-      toast({
-        title: 'Success',
-        description: `${response.deleted_count} transactions deleted successfully`,
-        duration: 3000,
-      });
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to delete transactions',
         variant: 'destructive',
       });
+      throw error;
     }
   };
 
@@ -118,13 +111,16 @@ export function CreditsHistory() {
           <CardDescription>Your recent credit activity</CardDescription>
         </div>
         {transactions.length > 0 && (
-          <button
-            onClick={handleDeleteAllTransactions}
-            className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors text-muted-foreground"
+          <ActionButton
+            action={handleDeleteAllTransactions}
+            variant="ghost"
+            size="icon"
+            className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
             title="Delete all transactions"
+            iconOnly={true}
           >
             <Trash2 className="h-5 w-5" />
-          </button>
+          </ActionButton>
         )}
       </CardHeader>
       <CardContent>
@@ -158,13 +154,16 @@ export function CreditsHistory() {
                   >
                     {tx.credits > 0 ? '+' : ''}{tx.credits}
                   </span>
-                  <button
-                    onClick={() => handleDeleteTransaction(tx.id)}
-                    className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                  <ActionButton
+                    action={() => handleDeleteTransaction(tx.id)}
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100"
                     title="Delete transaction"
+                    iconOnly={true}
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </ActionButton>
                 </div>
               </div>
             ))}
