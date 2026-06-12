@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { ActionButton } from '@/components/ui/action-button';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -40,16 +41,14 @@ export default function Diagnose() {
   const handleTextDiagnosis = async () => {
     if (!symptoms.trim()) {
       toast.error('Please enter your symptoms');
-      return;
+      return false;
     }
 
-    setLoading(true);
     setResult(null);
 
     try {
       const response: any = await api.diagnose(symptoms, currentLanguage);
       setResult(response.result);
-      toast.success('Analysis complete!');
 
       // Update credits if returned
       if (response.remaining_credits !== undefined) {
@@ -69,25 +68,22 @@ export default function Diagnose() {
       } else {
         toast.error(`Diagnosis failed: ${errorMessage}`);
       }
-    } finally {
-      setLoading(false);
+      return false;
     }
   };
 
   const handleImageDiagnosis = async () => {
     if (selectedImages.length === 0) {
       toast.error('Please select at least one image');
-      return;
+      return false;
     }
 
-    setLoading(true);
     setResult(null);
 
     try {
       // For now, analyze the first image (backend needs update for multiple)
       const response: any = await api.diagnoseImage(selectedImages[0], symptoms, currentLanguage);
       setResult(response.result);
-      toast.success(`Image analysis complete! (${selectedImages.length} image${selectedImages.length > 1 ? 's' : ''} uploaded)`);
 
       // Update credits if returned
       if (response.remaining_credits !== undefined) {
@@ -107,8 +103,7 @@ export default function Diagnose() {
       } else {
         toast.error(`Image analysis failed: ${errorMessage}`);
       }
-    } finally {
-      setLoading(false);
+      return false;
     }
   };
 
@@ -241,19 +236,15 @@ export default function Diagnose() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      onClick={!hasCredits ? () => setShowBuyCredits(true) : handleTextDiagnosis}
-                      disabled={loading || (!symptoms.trim() && hasCredits)}
+                    <ActionButton
+                      action={hasCredits ? handleTextDiagnosis : undefined}
+                      onClick={!hasCredits ? () => setShowBuyCredits(true) : undefined}
+                      disabled={!symptoms.trim() && hasCredits}
+                      successMessage="Analysis Complete"
                       className={`flex-1 text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
                       size="sm"
                     >
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
-                          <span className="hidden sm:inline">{t('diagnose.analyzing')}</span>
-                          <span className="sm:hidden">Analyzing</span>
-                        </>
-                      ) : !hasCredits ? (
+                      {!hasCredits ? (
                         <>
                           <span className="hidden sm:inline">No Credits</span>
                           <span className="sm:hidden">Credits</span>
@@ -264,7 +255,7 @@ export default function Diagnose() {
                           <span className="sm:hidden">Analyze</span>
                         </>
                       )}
-                    </Button>
+                    </ActionButton>
                     <Button
                       variant="outline"
                       size="sm"
@@ -328,19 +319,15 @@ export default function Diagnose() {
                       className="mt-2 resize-none text-xs lg:text-sm min-h-[60px] lg:min-h-[80px]"
                     />
                   </div>
-                  <Button
-                    onClick={!hasCredits ? () => setShowBuyCredits(true) : handleImageDiagnosis}
-                    disabled={loading || (selectedImages.length === 0 && hasCredits)}
+                  <ActionButton
+                    action={hasCredits ? handleImageDiagnosis : undefined}
+                    onClick={!hasCredits ? () => setShowBuyCredits(true) : undefined}
+                    disabled={selectedImages.length === 0 && hasCredits}
+                    successMessage="Image Analyzed"
                     className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`}
                     size="sm"
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
-                        <span className="hidden sm:inline">{t('diagnose.analyzing_image')}</span>
-                        <span className="sm:hidden">Analyzing</span>
-                      </>
-                    ) : !hasCredits ? (
+                    {!hasCredits ? (
                       <>
                         <span className="hidden sm:inline">No Credits</span>
                         <span className="sm:hidden">Credits</span>
@@ -351,7 +338,7 @@ export default function Diagnose() {
                         <span className="sm:hidden">Analyze</span>
                       </>
                     )}
-                  </Button>
+                  </ActionButton>
                 </TabsContent>
               </Tabs>
             </Card>

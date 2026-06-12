@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ActionButton } from '@/components/ui/action-button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ export default function Contact() {
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -25,11 +25,11 @@ export default function Contact() {
       toast.error(t('contact.fill_required', 'Please fill in all required fields.'));
       return;
     }
-    setLoading(true);
+    setStatus("loading");
     await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    toast.success(t('contact.sent_success', "Message sent! We'll get back to you soon."));
+    setStatus("success");
     setForm({ name: '', email: '', subject: '', message: '' });
+    setTimeout(() => setStatus("idle"), 2000);
   };
 
   const contactInfo = [
@@ -63,11 +63,14 @@ export default function Contact() {
                   <Label htmlFor="message">{t('contact.message', 'Message')} <span className="text-destructive">*</span></Label>
                   <Textarea id="message" name="message" placeholder={t('contact.message_placeholder', 'Tell us more about your question or feedback...')} rows={6} value={form.message} onChange={handleChange} required />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? t('contact.sending', 'Sending...') : (
-                    <>{t('contact.send', 'Send Message')}</>
-                  )}
-                </Button>
+                <ActionButton 
+                  type="submit" 
+                  className="w-full" 
+                  status={status}
+                  successMessage={t('contact.sent_success', "Message sent!")}
+                >
+                  {t('contact.send', 'Send Message')}
+                </ActionButton>
               </form>
             </Card>
         </div>

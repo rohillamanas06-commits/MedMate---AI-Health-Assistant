@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ActionButton } from '@/components/ui/action-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,7 @@ import { api } from '@/lib/api';
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [emailSent, setEmailSent] = useState(false);
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -51,16 +52,19 @@ export default function ForgotPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setStatus("loading");
 
     try {
       await api.forgotPassword(email);
-      setEmailSent(true);
-      toast.success('Check your email for reset instructions!');
+      setStatus("success");
+      setTimeout(() => {
+        setEmailSent(true);
+        setStatus("idle");
+      }, 1000);
     } catch (error) {
+      setStatus("error");
       toast.error(error instanceof Error ? error.message : 'Failed to send reset email');
-    } finally {
-      setLoading(false);
+      setTimeout(() => setStatus("idle"), 2000);
     }
   };
 
@@ -125,13 +129,14 @@ export default function ForgotPassword() {
               </div>
 
               <div className="pt-4">
-                <Button 
+                <ActionButton 
                   type="submit" 
-                  disabled={loading}
+                  status={status}
+                  successMessage="Email Sent!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
-                </Button>
+                  Send Reset Link
+                </ActionButton>
               </div>
 
               <div className="flex items-center justify-start mt-6 text-sm text-white/50">

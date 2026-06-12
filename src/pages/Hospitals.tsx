@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { ActionButton } from '@/components/ui/action-button';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,6 @@ export default function Hospitals() {
   const { currentLanguage } = useLanguage();
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
-  const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,37 +40,38 @@ export default function Hospitals() {
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
-  const handleCurrentLocation = useCallback(async () => {
-    if ('geolocation' in navigator) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            setMapCenter({ lat: latitude, lng: longitude });
-            setUserLocation({ lat: latitude, lng: longitude });
+  const handleCurrentLocation = useCallback(() => {
+    return new Promise<void | boolean>((resolve) => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              setMapCenter({ lat: latitude, lng: longitude });
+              setUserLocation({ lat: latitude, lng: longitude });
 
-            const response: any = await api.findNearbyHospitals(latitude, longitude);
-            const hospitalList = response.hospitals || [];
-            setHospitals(hospitalList);
-            setFilteredHospitals(hospitalList);
+              const response: any = await api.findNearbyHospitals(latitude, longitude);
+              const hospitalList = response.hospitals || [];
+              setHospitals(hospitalList);
+              setFilteredHospitals(hospitalList);
 
-            toast.success(`Found ${hospitalList.length} nearby hospitals`);
-          } catch (error) {
-            console.error('Error finding hospitals:', error);
-            toast.error('Failed to find hospitals');
-          } finally {
-            setLoading(false);
+              resolve();
+            } catch (error) {
+              console.error('Error finding hospitals:', error);
+              toast.error('Failed to find hospitals');
+              resolve(false);
+            }
+          },
+          () => {
+            toast.error('Location access denied');
+            resolve(false);
           }
-        },
-        () => {
-          toast.error('Location access denied');
-          setLoading(false);
-        }
-      );
-    } else {
-      toast.error('Geolocation not supported');
-    }
+        );
+      } else {
+        toast.error('Geolocation not supported');
+        resolve(false);
+      }
+    });
   }, []);
 
   // Filter hospitals based on search query
@@ -231,23 +232,14 @@ export default function Hospitals() {
                 </div>
 
                 {/* Location Action */}
-                <Button
-                  onClick={handleCurrentLocation}
-                  disabled={loading}
+                <ActionButton
+                  action={handleCurrentLocation}
+                  successMessage={t('hospitals.found', 'Hospitals Found')}
                   className="w-full text-xs lg:text-sm h-9 lg:h-10"
                   size="sm"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t('hospitals.searching', 'Searching...')}
-                    </>
-                  ) : (
-                    <>
-                      {t('hospitals.use_location', 'Use My Location')}
-                    </>
-                  )}
-                </Button>
+                  {t('hospitals.use_location', 'Use My Location')}
+                </ActionButton>
 
                 {/* Results Section */}
                 {hospitals.length > 0 && (

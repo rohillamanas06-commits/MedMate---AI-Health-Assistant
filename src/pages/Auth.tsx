@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { ActionButton } from '@/components/ui/action-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,9 @@ export default function Auth() {
     searchParams.get('mode') === 'register' ? 'register' : 'login'
   );
 
-  const [loading, setLoading] = useState(false);
+  // Form status
+  const [loginStatus, setLoginStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [registerStatus, setRegisterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [backgroundImages, setBackgroundImages] = useState<string[]>([]);
   const [imagesLoading, setImagesLoading] = useState(true);
@@ -72,16 +74,17 @@ export default function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLoginStatus("loading");
     try {
       await login(loginData.username, loginData.password);
+      setLoginStatus("success");
       setTimeout(() => {
         navigate('/dashboard');
-      }, 100);
+      }, 1000); // Give time for success state to show
     } catch (error) {
-      // Error handled by context
-    } finally {
-      setLoading(false);
+      setLoginStatus("error");
+      toast.error(error instanceof Error ? error.message : 'Login failed');
+      setTimeout(() => setLoginStatus("idle"), 2000);
     }
   };
 
@@ -103,16 +106,17 @@ export default function Auth() {
       return;
     }
 
-    setLoading(true);
+    setRegisterStatus("loading");
     try {
       await register(registerData.username, registerData.email, registerData.password);
+      setRegisterStatus("success");
       setTimeout(() => {
         navigate('/dashboard');
-      }, 100);
+      }, 1000);
     } catch (error) {
-      // Error handled by context
-    } finally {
-      setLoading(false);
+      setRegisterStatus("error");
+      toast.error(error instanceof Error ? error.message : 'Registration failed');
+      setTimeout(() => setRegisterStatus("idle"), 2000);
     }
   };
 
@@ -203,13 +207,14 @@ export default function Auth() {
               </div>
 
               <div className="pt-4">
-                <Button 
+                <ActionButton 
                   type="submit" 
-                  disabled={loading}
+                  status={loginStatus}
+                  successMessage="Welcome back!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
-                </Button>
+                  Sign In
+                </ActionButton>
               </div>
 
               <div className="flex items-center justify-start mt-6 text-sm text-white/50">
@@ -285,13 +290,14 @@ export default function Auth() {
               </div>
 
               <div className="pt-4">
-                <Button 
+                <ActionButton 
                   type="submit" 
-                  disabled={loading}
+                  status={registerStatus}
+                  successMessage="Account Created!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
-                </Button>
+                  Create Account
+                </ActionButton>
               </div>
 
               <div className="flex items-center justify-start mt-6 text-sm text-white/50">

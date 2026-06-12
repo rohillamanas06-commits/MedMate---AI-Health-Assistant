@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ActionButton } from '@/components/ui/action-button';
 import { Label } from '@/components/ui/label';
 import { FileText, Upload, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -165,16 +165,14 @@ export default function ReportExplainer() {
   const handleAnalysis = async () => {
     if (!selectedFile) {
       toast.error(t('explainer.please_upload'));
-      return;
+      return false;
     }
 
-    setLoading(true);
     setResult(null);
 
     try {
       const data = await api.explainReport(selectedFile, currentLanguage);
       setResult(data.result || data);
-      toast.success(t('explainer.analysis_complete'));
 
       // Update credits if returned
       if (data.remaining_credits !== undefined) {
@@ -183,8 +181,7 @@ export default function ReportExplainer() {
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
       toast.error(`${t('explainer.error')}: ${errorMessage}`);
-    } finally {
-      setLoading(false);
+      return false;
     }
   };
 
@@ -252,14 +249,15 @@ export default function ReportExplainer() {
                   />
                 </div>
 
-                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalysis} disabled={loading || (!selectedFile && hasCredits)} className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} size="sm">
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
-                      <span className="hidden sm:inline">{t('explainer.analyzing')}</span>
-                      <span className="sm:hidden">Analyzing</span>
-                    </>
-                  ) : !hasCredits ? (
+                <ActionButton 
+                  action={hasCredits ? handleAnalysis : undefined}
+                  onClick={!hasCredits ? () => setShowBuyCredits(true) : undefined} 
+                  disabled={!selectedFile && hasCredits} 
+                  successMessage={t('explainer.analysis_complete') || 'Analysis Complete'}
+                  className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} 
+                  size="sm"
+                >
+                  {!hasCredits ? (
                     <>
                       <span className="hidden sm:inline">No Credits</span>
                       <span className="sm:hidden">Credits</span>
@@ -270,7 +268,7 @@ export default function ReportExplainer() {
                       <span className="sm:hidden">Analyze</span>
                     </>
                   )}
-                </Button>
+                </ActionButton>
               </div>
             </Card>
           </div>

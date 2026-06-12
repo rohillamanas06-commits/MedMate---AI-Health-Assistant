@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ActionButton } from '@/components/ui/action-button';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -69,16 +69,14 @@ export default function HandwritingAnalyzer() {
   const handleAnalyzeHandwriting = async () => {
     if (!selectedImage) {
       toast.error('Please select an image');
-      return;
+      return false;
     }
 
-    setLoading(true);
     setResult(null);
 
     try {
       const response: any = await api.analyzeHandwriting(selectedImage, currentLanguage);
       setResult(response.result);
-      toast.success(t('features.prescription_complete') || 'Prescription analysis complete!');
 
       // Update credits if returned
       if (response.remaining_credits !== undefined) {
@@ -98,8 +96,7 @@ export default function HandwritingAnalyzer() {
       } else {
         toast.error(`Analysis failed: ${errorMessage}`);
       }
-    } finally {
-      setLoading(false);
+      return false;
     }
   };
 
@@ -157,14 +154,15 @@ export default function HandwritingAnalyzer() {
                   />
                 </div>
 
-                <Button onClick={!hasCredits ? () => setShowBuyCredits(true) : handleAnalyzeHandwriting} disabled={loading || (!selectedImage && hasCredits)} className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} size="sm">
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4 animate-spin" />
-                      <span className="hidden sm:inline">{t('features.prescription_analyzing') || 'Analyzing...'}</span>
-                      <span className="sm:hidden">Analyzing</span>
-                    </>
-                  ) : !hasCredits ? (
+                <ActionButton 
+                  action={hasCredits ? handleAnalyzeHandwriting : undefined}
+                  onClick={!hasCredits ? () => setShowBuyCredits(true) : undefined} 
+                  disabled={!selectedImage && hasCredits} 
+                  successMessage={t('features.prescription_complete') || 'Analysis Complete'}
+                  className={`w-full text-xs lg:text-sm h-9 lg:h-10 ${!hasCredits ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}`} 
+                  size="sm"
+                >
+                  {!hasCredits ? (
                     <>
                       <span className="hidden sm:inline">{t('features.prescription_no_credits') || 'No Credits'}</span>
                       <span className="sm:hidden">Credits</span>
@@ -175,7 +173,7 @@ export default function HandwritingAnalyzer() {
                       <span className="sm:hidden">Analyze</span>
                     </>
                   )}
-                </Button>
+                </ActionButton>
               </div>
             </Card>
           </div>

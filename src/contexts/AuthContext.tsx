@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { toast } from 'sonner';
 
 interface User {
   id: number;
@@ -51,9 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response: any = await api.login(username, password);
       setUser(response.user);
-      toast.success('Welcome back!');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
       throw error;
     }
   };
@@ -62,9 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response: any = await api.register(username, email, password);
       setUser(response.user);
-      toast.success('Account created successfully!');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Registration failed');
       throw error;
     }
   };
@@ -73,9 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.logout();
       setUser(null);
-      toast.success('Logged out successfully');
     } catch (error) {
-      toast.error('Logout failed');
+      throw error;
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { ActionButton } from '@/components/ui/action-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ export default function ResetPassword() {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [verifying, setVerifying] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
 
@@ -84,16 +85,18 @@ export default function ResetPassword() {
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
 
     try {
       await api.resetPassword(token, password);
-      toast.success('Password reset successful!');
-      navigate('/auth');
+      setStatus("success");
+      setTimeout(() => {
+        navigate('/auth');
+      }, 1000);
     } catch (error) {
+      setStatus("error");
       toast.error(error instanceof Error ? error.message : 'Failed to reset password');
-    } finally {
-      setLoading(false);
+      setTimeout(() => setStatus("idle"), 2000);
     }
   };
 
@@ -204,13 +207,14 @@ export default function ResetPassword() {
               </div>
 
               <div className="pt-4">
-                <Button 
+                <ActionButton 
                   type="submit" 
-                  disabled={loading}
+                  status={status}
+                  successMessage="Reset Successful!"
                   className="w-full bg-white text-black hover:bg-white/90 rounded-none h-14 text-[13px] font-semibold tracking-widest uppercase transition-all"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reset Password'}
-                </Button>
+                  Reset Password
+                </ActionButton>
               </div>
 
               <div className="flex items-center justify-start mt-6 text-sm text-white/50">
