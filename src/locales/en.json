@@ -160,7 +160,7 @@
     "prescription_description": "Upload an image of handwritten prescriptions and medical notes.",
     "prescription_analyzing": "Analyzing prescription...",
     "prescription_analyze_btn": "Analyze Image",
-    "prescription_no_credits": "No Credits Available",
+    "prescription_no_credits": "No Credits",
     "prescription_ready_desc": "Upload your medical prescription to get started",
     "prescription_disclaimer": "Medical Disclaimer: This AI explanation is for informational purposes only. Always consult with a healthcare professional for medical advice.",
     "prescription_complete": "Prescription analysis complete!",
